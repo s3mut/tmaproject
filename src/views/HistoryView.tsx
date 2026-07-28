@@ -169,23 +169,33 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate }: Props) => 
             {selectedAsset && (
               <div>
                 <label className={labelCls}>
-                  <span className="text-blue-400 mr-1">②</span> Site Tujuan
+                  <span className="text-blue-400 mr-1">②</span> Site Tujuan (Ketik Alias)
                   <span className="text-red-400 ml-0.5">*</span>
                 </label>
-                <select
+                <input
+                  type="text"
                   value={toSiteAlias}
-                  onChange={(e) => setToSiteAlias(e.target.value)}
+                  onChange={(e) => setToSiteAlias(e.target.value.toUpperCase())}
                   className={inputCls}
+                  placeholder="Contoh: HO1"
                   required
-                >
-                  <option value="">— Pilih Site Tujuan —</option>
-                  {availableSites.map((s) => (
-                    <option key={s.site_alias ?? s.site_code} value={s.site_alias ?? ''}>
-                      {s.site_alias ?? s.site_code} — {s.site_name}
-                      {s.region ? ` (${s.region})` : ''}
-                    </option>
-                  ))}
-                </select>
+                />
+                {toSiteAlias && (
+                  <div className="mt-2 text-xs">
+                    {(() => {
+                      const matched = availableSites.find((s) => s.site_alias?.toUpperCase() === toSiteAlias.toUpperCase());
+                      if (matched) {
+                        return (
+                          <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                            <i className="fas fa-check-circle mr-1"></i>
+                            <strong>{matched.site_code}</strong> — {matched.site_name} {matched.region ? `(${matched.region})` : ''}
+                          </div>
+                        );
+                      }
+                      return <span className="text-red-400"><i className="fas fa-times-circle mr-1"></i>Site tidak ditemukan</span>;
+                    })()}
+                  </div>
+                )}
               </div>
             )}
 
@@ -216,8 +226,13 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate }: Props) => 
               </button>
               <button
                 type="submit"
-                disabled={!selectedAsset || !toSiteAlias || submitting}
-                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={
+                  !selectedAsset ||
+                  !toSiteAlias ||
+                  submitting ||
+                  !availableSites.find((s) => s.site_alias?.toUpperCase() === toSiteAlias.toUpperCase())
+                }
+                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting
                   ? <><i className="fas fa-spinner fa-spin"></i> Menyimpan...</>
