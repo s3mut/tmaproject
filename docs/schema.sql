@@ -1,6 +1,7 @@
 -- ==========================================
 -- TransitTMA - Database Schema
 -- PostgreSQL Schema Definition
+-- UPDATED: 2026-07-28 (aktiva, site_alias)
 -- ==========================================
 
 -- ==========================================
@@ -15,7 +16,7 @@ CREATE TYPE asset_status AS ENUM ('Active', 'Backup', 'Broken', 'Repair');
 CREATE TABLE sites (
     site_code VARCHAR(4) PRIMARY KEY,
     site_name VARCHAR(100) NOT NULL,
-    site_alias VARCHAR(10),
+    site_alias VARCHAR(10) UNIQUE,
     region VARCHAR(50),
     site_address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -27,7 +28,7 @@ CREATE TABLE sites (
 CREATE TABLE telegram_users (
     telegram_id BIGINT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    role user_role DEFAULT 'guest', -- Menggunakan tipe data ENUM yang dibuat di atas
+    role user_role DEFAULT 'guest',
     is_active BOOLEAN DEFAULT TRUE,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -37,23 +38,23 @@ CREATE TABLE telegram_users (
 -- 3. Membuat Tabel Master Assets
 -- ==========================================
 CREATE TABLE master_assets (
-    id BIGSERIAL PRIMARY KEY, -- Menggunakan BIGSERIAL pengganti AUTO_INCREMENT
+    id BIGSERIAL PRIMARY KEY,
     serial_number VARCHAR(100) NOT NULL UNIQUE,
-    bta_number VARCHAR(50),
+    aktiva VARCHAR(50),                   -- Nomor aktiva (pengganti bta_number)
     category VARCHAR(50) NOT NULL,
     brand VARCHAR(50),
     model_type VARCHAR(100),
     computer_name VARCHAR(100),
-    site_code VARCHAR(4),
-    status asset_status DEFAULT 'Active', -- Menggunakan tipe data ENUM yang dibuat di atas
+    site_alias VARCHAR(10),               -- FK → sites.site_alias (pengganti site_code)
+    status asset_status DEFAULT 'Active',
     external_id VARCHAR(50),
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_asset_site 
-        FOREIGN KEY (site_code) 
-        REFERENCES sites(site_code) 
+        FOREIGN KEY (site_alias) 
+        REFERENCES sites(site_alias) 
         ON UPDATE CASCADE 
         ON DELETE RESTRICT
 );
@@ -112,21 +113,28 @@ CREATE TABLE asset_mutations (
 -- ==========================================
 -- 5. Membuat VIEW untuk Kemudahan Query
 -- ==========================================
+-- CATATAN: Jalankan query ini di Supabase SQL Editor untuk update VIEW
+DROP VIEW IF EXISTS view_assets_detail;
 CREATE VIEW view_assets_detail AS
 SELECT 
     a.id,
     a.serial_number,
-    a.bta_number,
+    a.aktiva,
     a.category,
     a.brand,
     a.model_type,
     a.computer_name,
+    a.site_alias,
     a.status,
+    a.external_id,
     a.description,
+    a.created_at,
+    a.updated_at,
     CONCAT(s.site_code, '-', s.site_alias, '-', s.region) AS full_location_code,
     s.site_name,
     s.site_address
 FROM 
     master_assets a
 LEFT JOIN 
-    sites s ON a.site_code = s.site_code;
+    sites s ON a.site_alias = s.site_alias;
+

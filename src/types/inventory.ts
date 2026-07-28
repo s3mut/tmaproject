@@ -30,12 +30,12 @@ export interface TelegramUser {
 export interface MasterAsset {
   id: number;              // BIGSERIAL PK
   serial_number: string;
-  bta_number: string | null;
+  aktiva: string | null;   // Nama aktiva / nomor BTA
   category: string;
   brand: string | null;
   model_type: string | null;
   computer_name: string | null;
-  site_code: string | null;
+  site_alias: string | null; // FK → sites.site_alias
   status: AssetStatus;
   external_id: string | null;
   description: string | null;

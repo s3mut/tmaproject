@@ -117,7 +117,7 @@ function App() {
   const handleMutationSubmit = async (toSiteCode: string, notes: string) => {
     if (!detailItem) return;
     try {
-      await mutateAsset(detailItem.id, detailItem.site_code ?? null, toSiteCode, notes);
+      await mutateAsset(detailItem.id, detailItem.site_alias ?? null, toSiteCode, notes);
       setMutationOpen(false);
       setDetailItem(null);
       showToast('Mutasi aset berhasil dicatat!');

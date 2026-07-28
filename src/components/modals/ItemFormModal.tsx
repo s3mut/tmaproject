@@ -3,12 +3,12 @@ import type { AssetDetail, AssetStatus, Site } from '../../types/inventory';
 
 interface FormData {
   serial_number: string;
-  bta_number: string;
+  aktiva: string;
   category: string;
   brand: string;
   model_type: string;
   computer_name: string;
-  site_code: string;
+  site_alias: string;
   status: AssetStatus;
   external_id: string;
   description: string;
@@ -24,12 +24,12 @@ interface Props {
 
 const defaultForm: FormData = {
   serial_number: '',
-  bta_number: '',
+  aktiva: '',
   category: 'Laptop',
   brand: '',
   model_type: '',
   computer_name: '',
-  site_code: '',
+  site_alias: '',
   status: 'Active',
   external_id: '',
   description: '',
@@ -45,12 +45,12 @@ const ItemFormModal = ({ isOpen, editItem, sites, onClose, onSubmit }: Props) =>
     if (editItem) {
       setForm({
         serial_number:  editItem.serial_number,
-        bta_number:     editItem.bta_number ?? '',
+        aktiva:         editItem.aktiva ?? '',
         category:       editItem.category,
         brand:          editItem.brand ?? '',
         model_type:     editItem.model_type ?? '',
         computer_name:  editItem.computer_name ?? '',
-        site_code:      editItem.site_code ?? '',
+        site_alias:     editItem.site_alias ?? '',
         status:         editItem.status,
         external_id:    editItem.external_id ?? '',
         description:    editItem.description ?? '',
@@ -94,12 +94,12 @@ const ItemFormModal = ({ isOpen, editItem, sites, onClose, onSubmit }: Props) =>
               className={inputCls} placeholder="S/N dari perangkat" required />
           </div>
 
-          {/* BTA Number + External ID */}
+          {/* Aktiva + External ID */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Nomor BTA</label>
-              <input type="text" value={form.bta_number} onChange={(e) => set('bta_number', e.target.value)}
-                className={inputCls} placeholder="BTA-XXXX" />
+              <label className={labelCls}>Aktiva</label>
+              <input type="text" value={form.aktiva} onChange={(e) => set('aktiva', e.target.value)}
+                className={inputCls} placeholder="Nomor aktiva" />
             </div>
             <div>
               <label className={labelCls}>External ID</label>
@@ -151,11 +151,11 @@ const ItemFormModal = ({ isOpen, editItem, sites, onClose, onSubmit }: Props) =>
           {/* Site */}
           <div>
             <label className={labelCls}>Site / Lokasi</label>
-            <select value={form.site_code} onChange={(e) => set('site_code', e.target.value)} className={inputCls}>
+            <select value={form.site_alias} onChange={(e) => set('site_alias', e.target.value)} className={inputCls}>
               <option value="">— Pilih Site —</option>
               {sites.map((s) => (
-                <option key={s.site_code} value={s.site_code}>
-                  {s.site_code} — {s.site_name}
+                <option key={s.site_alias ?? s.site_code} value={s.site_alias ?? ''}>
+                  {s.site_alias ?? s.site_code} — {s.site_name}
                 </option>
               ))}
             </select>

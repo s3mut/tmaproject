@@ -49,7 +49,7 @@ const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: 
         {/* Details Grid */}
         <div className="space-y-2 mb-4">
           <DetailRow label="Kategori"       value={item.category} />
-          <DetailRow label="BTA Number"     value={item.bta_number} />
+          <DetailRow label="Aktiva"          value={item.aktiva} />
           <DetailRow label="Computer Name"  value={item.computer_name} />
           <DetailRow label="External ID"    value={item.external_id} />
           <DetailRow label="Site"           value={item.site_name} />

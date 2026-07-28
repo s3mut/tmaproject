@@ -16,7 +16,7 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
 
   if (!asset) return null;
 
-  const availableSites = sites.filter((s) => s.site_code !== asset.site_code);
+  const availableSites = sites.filter((s) => s.site_alias !== asset.site_alias);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +52,7 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
         <div className="flex items-center gap-3 mb-5">
           <div className="flex-1 glass rounded-xl p-3 text-center">
             <p className="text-xs text-slate-500 mb-1">Dari Site</p>
-            <p className="text-sm font-semibold text-white">{asset.site_name ?? asset.site_code ?? '—'}</p>
+            <p className="text-sm font-semibold text-white">{asset.site_name ?? asset.site_alias ?? '—'}</p>
             {asset.full_location_code && (
               <p className="text-xs text-slate-500 mt-0.5">{asset.full_location_code}</p>
             )}
@@ -64,7 +64,7 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
             <p className="text-xs text-slate-500 mb-1">Ke Site</p>
             <p className="text-sm font-semibold text-blue-400">
               {toSiteCode
-                ? sites.find((s) => s.site_code === toSiteCode)?.site_name ?? toSiteCode
+                ? sites.find((s) => s.site_alias === toSiteCode)?.site_name ?? toSiteCode
                 : '— pilih —'}
             </p>
           </div>
@@ -84,8 +84,8 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
             >
               <option value="">— Pilih Site Tujuan —</option>
               {availableSites.map((s) => (
-                <option key={s.site_code} value={s.site_code}>
-                  {s.site_code} — {s.site_name} {s.region ? `(${s.region})` : ''}
+                <option key={s.site_alias ?? s.site_code} value={s.site_alias ?? ''}>
+                  {s.site_alias ?? s.site_code} — {s.site_name} {s.region ? `(${s.region})` : ''}
                 </option>
               ))}
             </select>

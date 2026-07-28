@@ -84,8 +84,8 @@ export function useInventory() {
       moved_by: HARDCODED_USER.telegram_id,
       notes: notes || null,
     });
-    // 2. Update site_code di master_assets
-    await updateAsset(assetId, { site_code: toSiteCode });
+    // 2. Update site_alias di master_assets
+    await updateAsset(assetId, { site_alias: toSiteCode });
     await fetchAll();
   }, [fetchAll]);
 
