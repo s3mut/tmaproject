@@ -6,7 +6,8 @@ interface Props {
 }
 
 const StatusBadge = ({ status }: Props) => {
-  const cfg = assetStatusConfig[status];
+  // Guard: fallback ke 'Active' jika status tidak valid (e.g., VIEW Supabase return null)
+  const cfg = assetStatusConfig[status] ?? assetStatusConfig['Active'];
   return (
     <span className={`status-badge ${cfg.className} flex-shrink-0`}>
       <i className={`fas ${cfg.icon} text-xs`}></i>

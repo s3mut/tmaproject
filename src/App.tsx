@@ -167,7 +167,18 @@ function App() {
             onItemClick={handleItemClick}
           />
         )}
-        {activeTab === 'history' && <HistoryView mutations={mutations} loading={loading} />}
+        {activeTab === 'history' && (
+          <HistoryView
+            mutations={mutations}
+            assets={assets}
+            sites={sites}
+            loading={loading}
+            onMutate={async (assetId, fromSiteAlias, toSiteAlias, notes) => {
+              await mutateAsset(assetId, fromSiteAlias, toSiteAlias, notes);
+              showToast('Mutasi aset berhasil dicatat!');
+            }}
+          />
+        )}
         {activeTab === 'profile' && <ProfileView />}
       </main>
 
