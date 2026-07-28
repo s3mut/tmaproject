@@ -169,7 +169,7 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate }: Props) => 
             {selectedAsset && (
               <div>
                 <label className={labelCls}>
-                  <span className="text-blue-400 mr-1">②</span> Site Tujuan (Ketik Alias)
+                  <span className="text-blue-400 mr-1">②</span> Site Tujuan (Ketik Alias / Kode)
                   <span className="text-red-400 ml-0.5">*</span>
                 </label>
                 <input
@@ -177,13 +177,17 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate }: Props) => 
                   value={toSiteAlias}
                   onChange={(e) => setToSiteAlias(e.target.value.toUpperCase())}
                   className={inputCls}
-                  placeholder="Contoh: HO1"
+                  placeholder="Contoh: HO1 atau 0999"
                   required
                 />
                 {toSiteAlias && (
                   <div className="mt-2 text-xs">
                     {(() => {
-                      const matched = availableSites.find((s) => s.site_alias?.toUpperCase() === toSiteAlias.toUpperCase());
+                      const searchStr = toSiteAlias.trim().toUpperCase();
+                      const matched = availableSites.find((s) => 
+                        s.site_alias?.trim().toUpperCase() === searchStr ||
+                        s.site_code?.trim().toUpperCase() === searchStr
+                      );
                       if (matched) {
                         return (
                           <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
