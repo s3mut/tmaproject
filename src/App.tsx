@@ -14,6 +14,7 @@ import MutationModal from './components/modals/MutationModal';
 import DashboardView from './views/DashboardView';
 import ItemsView from './views/ItemsView';
 import HistoryView from './views/HistoryView';
+import SitesView from './views/SitesView';
 import ProfileView from './views/ProfileView';
 
 declare global { interface Window { Telegram?: any; } }
@@ -179,6 +180,7 @@ function App() {
             }}
           />
         )}
+        {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
         {activeTab === 'profile' && <ProfileView />}
       </main>
 

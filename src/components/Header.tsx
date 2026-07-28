@@ -6,6 +6,7 @@ const tabTitles: Record<TabName, TabConfig> = {
   dashboard: { title: 'Inventory IT',  subtitle: 'Kelola aset teknologi' },
   items:     { title: 'Daftar Aset',   subtitle: 'Semua aset terdaftar' },
   history:   { title: 'Mutasi Aset',   subtitle: 'Riwayat perpindahan' },
+  sites:     { title: 'Daftar Site',   subtitle: 'Lokasi cabang & operasional' },
   profile:   { title: 'Profil',        subtitle: 'Pengaturan akun' },
 };
 

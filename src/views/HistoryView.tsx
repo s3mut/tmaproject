@@ -184,11 +184,23 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate }: Props) => 
                   <div className="mt-2 text-xs">
                     {(() => {
                       const searchStr = toSiteAlias.trim().toUpperCase();
-                      const matched = availableSites.find((s) => 
+                      // Cari di SEMUA site, bukan cuma availableSites
+                      const matched = sites.find((s) => 
                         s.site_alias?.trim().toUpperCase() === searchStr ||
                         s.site_code?.trim().toUpperCase() === searchStr
                       );
+                      
                       if (matched) {
+                        // Cek apakah ini site tempat aset sudah berada
+                        if (matched.site_alias === selectedAsset.site_alias) {
+                          return (
+                            <span className="text-orange-400">
+                              <i className="fas fa-exclamation-triangle mr-1"></i>
+                              Aset sudah berada di lokasi ini ({matched.site_code} - {matched.site_name})
+                            </span>
+                          );
+                        }
+                        
                         return (
                           <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                             <i className="fas fa-check-circle mr-1"></i>
@@ -196,7 +208,13 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate }: Props) => 
                           </div>
                         );
                       }
-                      return <span className="text-red-400"><i className="fas fa-times-circle mr-1"></i>Site tidak ditemukan</span>;
+                      
+                      return (
+                        <span className="text-red-400">
+                          <i className="fas fa-times-circle mr-1"></i>
+                          Site tidak ditemukan
+                        </span>
+                      );
                     })()}
                   </div>
                 )}
