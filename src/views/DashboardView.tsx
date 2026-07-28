@@ -1,14 +1,6 @@
 import type { AssetDetail } from '../types/inventory';
+import { getCategoryConfig } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
-
-const CATEGORIES = [
-  { key: 'all',          label: 'Semua',    icon: 'fa-th-large', color: 'text-blue-400',    bg: 'bg-blue-500/20' },
-  { key: 'Laptop',       label: 'Laptop',   icon: 'fa-laptop',   color: 'text-purple-400',  bg: 'bg-purple-500/20' },
-  { key: 'Monitor',      label: 'Monitor',  icon: 'fa-desktop',  color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
-  { key: 'Printer',      label: 'Printer',  icon: 'fa-print',    color: 'text-orange-400',  bg: 'bg-orange-500/20' },
-  { key: 'Network',      label: 'Network',  icon: 'fa-wifi',     color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  { key: 'Accessories',  label: 'Aksesoris',icon: 'fa-keyboard', color: 'text-pink-400',    bg: 'bg-pink-500/20' },
-];
 
 interface Stats { total: number; active: number; backup: number; broken: number; repair: number; }
 
@@ -46,8 +38,26 @@ const SkeletonCard = () => (
   </div>
 );
 
+const SkeletonCategory = () => (
+  <div className="flex-shrink-0 text-center animate-pulse">
+    <div className="w-12 h-12 rounded-xl bg-slate-700 mx-auto mb-1"></div>
+    <div className="h-2 bg-slate-700 rounded w-10 mx-auto"></div>
+  </div>
+);
+
 const DashboardView = ({ stats, assets, loading, onItemClick, onCategoryClick }: Props) => {
   const recentAssets = [...assets].slice(0, 5);
+
+  // Derivasi kategori unik dari data aset yang sudah ter-load
+  const dynamicCategories = [
+    { key: 'all', label: 'Semua', icon: 'fa-th-large', color: 'text-blue-400', bg: 'bg-blue-500/20' },
+    ...Array.from(new Set(assets.map((a) => a.category)))
+      .sort()
+      .map((cat) => {
+        const cfg = getCategoryConfig(cat);
+        return { key: cat, label: cat, icon: cfg.icon, color: cfg.color, bg: cfg.bg };
+      }),
+  ];
 
   return (
     <div className="fade-in">
@@ -74,17 +84,22 @@ const DashboardView = ({ stats, assets, loading, onItemClick, onCategoryClick }:
           gradient="linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.05))" border="rgba(234,179,8,0.2)" />
       </div>
 
-      {/* Categories */}
+      {/* Categories — dinamis dari data database */}
       <h2 className="text-sm font-semibold text-slate-300 mb-3">Kategori</h2>
-      <div className="flex gap-3 overflow-x-auto pb-4 mb-4 scrollbar-hide">
-        {CATEGORIES.map(({ key, label, icon, color, bg }) => (
-          <div key={key} className="flex-shrink-0 text-center cursor-pointer" onClick={() => onCategoryClick(key)}>
-            <div className={`category-icon ${bg} ${color} mx-auto mb-1`}>
-              <i className={`fas ${icon}`}></i>
+      <div className="flex gap-3 overflow-x-auto pb-4 mb-4 scrollbar-hide pr-16">
+        {loading ? (
+          // Skeleton saat loading
+          [1, 2, 3, 4].map((i) => <SkeletonCategory key={i} />)
+        ) : (
+          dynamicCategories.map(({ key, label, icon, color, bg }) => (
+            <div key={key} className="flex-shrink-0 text-center cursor-pointer" onClick={() => onCategoryClick(key)}>
+              <div className={`category-icon ${bg} ${color} mx-auto mb-1`}>
+                <i className={`fas ${icon}`}></i>
+              </div>
+              <span className="text-xs text-slate-400">{label}</span>
             </div>
-            <span className="text-xs text-slate-400">{label}</span>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Recent Assets */}
