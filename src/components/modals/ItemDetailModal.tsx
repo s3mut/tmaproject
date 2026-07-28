@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { getCategoryConfig } from '../../types/inventory';
 import type { AssetDetail } from '../../types/inventory';
 import StatusBadge from '../StatusBadge';
@@ -23,6 +24,21 @@ const DetailRow = ({ label, value }: { label: string; value: string | null | und
 const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: Props) => {
   if (!item) return null;
   const cat = getCategoryConfig(item.category);
+  const [copied, setCopied] = useState(false);
+
+  const copySerial = () => {
+    navigator.clipboard.writeText(item.serial_number).catch(() => {
+      // fallback for environments that don't support clipboard API
+      const el = document.createElement('textarea');
+      el.value = item.serial_number;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    });
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className={`modal-overlay ${isOpen ? 'active' : ''}`} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -40,7 +56,15 @@ const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: 
             <i className={`fas ${cat.icon}`}></i>
           </div>
           <h3 className="text-lg font-bold text-white">{item.brand} {item.model_type ?? ''}</h3>
-          <p className="text-sm text-slate-400 mt-0.5 font-mono">{item.serial_number}</p>
+          {/* Serial Number — tap to copy */}
+          <button
+            onClick={copySerial}
+            className="flex items-center gap-2 mx-auto mt-0.5 px-3 py-1 rounded-lg hover:bg-slate-700/50 transition-colors group"
+          >
+            <p className="text-sm text-slate-400 font-mono">{item.serial_number}</p>
+            <i className={`fas ${copied ? 'fa-check text-emerald-400' : 'fa-copy text-slate-500 group-hover:text-blue-400'} text-xs transition-colors`}></i>
+          </button>
+          {copied && <p className="text-xs text-emerald-400 mt-1">Tersalin!</p>}
           <div className="flex justify-center mt-2">
             <StatusBadge status={item.status} />
           </div>
@@ -51,7 +75,6 @@ const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: 
           <DetailRow label="Kategori"       value={item.category} />
           <DetailRow label="Aktiva"          value={item.aktiva} />
           <DetailRow label="Computer Name"  value={item.computer_name} />
-          <DetailRow label="External ID"    value={item.external_id} />
           <DetailRow label="Site"           value={item.site_name} />
           <DetailRow label="Lokasi Code"    value={item.full_location_code} />
           <DetailRow label="Alamat Site"    value={item.site_address} />

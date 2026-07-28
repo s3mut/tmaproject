@@ -84,16 +84,46 @@ export const assetStatusConfig: Record<AssetStatus, { label: string; className: 
 };
 
 export const categoryConfig: Record<string, { icon: string; color: string; bg: string }> = {
-  Laptop:      { icon: 'fa-laptop',   color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  Monitor:     { icon: 'fa-desktop',  color: 'text-cyan-400',   bg: 'bg-cyan-500/20' },
-  Printer:     { icon: 'fa-print',    color: 'text-orange-400', bg: 'bg-orange-500/20' },
-  Network:     { icon: 'fa-wifi',     color: 'text-emerald-400',bg: 'bg-emerald-500/20' },
-  Accessories: { icon: 'fa-keyboard', color: 'text-pink-400',   bg: 'bg-pink-500/20' },
-  Server:      { icon: 'fa-server',   color: 'text-indigo-400', bg: 'bg-indigo-500/20' },
-  Storage:     { icon: 'fa-hdd',      color: 'text-teal-400',   bg: 'bg-teal-500/20' },
-  default:     { icon: 'fa-box',      color: 'text-slate-400',  bg: 'bg-slate-500/20' },
+  // ── Komputer & Display ──
+  Laptop:          { icon: 'fa-laptop',          color: 'text-purple-400',  bg: 'bg-purple-500/20' },
+  PC:              { icon: 'fa-desktop',          color: 'text-blue-400',    bg: 'bg-blue-500/20' },
+  Monitor:         { icon: 'fa-desktop',          color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
+  Tablet:          { icon: 'fa-tablet-alt',       color: 'text-sky-400',     bg: 'bg-sky-500/20' },
+  // ── Jaringan ──
+  Network:         { icon: 'fa-wifi',             color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+  'Access Point':  { icon: 'fa-wifi',             color: 'text-green-400',   bg: 'bg-green-500/20' },
+  'ACCESS POINT':  { icon: 'fa-wifi',             color: 'text-green-400',   bg: 'bg-green-500/20' },
+  Switch:          { icon: 'fa-network-wired',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
+  SWITCH:          { icon: 'fa-network-wired',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
+  Router:          { icon: 'fa-globe',            color: 'text-red-400',     bg: 'bg-red-500/20' },
+  ROUTER:          { icon: 'fa-globe',            color: 'text-red-400',     bg: 'bg-red-500/20' },
+  Firewall:        { icon: 'fa-shield-alt',       color: 'text-orange-400',  bg: 'bg-orange-500/20' },
+  // ── Server & Storage ──
+  Server:          { icon: 'fa-server',           color: 'text-indigo-400',  bg: 'bg-indigo-500/20' },
+  Storage:         { icon: 'fa-hdd',              color: 'text-teal-400',    bg: 'bg-teal-500/20' },
+  NAS:             { icon: 'fa-hdd',              color: 'text-violet-400',  bg: 'bg-violet-500/20' },
+  // ── Cetak & Scan ──
+  Printer:         { icon: 'fa-print',            color: 'text-orange-400',  bg: 'bg-orange-500/20' },
+  Scanner:         { icon: 'fa-qrcode',           color: 'text-amber-400',   bg: 'bg-amber-500/20' },
+  // ── Aksesoris & Perangkat ──
+  Accessories:     { icon: 'fa-keyboard',         color: 'text-pink-400',    bg: 'bg-pink-500/20' },
+  Phone:           { icon: 'fa-phone-alt',        color: 'text-rose-400',    bg: 'bg-rose-500/20' },
+  PHONE:           { icon: 'fa-phone-alt',        color: 'text-rose-400',    bg: 'bg-rose-500/20' },
+  UPS:             { icon: 'fa-battery-full',     color: 'text-lime-400',    bg: 'bg-lime-500/20' },
+  Camera:          { icon: 'fa-camera',           color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/20' },
+  Projector:       { icon: 'fa-tv',               color: 'text-slate-300',   bg: 'bg-slate-500/20' },
+  // ── Default ──
+  default:         { icon: 'fa-box',              color: 'text-slate-400',   bg: 'bg-slate-500/20' },
 };
 
 export function getCategoryConfig(category: string) {
-  return categoryConfig[category] ?? categoryConfig['default'];
+  if (!category) return categoryConfig['default'];
+  // 1. Exact match
+  if (categoryConfig[category]) return categoryConfig[category];
+  // 2. Case-insensitive match
+  const lowerCat = category.toLowerCase();
+  const matchedKey = Object.keys(categoryConfig).find(
+    (k) => k.toLowerCase() === lowerCat
+  );
+  return matchedKey ? categoryConfig[matchedKey] : categoryConfig['default'];
 }

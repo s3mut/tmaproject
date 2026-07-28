@@ -2,15 +2,8 @@ import { useState, useMemo } from 'react';
 import type { AssetDetail, AssetStatus } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 
-type FilterType = AssetStatus | 'all';
-
-const filters: { key: FilterType; label: string }[] = [
-  { key: 'all',    label: 'Semua'  },
-  { key: 'Active', label: 'Active' },
-  { key: 'Backup', label: 'Backup' },
-  { key: 'Broken', label: 'Broken' },
-  { key: 'Repair', label: 'Repair' },
-];
+// Urutan tampilan status yang diinginkan
+const STATUS_ORDER: AssetStatus[] = ['Active', 'Backup', 'Broken', 'Repair'];
 
 interface Props {
   assets: AssetDetail[];
@@ -21,16 +14,32 @@ interface Props {
 }
 
 const ItemsView = ({ assets, searchValue, loading, initialCategory, onItemClick }: Props) => {
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>('all');
+
+  // Build dynamic status filter chips dari data aktual di database
+  const statusFilters = useMemo(() => [
+    { key: 'all' as const, label: 'Semua' },
+    ...STATUS_ORDER
+      .filter((s) => assets.some((a) => (a.status ?? 'Active') === s))
+      .map((s) => ({ key: s, label: s })),
+  ], [assets]);
 
   const filtered = useMemo(() => {
     let result = assets;
+
+    // Filter kategori (dari klik dashboard)
     if (initialCategory && initialCategory !== 'all') {
       result = result.filter((a) => a.category === initialCategory);
     }
+
+    // Filter status — case-insensitive + null dianggap 'Active'
     if (activeFilter !== 'all') {
-      result = result.filter((a) => a.status === activeFilter);
+      result = result.filter((a) =>
+        (a.status ?? 'Active').toLowerCase() === activeFilter.toLowerCase()
+      );
     }
+
+    // Filter pencarian
     if (searchValue.trim()) {
       const term = searchValue.toLowerCase();
       result = result.filter((a) =>
@@ -47,11 +56,14 @@ const ItemsView = ({ assets, searchValue, loading, initialCategory, onItemClick 
 
   return (
     <div className="fade-in">
-      {/* Filter Chips */}
+      {/* Filter Chips — dinamis dari data database */}
       <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
-        {filters.map(({ key, label }) => (
-          <button key={key} className={`filter-chip ${activeFilter === key ? 'active' : ''}`}
-            onClick={() => setActiveFilter(key)}>
+        {statusFilters.map(({ key, label }) => (
+          <button
+            key={key}
+            className={`filter-chip ${activeFilter === key ? 'active' : ''}`}
+            onClick={() => setActiveFilter(key)}
+          >
             {label}
           </button>
         ))}
