@@ -200,7 +200,7 @@ function App() {
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
         {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} />}
-        {activeTab === 'profile' && <ProfileView />}
+        {activeTab === 'profile' && <ProfileView onShowToast={showToast} />}
       </main>
 
       {showFab && (

@@ -20,6 +20,11 @@
   - Validasi kategori *strict* terhadap database `master_categories` untuk mencegah typo / data kotor.
   - Penanganan payload besar menggunakan **Chunking 250 unit per request** (bebas dari limit query browser).
   - Opsi interaktif Admin: hubungkan typo ke kategori resmi, auto-create kategori baru, atau tombol **"Abaikan / Skip"** unit tertentu.
+- **🤖 Interactive Telegram Bot Access Request & Approval (Pendekatan 1)**:
+  - Otomatis mengidentifikasi Telegram ID, Nama, & Username pengguna dari Telegram WebApp SDK (`window.Telegram.WebApp.initDataUnsafe.user`).
+  - Pengguna berstatus **Guest** dapat mengajukan verifikasi akses Tim IT via tombol **"Request Akses Tim IT"** di halaman Profil.
+  - Telegram Bot mengirimkan pesan notifikasi interaktif lengkap dengan **Tombol Persetujuan 1-Klik** (`[ ✅ Setujui (User) ]`, `[ 👑 Setujui (Admin) ]`, `[ ❌ Tolak ]`) langsung ke Grup Admin IT.
+  - Approval Admin di Telegram otomatis mengubah role pengguna di Supabase secara real-time dan mengirim notifikasi konfirmasi ke Telegram pengguna.
 - **🛡️ Keamanan & Integritas Data**:
   - Soft Delete (`deleted_at`) untuk mencegah kehilangan riwayat aset.
   - PostgreSQL Trigger (`handle_asset_category_strict_sync`) untuk sinkronisasi dan penolakan otomatis data tidak terdaftar.

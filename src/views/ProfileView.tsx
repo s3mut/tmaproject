@@ -1,11 +1,32 @@
-import { HARDCODED_USER } from '../hooks/useInventory';
+import { useState, useEffect } from 'react';
+import type { TelegramUser } from '../types/inventory';
+import { syncTelegramUser, getTelegramSDKUser } from '../services/userService';
+import RequestAccessModal from '../components/modals/RequestAccessModal';
 
-const ProfileView = () => {
+interface Props {
+  onShowToast?: (msg: string, type?: 'success' | 'error') => void;
+}
+
+const ProfileView = ({ onShowToast }: Props) => {
+  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+
+  useEffect(() => {
+    syncTelegramUser()
+      .then((data) => setUser(data))
+      .catch((err) => console.error('Gagal sync telegram user:', err));
+  }, []);
+
+  const sdkUser = getTelegramSDKUser();
+
   const roleColor: Record<string, string> = {
     admin: 'text-yellow-400 bg-yellow-500/15 border-yellow-500/30',
     user:  'text-blue-400 bg-blue-500/15 border-blue-500/30',
     guest: 'text-slate-400 bg-slate-500/15 border-slate-500/30',
   };
+
+  const isGuest = user?.role === 'guest';
+  const isPending = user?.notes?.includes('PENDING_APPROVAL');
 
   const menuItems = [
     {
@@ -25,26 +46,60 @@ const ProfileView = () => {
     },
     {
       icon: 'fa-shield-alt', color: 'text-orange-400', bg: 'bg-orange-500/20',
-      title: 'Info Koneksi', subtitle: 'Supabase: Connected',
-      onClick: () => alert(`Terhubung ke Supabase\nUser: ${HARDCODED_USER.name}\nRole: ${HARDCODED_USER.role}`),
+      title: 'Info Koneksi', subtitle: `Telegram ID: ${user?.telegram_id || sdkUser.id}`,
+      onClick: () => alert(`Terhubung ke Supabase\nUser: ${user?.name || sdkUser.first_name}\nRole: ${user?.role || 'guest'}`),
     },
   ];
 
   return (
-    <div className="fade-in">
+    <div className="fade-in space-y-4">
       {/* Avatar & User Info */}
-      <div className="text-center py-8">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold shadow-lg shadow-blue-500/30">
-          {HARDCODED_USER.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
+      <div className="text-center py-6 glass rounded-2xl p-6 relative overflow-hidden">
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-3 text-white text-xl font-bold shadow-lg shadow-blue-500/30">
+          {(user?.name || sdkUser.first_name || 'IT').split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
         </div>
-        <h2 className="text-lg font-bold text-white">{HARDCODED_USER.name}</h2>
-        <p className="text-sm text-slate-400 mt-0.5">Telegram ID: {HARDCODED_USER.telegram_id}</p>
-        <span className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full border ${roleColor[HARDCODED_USER.role] ?? roleColor.guest}`}>
-          {HARDCODED_USER.role.toUpperCase()}
-        </span>
+        <h2 className="text-lg font-bold text-white">{user?.name || sdkUser.first_name || 'Pengguna Telegram'}</h2>
+        
+        {sdkUser.username && (
+          <p className="text-xs text-blue-400 font-medium">@{sdkUser.username}</p>
+        )}
+
+        <div className="flex items-center justify-center gap-2 mt-2">
+          <span className="text-xs text-slate-400 font-mono">ID: {user?.telegram_id || sdkUser.id}</span>
+          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${roleColor[user?.role || 'guest']}`}>
+            {(user?.role || 'GUEST').toUpperCase()}
+          </span>
+        </div>
       </div>
 
-      {/* Menu */}
+      {/* Banner Khusus Guest / Pending Request Access */}
+      {isGuest && (
+        <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/10 border border-amber-500/40 rounded-2xl p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+              <i className="fas fa-user-lock text-lg"></i>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Akses Tim IT (Guest)</h3>
+              <p className="text-xs text-amber-200/80 mt-0.5">
+                {isPending 
+                  ? 'Pengajuan akses Anda sedang dalam proses verifikasi oleh Admin IT.' 
+                  : 'Akun Anda berstatus Guest (akses terbatas). Ajukan verifikasi ke Admin untuk mendapatkan akses penuh Tim IT.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setRequestModalOpen(true)}
+            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all"
+          >
+            <i className="fas fa-paper-plane"></i>
+            {isPending ? 'Kirim Ulang Request Akses IT' : 'Request Akses Tim IT'}
+          </button>
+        </div>
+      )}
+
+      {/* Menu Options */}
       <div className="space-y-2">
         {menuItems.map((item) => (
           <div
@@ -61,22 +116,36 @@ const ProfileView = () => {
                 <p className="text-xs text-slate-400">{item.subtitle}</p>
               </div>
             </div>
-            <i className="fas fa-chevron-right text-slate-600"></i>
+            <i className="fas fa-chevron-right text-slate-600 text-xs"></i>
           </div>
         ))}
       </div>
 
-      {/* Supabase Badge */}
-      <div className="mt-6 glass rounded-xl p-3 flex items-center gap-3">
+      {/* Database Status Badge */}
+      <div className="glass rounded-xl p-3 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
           <i className="fas fa-database"></i>
         </div>
         <div>
-          <p className="text-xs font-medium text-white">Database: Supabase (PostgreSQL)</p>
-          <p className="text-xs text-slate-500">umhgqkbisdxfcxzkakqa.supabase.co</p>
+          <p className="text-xs font-medium text-white">Database Supabase (PostgreSQL)</p>
+          <p className="text-xs text-slate-500">Auto-Synced with Telegram WebApp SDK</p>
         </div>
         <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
       </div>
+
+      {/* Request Access Modal */}
+      {user && (
+        <RequestAccessModal
+          isOpen={requestModalOpen}
+          currentUser={user}
+          onClose={() => setRequestModalOpen(false)}
+          onSuccess={(msg) => {
+            if (onShowToast) onShowToast(msg, 'success');
+            else alert(msg);
+            syncTelegramUser().then((u) => setUser(u));
+          }}
+        />
+      )}
     </div>
   );
 };

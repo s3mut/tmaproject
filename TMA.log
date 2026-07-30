@@ -291,6 +291,27 @@ Solusi & Perubahan File:
       - Terkonfirmasi fungsi `uploadValidatedCSVAssets` menggunakan `.upsert(chunk, { onConflict: 'serial_number' })`.
       - Pengunggahan ulang CSV yang sama terjamin aman 100% tanpa menghasilkan data ganda (otomatis menyinkronkan unit yang ada & melanjutkan unit yang belum terproses).
 
+--------------------------------------------------------------------------------
+STEP 16: INTERACTIVE TELEGRAM BOT ACCESS APPROVAL (PENDEKATAN 1) (2026-07-30)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Penanganan pengguna Telegram yang berstatus 'guest' agar dapat mengajukan verifikasi/request akses ke Admin Tim IT secara otomatis tanpa membuat form identitas manual.
+
+Solusi & Perubahan File:
+  [A] Service Manajemen Telegram User & Bot (`src/services/userService.ts`):
+      - Integration dengan Telegram WebApp SDK (`window.Telegram.WebApp.initDataUnsafe.user`) untuk membaca Telegram ID, Name, & Username secara otomatis.
+      - Fungsi `syncTelegramUser`: Otomatis memicu auto-registration pengguna baru ke tabel `telegram_users` dengan default role `'guest'`.
+      - Fungsi `requestITAccess`: Meng-upsert status request ke Supabase dan mengirim notifikasi pesan Markdown + Inline Keyboard Buttons (`[ ✅ Setujui (User) ]`, `[ 👑 Setujui (Admin) ]`, `[ ❌ Tolak ]`) langsung ke Grup Admin IT via Telegram Bot API.
+
+  [B] UI Pengajuan Akses Guest (`src/components/modals/RequestAccessModal.tsx` & `src/views/ProfileView.tsx`):
+      - Banner khusus pada `ProfileView` untuk pengguna dengan role `'guest'` dengan tombol **"Request Akses Tim IT"**.
+      - Modal interaktif pengisian alasan/cabang yang otomatis menampilkan Telegram ID & Username terverifikasi dari SDK.
+      - Integrasi pesan status *"Permintaan Akses Terkirim ke Admin IT"*.
+
+  [C] Webhook Serverless Handler (`docs/bot_webhook_handler.js`):
+      - Handler Node.js / Supabase Edge Function untuk memproses callback query saat Admin menekan tombol persetujuan di Telegram.
+      - Meng-update role pengguna di Supabase (`telegram_users`) secara real-time, meng-edit pesan notifikasi Admin, dan mengirim notifikasi Telegram DM konfirmasi ke pengguna.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
