@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Category, MasterAsset, AssetStatus } from '../types/inventory';
+import type { Category, AssetStatus } from '../types/inventory';
 
 export interface CSVRowParsed {
   rowNumber: number;
