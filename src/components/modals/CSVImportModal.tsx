@@ -18,6 +18,7 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [addingCategory, setAddingCategory] = useState<string | null>(null);
+  const [skippedCategories, setSkippedCategories] = useState<Record<string, boolean>>({});
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -97,8 +98,6 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
       setAddingCategory(null);
     }
   };
-
-  const [skippedCategories, setSkippedCategories] = useState<Record<string, boolean>>({});
 
   const handleToggleSkipCategory = (catName: string) => {
     setSkippedCategories(prev => ({
