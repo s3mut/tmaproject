@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Category } from '../../types/inventory';
 import { parseCSVText, uploadValidatedCSVAssets, createCategoryFromAdmin, type CSVParseResult, type CSVRowParsed } from '../../services/csvImportService';
 
@@ -22,9 +22,9 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync categories prop saat categories di parent berubah
-  if (categories !== initialCategories && initialCategories.length !== categories.length) {
+  useEffect(() => {
     setCategories(initialCategories);
-  }
+  }, [initialCategories]);
 
   if (!isOpen) return null;
 

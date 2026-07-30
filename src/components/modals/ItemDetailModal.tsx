@@ -21,8 +21,9 @@ const DetailRow = ({ label, value }: { label: string; value: string | null | und
 );
 
 const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: Props) => {
-  if (!item) return null;
   const [copied, setCopied] = useState(false);
+
+  if (!item) return null;
 
   const copySerial = () => {
     navigator.clipboard.writeText(item.serial_number).catch(() => {
