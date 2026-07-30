@@ -271,6 +271,26 @@ Solusi & Perubahan File:
   [C] Pembersihan Type Import:
       - `src/services/csvImportService.ts`: Menghapus unused import `MasterAsset` untuk memastikan `npm run build` & `npx tsc --noEmit` 100% bersih.
 
+--------------------------------------------------------------------------------
+STEP 15: SITE ALIAS FK VALIDATION & UPSERT RESUME GUARANTEE (2026-07-30)
+--------------------------------------------------------------------------------
+Masalah:
+  1. Upload CSV gagal dengan error PostgreSQL 23503 (`violates foreign key constraint "fk_asset_site"`) jika kolom `site_alias` di CSV berisi kode/alias lokasi yang tidak terdaftar di tabel `sites`.
+  2. Pertanyaan pengguna tentang penanganan upload ulang file CSV jika proses terputus di tengah jalan.
+
+Solusi & Perubahan File:
+  [A] Normalisasi & Proteksi FK Site:
+      - `src/services/csvImportService.ts`: Menambahkan parameter `sites: Site[]` pada `parseCSVText`.
+      - Memetakan dan mencocokkan `site_alias` dari CSV terhadap data di tabel `sites` (mencocokkan `site_alias` maupun `site_code`).
+      - Jika `site_alias` di CSV tidak ditemukan di tabel `sites`, otomatis di-set ke `null` agar transaksi insert aman dan tidak melanggar constraint FK `fk_asset_site`.
+
+  [B] Integrasi Props Modal & App:
+      - `src/components/modals/CSVImportModal.tsx` & `src/App.tsx`: Mengirimkan prop `sites` dari `App` ke `CSVImportModal`.
+
+  [C] Garansi Anti-Duplikat & Resumable Upsert:
+      - Terkonfirmasi fungsi `uploadValidatedCSVAssets` menggunakan `.upsert(chunk, { onConflict: 'serial_number' })`.
+      - Pengunggahan ulang CSV yang sama terjamin aman 100% tanpa menghasilkan data ganda (otomatis menyinkronkan unit yang ada & melanjutkan unit yang belum terproses).
+
 ================================================================================
                                  END OF LOG
 ================================================================================
