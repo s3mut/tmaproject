@@ -251,6 +251,26 @@ Solusi & Perubahan File:
       - `src/components/Header.tsx` & `src/App.tsx`: Proteksi akses tombol "Import CSV" khusus untuk grup role Admin (`userRole === 'admin'`).
       - `.env.example`: Template konfigurasi env variables Supabase Client.
 
+--------------------------------------------------------------------------------
+STEP 14: REACT HOOKS BUGFIX (#310) & EXPLICIT CATEGORY SKIP (2026-07-30)
+--------------------------------------------------------------------------------
+Masalah:
+  1. Munculnya Minified React Error #310 (*Rendered more hooks than during previous render*) saat membuka/menutup modal detail atau import CSV.
+  2. Kebingungan admin jika ingin sengaja mengabaikan (skip) unit dengan kategori yang tidak terdaftar saat upload CSV massal.
+
+Solusi & Perubahan File:
+  [A] Perbaikan Rules of Hooks (React Error #310):
+      - `src/components/modals/ItemDetailModal.tsx`: Memindahkan `useState(copied)` di atas conditional early return (`if (!item) return null`).
+      - `src/components/modals/CSVImportModal.tsx`: Memindahkan seluruh `useState`, `useRef`, dan `useEffect` ke paling atas fungsi komponen sebelum `if (!isOpen) return null`.
+      - Mengganti state update langsung pada body render dengan `useEffect` untuk menyinkronkan data kategori.
+
+  [B] Fitur Explicit Skip Kategori di CSV Import:
+      - `src/components/modals/CSVImportModal.tsx`: Menambahkan tombol **"Abaikan / Skip"** pada daftar kategori tidak dikenal.
+      - Unit dengan kategori yang di-skip akan ditandai `[Dilewati]` (dicoret) dan jumlah indikator "Perlu Verifikasi" otomatis berkurang tanpa mempengaruhi unit valid lainnya.
+
+  [C] Pembersihan Type Import:
+      - `src/services/csvImportService.ts`: Menghapus unused import `MasterAsset` untuk memastikan `npm run build` & `npx tsc --noEmit` 100% bersih.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
