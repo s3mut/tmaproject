@@ -1,0 +1,256 @@
+================================================================================
+                     TransitTMA — DEVELOPMENT LOG (TMA.log)
+================================================================================
+Project: TransitTMA (IT Asset Inventory - Telegram Mini App)
+Location: d:\Documents\05. PROJECT\TransitTMA
+Tech Stack: React + TypeScript + Vite + Tailwind CSS v3 + Supabase (PostgreSQL)
+
+--------------------------------------------------------------------------------
+STEP 1: INISIALISASI PROYEK & FRAMEWORK
+--------------------------------------------------------------------------------
+- Membuat struktur folder proyek baru TransitTMA menggunakan Vite:
+  `npx create-vite@latest TransitTMA --template react-ts`
+- Melakukan instalasi dependensi dasar (React 19, TypeScript, Vite, Oxlint).
+- Menambahkan Telegram WebApp SDK Script ke index.html:
+  `<script src="https://telegram.org/js/telegram-web-app.js"></script>`
+- Mengkonfigurasi styling global dengan glassmorphism & dark theme di `src/index.css`.
+- Membuat entry point komponen awal di `src/App.tsx`.
+
+--------------------------------------------------------------------------------
+STEP 2: KONVERSI PROTOTYPE (script01.txt) KE REACT + TYPESCRIPT
+--------------------------------------------------------------------------------
+- Menjadikan prototype single-page HTML (`script01.txt`) sebagai referensi UI/UX.
+- Melakukan instalasi Tailwind CSS v3 lokal (bukan via CDN):
+  `npm install -D tailwindcss postcss autoprefixer`
+- Menginisialisasi `tailwind.config.js` & `postcss.config.js`.
+- Membagi arsitektur aplikasi menjadi struktur modular:
+  * `src/types/`      : Interface TypeScript (inventory, history, status maps)
+  * `src/data/`       : Data sampel untuk prototyping awal
+  * `src/hooks/`      : Custom React Hooks (`useInventory.ts`)
+  * `src/services/`   : Service layer pengolahan data
+  * `src/components/` : Reusable UI components & modals
+  * `src/views/`      : Main page screens (Dashboard, Items, History, Profile)
+
+--------------------------------------------------------------------------------
+STEP 3: DESAIN SKEMA DATABASE POSTGRESQL (docs/schema.sql)
+--------------------------------------------------------------------------------
+Membuat skema database terstruktur (Normalisasi 3NF) di Supabase dengan komponen:
+1. Custom ENUM Types:
+   - `user_role`: ('admin', 'user', 'guest')
+   - `asset_status`: ('Active', 'Backup', 'Broken', 'Repair')
+2. Tabel `sites` (PK: site_code VARCHAR(4), site_alias UNIQUE).
+3. Tabel `telegram_users` (PK: telegram_id BIGINT).
+4. Tabel `master_assets` (PK: id BIGSERIAL, FK: site_alias).
+5. Tabel `asset_mutations` (PK: id BIGSERIAL, FK: asset_id, from_site, to_site, moved_by).
+6. View `view_assets_detail` (JOIN master_assets & sites dengan full_location_code).
+7. Trigger auto-update timestamp untuk `updated_at`.
+
+--------------------------------------------------------------------------------
+STEP 4: INTEGRASI SUPABASE & SERVICE LAYER
+--------------------------------------------------------------------------------
+- Instalasi SDK Supabase Client:
+  `npm install @supabase/supabase-js`
+- Membuat file konfigurasi environment `.env`:
+  * `VITE_SUPABASE_URL=https://umhgqkbisdxfcxzkakqa.supabase.co`
+  * `VITE_SUPABASE_ANON_KEY=sb_publishable_...`
+- Membuat Supabase Client Instance di `src/lib/supabase.ts`.
+
+--------------------------------------------------------------------------------
+STEP 5: DAFTAR FUNGSI & SERVICE LAYER YANG DIBANGUN
+--------------------------------------------------------------------------------
+
+[A] Service Layer (Async API Calls ke Supabase)
+
+1. Asset Service (`src/services/assetService.ts`)
+   - `getAssets()`
+     Mengambil seluruh data aset dari VIEW `view_assets_detail` beserta kode lokasi lengkap.
+   - `createAsset(asset)`
+     Menambahkan unit aset baru ke tabel `master_assets`.
+   - `updateAsset(id, asset)`
+     Mengubah detail data unit aset di `master_assets` berdasarkan ID.
+   - `deleteAsset(id)`
+     Menghapus data unit aset dari `master_assets`.
+
+2. Site Service (`src/services/siteService.ts`)
+   - `getSites()`
+     Mengambil daftar master lokasi/cabang dari tabel `sites` (diurutkan berdasarkan site_code).
+   - `createSite(site)`
+     Menambahkan lokasi/cabang baru ke tabel `sites`.
+
+3. Mutation Service (`src/services/mutationService.ts`)
+   - `getMutations()`
+     Mengambil 50 log riwayat perpindahan/mutasi aset dengan relational JOIN ke `master_assets`, `sites` (from/to), dan `telegram_users`.
+   - `createMutation(mutation)`
+     Mencatat transaksi perpindahan unit aset baru ke tabel `asset_mutations`.
+
+[B] State Management & Custom Hooks (`src/hooks/useInventory.ts`)
+   - `useInventory()`
+     Hook utama pengelola state aplikasi:
+     * State: `items` (daftar aset), `sites` (daftar cabang), `mutations` (log mutasi), `loading`, `error`.
+     * Actions: `fetchAssets()`, `fetchSites()`, `fetchMutations()`, `addAsset()`, `updateAsset()`, `deleteAsset()`, `mutateAsset()`.
+     * Menangani sinkronisasi otomatis status aset saat dilakukan mutasi lokasi.
+
+[C] User Interface Views (`src/views/`)
+   - `DashboardView.tsx` : Halaman beranda dengan 4 stat card, quick filter category, dan recent assets.
+   - `ItemsView.tsx`     : Halaman daftar aset lengkap dengan pencarian real-time dan filter status.
+   - `HistoryView.tsx`   : Halaman log mutasi aset interaktif (dari lokasi mana ke mana dan oleh siapa).
+   - `ProfileView.tsx`   : Halaman info profil pengguna Telegram dan indikator status koneksi Supabase.
+
+[D] Modals & Interactive Components (`src/components/modals/`)
+   - `ItemFormModal.tsx`   : Modal form tambah & edit data aset.
+   - `ItemDetailModal.tsx` : Modal preview detail spesifikasi aset + tombol aksi mutasi.
+   - `MutationModal.tsx`   : Modal alur pemindahan lokasi aset (select target site & input notes).
+   - `QRScannerModal.tsx`  : Modal simulasi scanner QR/Barcode untuk pencarian aset cepat.
+
+--------------------------------------------------------------------------------
+STEP 6: TESTING & BUILD VERIFICATION
+--------------------------------------------------------------------------------
+- Menjalankan build verifikasi lokal (`npm run build`).
+- Memastikan tidak ada type mismatch atau lint error.
+- Aplikasi siap di-deploy ke Vercel dan dihubungkan ke Bot Father Telegram Mini App.
+
+================================================================================
+                                 END OF LOG
+================================================================================
+
+--------------------------------------------------------------------------------
+STEP 7: DEPLOYMENT FIXES & ERROR BOUNDARY (2026-07-26)
+--------------------------------------------------------------------------------
+Masalah: Halaman Vercel blank hitam setelah deploy pertama.
+Penyebab:
+  1. Environment Variables (VITE_SUPABASE_URL & VITE_SUPABASE_ANON_KEY) tidak ada
+     di Vercel → supabase.ts melempar Error saat module di-import → React crash
+     sebelum sempat render → tampilan blank hitam.
+  2. window.Telegram.WebApp.ready() dipanggil tanpa type-check → TypeError jika
+     method tidak tersedia (version mismatch atau dibuka di browser biasa).
+
+Solusi & Perubahan File:
+
+[A] Dibuat komponen baru `src/components/ErrorBoundary.tsx`
+   - Class component React yang menangkap semua uncaught error saat rendering.
+   - Menampilkan halaman error yang informatif (bukan blank hitam) dengan panduan
+     langkah perbaikan jika penyebabnya adalah missing Supabase env variables.
+
+[B] Diperbarui `src/main.tsx`
+   - Membungkus <App /> dengan <ErrorBoundary> agar semua crash tertangkap.
+
+[C] Diperbarui `src/lib/supabase.ts`
+   - Memperjelas pesan error agar ErrorBoundary bisa mendeteksi konteks masalahnya
+     dan menampilkan instruksi yang tepat (Vercel Environment Variables).
+
+[D] Diperbarui `src/App.tsx`
+   - Membungkus inisialisasi Telegram SDK dalam try/catch.
+   - Menambahkan typeof check sebelum memanggil .ready() dan .expand()
+     agar aman diakses di browser biasa maupun di dalam Telegram WebView.
+
+[E] Diperbarui `.gitignore`
+   - Menambahkan .env, .env.local, .env.production, .env.development ke daftar
+     ignore agar credentials Supabase tidak ikut ter-commit ke GitHub.
+
+Build verification: `npm run build` → ✓ 79 modules transformed, built in 1.70s
+
+--------------------------------------------------------------------------------
+STEP 8: GITHUB REPOSITORY SETUP & PUSH (2026-07-26)
+--------------------------------------------------------------------------------
+- Inisialisasi git repository baru: `git init`
+- Stage semua file project: `git add .`
+  * File .env terkonfirmasi TIDAK ikut staged (protected oleh .gitignore)
+- Initial commit: 45 files, 6484 insertions
+  `git commit -m "feat: initial commit - TransitTMA IT Asset Inventory TMA"`
+- Menghubungkan ke remote GitHub:
+  `git remote add origin https://github.com/s3mut/tmaproject.git`
+- Rename branch ke main: `git branch -M main`
+- Force push ke GitHub (override versi lama di remote yang sudah ada README):
+  `git push -u origin main --force`
+  → Status: forced update (af1b3fc → 0f8572d), branch main tracking origin/main
+
+Repository: https://github.com/s3mut/tmaproject
+GitHub Account: s3mut
+
+Langkah Vercel yang WAJIB dilakukan setelah push:
+  1. Vercel Dashboard → Project Settings → Environment Variables
+     Tambahkan: VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY
+  2. Lakukan Redeploy agar build menggunakan env vars yang baru.
+
+--------------------------------------------------------------------------------
+STEP 9: FIX POSTGREST RELATIONSHIP SCHEMA CACHE ERROR (2026-07-28)
+--------------------------------------------------------------------------------
+Masalah: Error "Could not find a relationship between 'asset_mutations' and 'master_assets' in the schema cache".
+Penyebab:
+  Query di `mutationService.ts` sebelumnya menggunakan nama constraint default PostgreSQL
+  (`asset_mutations_asset_id_fkey`) bukannya nama FK constraint eksplisit yang ditentukan di `docs/schema.sql` (`fk_mutation_asset`, `fk_mutation_from_site`, `fk_mutation_to_site`, `fk_mutation_user`).
+
+Solusi & Perubahan File:
+  [A] Diperbarui `src/services/mutationService.ts`:
+      1. Attempt 1: Query relational join dengan nama FK eksplisit (`fk_mutation_asset`, `fk_mutation_from_site`, `fk_mutation_to_site`, `fk_mutation_user`).
+      2. Attempt 2: Fallback query jika database dibuat dengan nama constraint default postgres.
+      3. Attempt 3: Fallback manual join (fetch tabel terpisah dan petakan via JavaScript Map) jika relasi FK tidak terdaftar di schema cache PostgREST agar aplikasi tidak pernah crash.
+
+Commit & Push: `fix: update FK relationship names in mutationService to match schema.sql and add manual fallback`
+
+--------------------------------------------------------------------------------
+STEP 10: FIX SITES VIEW EMPTY DATA & PROMISE REJECTION (2026-07-28)
+--------------------------------------------------------------------------------
+Masalah: Data pada menu "Site" (tab Sites) kosong meskipun tabel `sites` di database sudah terisi.
+Penyebab:
+  1. Pengambilan data di `useInventory.ts` menggunakan `Promise.all()`. Jika salah satu request (misal: `getAssets()` gagal karena masalah view), seluruh loading dibatalkan dan sisa data (seperti `sites`) menjadi kosong.
+  2. Adanya kemungkinan Row Level Security (RLS) di tabel `sites` yang memblokir akses baca publik sehingga data kembali kosong secara diam-diam.
+
+Solusi & Perubahan File:
+  [A] Diperbarui `src/hooks/useInventory.ts`:
+      Mengganti `Promise.all()` menjadi `Promise.allSettled()` agar setiap request (`getAssets`, `getMutations`, `getSites`) berjalan independen. Jika satu gagal, yang lain tetap berhasil dimuat dan dirender di aplikasi.
+      
+  [B] Penyesuaian Database (Supabase):
+      Menambahkan kebijakan (policy) RLS di tabel `sites` untuk mengizinkan aplikasi melakukan select secara publik.
+      Perintah SQL yang digunakan:
+      -- Mengizinkan aplikasi (anon) untuk membaca data dari tabel sites
+      CREATE POLICY "Allow public read access" ON sites FOR SELECT USING (true);
+
+--------------------------------------------------------------------------------
+STEP 11: GROUP ASSETS BY REGION IN ITEMS VIEW (2026-07-28)
+--------------------------------------------------------------------------------
+Fitur: Mengelompokkan tampilan daftar aset pada menu "Aset" berdasarkan Region/Wilayah.
+Perubahan File:
+  [A] Diperbarui `src/App.tsx`:
+      - Mengirimkan properti `sites` (dari `useInventory`) ke komponen `ItemsView`.
+      
+  [B] Diperbarui `src/views/ItemsView.tsx`:
+      - Menambahkan `sites: Site[]` ke dalam definisi `Props`.
+      - Membuat logika pengelompokan (grouping) otomatis menggunakan `useMemo`. Aset dikelompokkan dengan memetakan `site_alias` dari masing-masing aset ke `region` pada data sites.
+      - Mengubah render UI dari _flat list_ (daftar berurutan biasa) menjadi daftar yang dikelompokkan dan diurutkan berdasarkan abjad nama Region (dengan "Tanpa Region" diletakkan di bagian paling bawah).
+      - Menambahkan badge jumlah total aset di sebelah masing-masing header Region.
+
+--------------------------------------------------------------------------------
+STEP 12: ENTERPRISE UPGRADE (2026-07-30)
+--------------------------------------------------------------------------------
+- Updated `docs/schema.sql` dengan model data enterprise (Soft Delete, Handover, Stock Opname, RLS).
+- Sinkronisasi tipe data TypeScript di `src/types/inventory.ts`.
+- Pembaruan UI & fitur: `OpnameView`, Maker-Checker mutasi, dan integrasi view `view_assets_detail`.
+
+--------------------------------------------------------------------------------
+STEP 13: STRICT CATEGORY VALIDATION & SUPABASE CLIENT CSV UPLOADER (2026-07-30)
+--------------------------------------------------------------------------------
+Masalah:
+  1. Penghapusan kolom `category` teks di `master_assets` menyebabkan kesulitan saat import CSV massal yang mengandung kolom nama kategori (teks).
+  2. Adanya risiko typo / data kotor di CSV (misal: "PC-Win", "Printer Dotmatrix") yang merusak konsistensi kategori.
+  3. Import CSV langsung via Supabase Dashboard SQL Editor gagal jika file terlalu besar (`Query is too large to be run via the SQL Editor`).
+
+Solusi & Perubahan File:
+  [A] Penyesuaian Data Master Kategori:
+      - Memperbarui `docs/seed_categories.sql` dengan ID eksplisit (44 hingga 80) dan melakukan reset sequence auto-increment `master_categories_id_seq`.
+      
+  [B] Kebijakan Validasi Database (Strict Validation Trigger):
+      - Membuat `docs/auto_category_trigger.sql` (Trigger PostgreSQL `handle_asset_category_strict_sync`):
+        * Menjaga kolom `category` (teks) & `category_id` (FK) tetap ada di `master_assets`.
+        * Otomatis memvalidasi nama kategori (case-insensitive & trim space).
+        * Menolak (`RAISE EXCEPTION`) jika kategori belum terdaftar di `master_categories` untuk menjaga kebersihan data.
+
+  [C] Fitur Import CSV di Web App (Supabase Client):
+      - `src/services/csvImportService.ts`: Logika parsing CSV, pre-check validasi kategori, dan batch upsert chunking (250 unit per request) untuk menghindari limit payload Supabase.
+      - `src/components/modals/CSVImportModal.tsx`: UI Modal Upload CSV khusus Admin. Menampilkan ringkasan unit valid vs unit dengan kategori tidak dikenal, opsi remap typo ke kategori resmi, serta opsi auto-create kategori baru di tempat.
+      - `src/components/Header.tsx` & `src/App.tsx`: Proteksi akses tombol "Import CSV" khusus untuk grup role Admin (`userRole === 'admin'`).
+      - `.env.example`: Template konfigurasi env variables Supabase Client.
+
+================================================================================
+                                 END OF LOG
+================================================================================

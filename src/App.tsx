@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useInventory } from './hooks/useInventory';
+import { useInventory, HARDCODED_USER } from './hooks/useInventory';
 import type { AssetDetail } from './types/inventory';
 
 import Header from './components/Header';
@@ -10,6 +10,7 @@ import ItemFormModal from './components/modals/ItemFormModal';
 import ItemDetailModal from './components/modals/ItemDetailModal';
 import QRScannerModal from './components/modals/QRScannerModal';
 import MutationModal from './components/modals/MutationModal';
+import CSVImportModal from './components/modals/CSVImportModal';
 
 import DashboardView from './views/DashboardView';
 import ItemsView from './views/ItemsView';
@@ -23,7 +24,7 @@ declare global { interface Window { Telegram?: any; } }
 function App() {
   const { 
     assets, mutations, sites, categories, stats, 
-    loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation 
+    loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation, refresh
   } = useInventory();
 
   const [activeTab, setActiveTab]           = useState<TabName>('dashboard');
@@ -35,6 +36,7 @@ function App() {
   const [detailOpen, setDetailOpen]         = useState(false);
   const [qrOpen, setQrOpen]                 = useState(false);
   const [mutationOpen, setMutationOpen]     = useState(false);
+  const [csvImportOpen, setCsvImportOpen]   = useState(false);
   const [editItem, setEditItem]             = useState<AssetDetail | null>(null);
   const [detailItem, setDetailItem]         = useState<AssetDetail | null>(null);
 
@@ -149,8 +151,10 @@ function App() {
       <Header
         activeTab={activeTab}
         searchValue={searchValue}
+        userRole={HARDCODED_USER.role}
         onSearchChange={setSearchValue}
         onScanClick={() => setQrOpen(true)}
+        onImportCSVClick={() => setCsvImportOpen(true)}
       />
 
       <main className="px-4 pt-4">
@@ -234,6 +238,16 @@ function App() {
         isOpen={qrOpen}
         onClose={() => setQrOpen(false)}
         onSimulateScan={handleSimulateScan}
+      />
+      <CSVImportModal
+        isOpen={csvImportOpen}
+        userRole={HARDCODED_USER.role}
+        categories={categories}
+        onClose={() => setCsvImportOpen(false)}
+        onSuccess={(count) => {
+          refresh();
+          showToast(`Berhasil mengunggah ${count} unit aset dari CSV!`);
+        }}
       />
     </div>
   );

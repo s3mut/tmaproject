@@ -14,13 +14,16 @@ const tabTitles: Record<TabName, TabConfig> = {
 interface Props {
   activeTab: TabName;
   searchValue: string;
+  userRole?: string;
   onSearchChange: (value: string) => void;
   onScanClick: () => void;
+  onImportCSVClick?: () => void;
 }
 
-const Header = ({ activeTab, searchValue, onSearchChange, onScanClick }: Props) => {
+const Header = ({ activeTab, searchValue, userRole, onSearchChange, onScanClick, onImportCSVClick }: Props) => {
   const { title, subtitle } = tabTitles[activeTab];
   const showSearch = activeTab === 'dashboard' || activeTab === 'items';
+  const isAdmin = userRole === 'admin';
 
   return (
     <header className="sticky top-0 z-30 glass px-4 pt-4 pb-3">
@@ -29,8 +32,20 @@ const Header = ({ activeTab, searchValue, onSearchChange, onScanClick }: Props) 
           <h1 className="text-xl font-bold text-white">{title}</h1>
           <p className="text-xs text-slate-400">{subtitle}</p>
         </div>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-          IT
+        <div className="flex items-center gap-2">
+          {isAdmin && onImportCSVClick && (
+            <button
+              onClick={onImportCSVClick}
+              title="Import CSV Assets (Khusus Admin)"
+              className="px-3 py-1.5 rounded-xl bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-semibold hover:bg-blue-600/50 flex items-center gap-1.5 transition-all"
+            >
+              <i className="fas fa-file-csv text-sm"></i>
+              <span className="hidden sm:inline">Import CSV</span>
+            </button>
+          )}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20">
+            IT
+          </div>
         </div>
       </div>
       {showSearch && (
