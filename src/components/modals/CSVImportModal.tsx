@@ -16,9 +16,15 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
   const [parseResult, setParseResult] = useState<CSVParseResult | null>(null);
   const [remapRules, setRemapRules] = useState<Record<string, number>>({});
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [addingCategory, setAddingCategory] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync categories prop saat categories di parent berubah
+  if (categories !== initialCategories && initialCategories.length !== categories.length) {
+    setCategories(initialCategories);
+  }
 
   if (!isOpen) return null;
 
@@ -120,8 +126,6 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
 
   const finalRows = getFinalRowsToUpload();
   const unhandledUnknownCats = parseResult ? parseResult.unknownCategories.filter(cat => !remapRules[cat]) : [];
-
-  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
 
   const handleUploadSubmit = async () => {
     if (finalRows.length === 0) {
