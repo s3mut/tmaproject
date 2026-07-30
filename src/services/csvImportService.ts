@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Category, AssetStatus } from '../types/inventory';
+import type { Category, Site, AssetStatus } from '../types/inventory';
 
 export interface CSVRowParsed {
   rowNumber: number;
@@ -31,7 +31,7 @@ export interface CSVParseResult {
 /**
  * Parse teks CSV dari file upload
  */
-export function parseCSVText(csvText: string, categories: Category[]): CSVParseResult {
+export function parseCSVText(csvText: string, categories: Category[], sites: Site[] = []): CSVParseResult {
   const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
   if (lines.length < 2) {
     throw new Error('File CSV kosong atau tidak memiliki data.');
@@ -80,6 +80,13 @@ export function parseCSVText(csvText: string, categories: Category[]): CSVParseR
     categoryMap.set(c.name.trim().toUpperCase(), c);
   });
 
+  // Map sites (mencocokkan site_alias maupun site_code)
+  const siteMap = new Map<string, string>();
+  sites.forEach(s => {
+    if (s.site_alias) siteMap.set(s.site_alias.trim().toUpperCase(), s.site_alias);
+    if (s.site_code) siteMap.set(s.site_code.trim().toUpperCase(), s.site_alias || s.site_code);
+  });
+
   const validRows: CSVRowParsed[] = [];
   const invalidRows: CSVRowParsed[] = [];
   const unknownCatSet = new Set<string>();
@@ -91,14 +98,26 @@ export function parseCSVText(csvText: string, categories: Category[]): CSVParseR
 
     if (!sn) continue; // Skip baris tanpa serial number
 
-    const aktiva    = aktivaIdx !== -1 && cols[aktivaIdx] ? cols[aktivaIdx].trim() : null;
-    const brand     = brandIdx !== -1 && cols[brandIdx] ? cols[brandIdx].trim() : null;
-    const modelType = modelIdx !== -1 && cols[modelIdx] ? cols[modelIdx].trim() : null;
-    const compName  = compIdx !== -1 && cols[compIdx] ? cols[compIdx].trim() : null;
-    const siteAlias = siteIdx !== -1 && cols[siteIdx] ? cols[siteIdx].trim() : null;
-    const rawStatus = statusIdx !== -1 && cols[statusIdx] ? cols[statusIdx].trim() : 'Active';
-    const extId     = extIdx !== -1 && cols[extIdx] ? cols[extIdx].trim() : null;
-    const desc      = descIdx !== -1 && cols[descIdx] ? cols[descIdx].trim() : null;
+    const aktiva      = aktivaIdx !== -1 && cols[aktivaIdx] ? cols[aktivaIdx].trim() : null;
+    const brand       = brandIdx !== -1 && cols[brandIdx] ? cols[brandIdx].trim() : null;
+    const modelType   = modelIdx !== -1 && cols[modelIdx] ? cols[modelIdx].trim() : null;
+    const compName    = compIdx !== -1 && cols[compIdx] ? cols[compIdx].trim() : null;
+    const rawSite     = siteIdx !== -1 && cols[siteIdx] ? cols[siteIdx].trim() : null;
+    const rawStatus   = statusIdx !== -1 && cols[statusIdx] ? cols[statusIdx].trim() : 'Active';
+    const extId       = extIdx !== -1 && cols[extIdx] ? cols[extIdx].trim() : null;
+    const desc        = descIdx !== -1 && cols[descIdx] ? cols[descIdx].trim() : null;
+
+    // Normalisasi site_alias terhadap tabel sites agar tidak melanggar FK constraint fk_asset_site
+    let validSiteAlias: string | null = null;
+    if (rawSite) {
+      const matchedSite = siteMap.get(rawSite.toUpperCase());
+      if (matchedSite) {
+        validSiteAlias = matchedSite;
+      } else {
+        // Jika site_alias di CSV tidak ditemukan di tabel sites, set null agar aman
+        validSiteAlias = null;
+      }
+    }
 
     // Normalisasi status
     const validStatuses: AssetStatus[] = ['Active', 'Backup', 'Broken', 'Repair', 'Disposed', 'In Transit'];
@@ -115,7 +134,7 @@ export function parseCSVText(csvText: string, categories: Category[]): CSVParseR
       brand: brand || null,
       model_type: modelType || null,
       computer_name: compName || null,
-      site_alias: siteAlias || null,
+      site_alias: validSiteAlias,
       status: matchedStatus,
       external_id: extId || null,
       description: desc || null,

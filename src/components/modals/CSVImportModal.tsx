@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Category } from '../../types/inventory';
+import type { Category, Site } from '../../types/inventory';
 import { parseCSVText, uploadValidatedCSVAssets, createCategoryFromAdmin, type CSVParseResult, type CSVRowParsed } from '../../services/csvImportService';
 
 interface Props {
   isOpen: boolean;
   userRole: string;
   categories: Category[];
+  sites?: Site[];
   onClose: () => void;
   onSuccess: (count: number) => void;
 }
 
-const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClose, onSuccess }: Props) => {
+const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, sites = [], onClose, onSuccess }: Props) => {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [file, setFile] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<CSVParseResult | null>(null);
@@ -62,7 +63,7 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
     setFile(selectedFile);
     try {
       const text = await selectedFile.text();
-      const result = parseCSVText(text, categories);
+      const result = parseCSVText(text, categories, sites);
       setParseResult(result);
       setRemapRules({});
     } catch (err: any) {
@@ -89,7 +90,7 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
       // Re-parse CSV dengan daftar kategori terbaru
       if (file) {
         const text = await file.text();
-        const result = parseCSVText(text, updatedCategories);
+        const result = parseCSVText(text, updatedCategories, sites);
         setParseResult(result);
       }
     } catch (err: any) {

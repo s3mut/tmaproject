@@ -243,6 +243,7 @@ function App() {
         isOpen={csvImportOpen}
         userRole={HARDCODED_USER.role}
         categories={categories}
+        sites={sites}
         onClose={() => setCsvImportOpen(false)}
         onSuccess={(count) => {
           refresh();
