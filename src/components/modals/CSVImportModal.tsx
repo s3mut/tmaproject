@@ -98,25 +98,37 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
     }
   };
 
+  const [skippedCategories, setSkippedCategories] = useState<Record<string, boolean>>({});
+
+  const handleToggleSkipCategory = (catName: string) => {
+    setSkippedCategories(prev => ({
+      ...prev,
+      [catName]: !prev[catName]
+    }));
+  };
+
   // Re-calculate valid rows considering remap rules
   const getFinalRowsToUpload = (): CSVRowParsed[] => {
     if (!parseResult) return [];
 
     const finalValid: CSVRowParsed[] = [...parseResult.validRows];
 
-    // Check invalid rows to see if any have been remapped
+    // Check invalid rows to see if any have been remapped (and not explicitly skipped)
     parseResult.invalidRows.forEach(row => {
-      const remappedCatId = remapRules[row.category_input];
-      if (remappedCatId) {
-        const catObj = categories.find(c => c.id === Number(remappedCatId));
-        if (catObj) {
-          finalValid.push({
-            ...row,
-            isValid: true,
-            category_id: catObj.id,
-            category_matched_name: catObj.name,
-            errorMsg: undefined
-          });
+      const isSkipped = skippedCategories[row.category_input];
+      if (!isSkipped) {
+        const remappedCatId = remapRules[row.category_input];
+        if (remappedCatId) {
+          const catObj = categories.find(c => c.id === Number(remappedCatId));
+          if (catObj) {
+            finalValid.push({
+              ...row,
+              isValid: true,
+              category_id: catObj.id,
+              category_matched_name: catObj.name,
+              errorMsg: undefined
+            });
+          }
         }
       }
     });
@@ -125,7 +137,9 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
   };
 
   const finalRows = getFinalRowsToUpload();
-  const unhandledUnknownCats = parseResult ? parseResult.unknownCategories.filter(cat => !remapRules[cat]) : [];
+  const unhandledUnknownCats = parseResult
+    ? parseResult.unknownCategories.filter(cat => !remapRules[cat] && !skippedCategories[cat])
+    : [];
 
   const handleUploadSubmit = async () => {
     if (finalRows.length === 0) {
@@ -242,27 +256,37 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, onClo
                   {parseResult.unknownCategories.map((unknownCat) => {
                     const count = parseResult.invalidRows.filter(r => r.category_input === unknownCat).length;
                     const selectedRemap = remapRules[unknownCat] || '';
+                    const isSkipped = !!skippedCategories[unknownCat];
 
                     return (
-                      <div key={unknownCat} className="bg-slate-900/90 p-3 rounded-lg flex flex-col gap-2 text-xs border border-slate-700">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-amber-300 font-semibold px-2 py-0.5 bg-amber-500/10 rounded">
-                            "{unknownCat}" ({count} unit)
+                      <div key={unknownCat} className={`p-3 rounded-lg flex flex-col gap-2 text-xs border transition-all ${isSkipped ? 'bg-slate-900/40 border-slate-800 opacity-60' : 'bg-slate-900/90 border-slate-700'}`}>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className={`font-mono font-semibold px-2 py-0.5 rounded ${isSkipped ? 'text-slate-500 bg-slate-800 line-through' : 'text-amber-300 bg-amber-500/10'}`}>
+                            "{unknownCat}" ({count} unit) {isSkipped && '— [Dilewati]'}
                           </span>
-                          <button
-                            type="button"
-                            disabled={addingCategory === unknownCat}
-                            onClick={() => handleCreateCategory(unknownCat)}
-                            className="px-2.5 py-1 rounded bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 font-medium transition-all text-[11px] flex items-center gap-1"
-                          >
-                            {addingCategory === unknownCat ? (
-                              <i className="fas fa-spinner fa-spin"></i>
-                            ) : (
-                              <>
-                                <i className="fas fa-plus"></i> Buat Kategori Ini
-                              </>
-                            )}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSkipCategory(unknownCat)}
+                              className={`px-2 py-1 rounded text-[11px] font-medium transition-all ${isSkipped ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700'}`}
+                            >
+                              {isSkipped ? 'Batalkan Skip' : 'Abaikan / Skip'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={addingCategory === unknownCat || isSkipped}
+                              onClick={() => handleCreateCategory(unknownCat)}
+                              className="px-2.5 py-1 rounded bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 font-medium transition-all text-[11px] flex items-center gap-1 disabled:opacity-40"
+                            >
+                              {addingCategory === unknownCat ? (
+                                <i className="fas fa-spinner fa-spin"></i>
+                              ) : (
+                                <>
+                                  <i className="fas fa-plus"></i> Buat Kategori
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         {/* Remap Option */}
