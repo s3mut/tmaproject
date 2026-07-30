@@ -1,10 +1,12 @@
 // ============================================================
-// Types selaras dengan docs/schema.sql
+// Types selaras dengan docs/schema.sql (Enterprise Upgrade)
 // ============================================================
 
 // ----- ENUMs -----
-export type AssetStatus = 'Active' | 'Backup' | 'Broken' | 'Repair';
+export type AssetStatus = 'Active' | 'Backup' | 'Broken' | 'Repair' | 'Disposed' | 'In Transit';
 export type UserRole = 'admin' | 'user' | 'guest';
+export type MutationStatus = 'Pending' | 'Completed' | 'Rejected';
+export type OpnameStatus = 'Ditemukan' | 'Hilang' | 'Nyasar';
 
 // ----- TABLE: sites -----
 export interface Site {
@@ -13,6 +15,16 @@ export interface Site {
   site_alias: string | null;
   region: string | null;
   site_address: string | null;
+  created_at: string;
+}
+
+// ----- TABLE: master_categories -----
+export interface Category {
+  id: number;
+  name: string;
+  icon: string;
+  color_text: string;
+  color_bg: string;
   created_at: string;
 }
 
@@ -31,7 +43,7 @@ export interface MasterAsset {
   id: number;              // BIGSERIAL PK
   serial_number: string;
   aktiva: string | null;   // Nama aktiva / nomor BTA
-  category: string;
+  category_id: number;     // FK → master_categories.id
   brand: string | null;
   model_type: string | null;
   computer_name: string | null;
@@ -41,6 +53,7 @@ export interface MasterAsset {
   description: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 // ----- TABLE: asset_mutations -----
@@ -51,11 +64,38 @@ export interface AssetMutation {
   to_site_code: string;
   moved_by: number;        // telegram_id FK
   notes: string | null;
+  status: MutationStatus;
+  received_by: number | null;
+  received_at: string | null;
   mutation_date: string;
+}
+
+// ----- TABLE: stock_opname -----
+export interface StockOpname {
+  id: number;
+  site_alias: string;
+  conducted_by: number;
+  start_date: string;
+  end_date: string | null;
+  notes: string | null;
+}
+
+// ----- TABLE: stock_opname_details -----
+export interface StockOpnameDetail {
+  id: number;
+  opname_id: number;
+  asset_id: number;
+  status: OpnameStatus;
+  scanned_at: string;
+  notes: string | null;
 }
 
 // ----- VIEW: view_assets_detail -----
 export interface AssetDetail extends MasterAsset {
+  category_name: string;
+  category_icon: string;
+  category_color_text: string;
+  category_color_bg: string;
   full_location_code: string | null;
   site_name: string | null;
   site_address: string | null;
@@ -64,12 +104,13 @@ export interface AssetDetail extends MasterAsset {
 // ----- Mutation with joins (untuk tampilan history) -----
 export interface MutationDetail extends AssetMutation {
   asset_serial_number: string;
-  asset_category: string;
+  asset_category_name: string;
   asset_brand: string | null;
   asset_model_type: string | null;
   from_site_name: string | null;
   to_site_name: string;
   moved_by_name: string;
+  received_by_name: string | null;
 }
 
 // ============================================================
@@ -77,53 +118,10 @@ export interface MutationDetail extends AssetMutation {
 // ============================================================
 
 export const assetStatusConfig: Record<AssetStatus, { label: string; className: string; icon: string }> = {
-  Active:  { label: 'Active',  className: 'status-active',  icon: 'fa-check-circle' },
-  Backup:  { label: 'Backup',  className: 'status-backup',  icon: 'fa-archive' },
-  Broken:  { label: 'Broken',  className: 'status-broken',  icon: 'fa-times-circle' },
-  Repair:  { label: 'Repair',  className: 'status-repair',  icon: 'fa-tools' },
+  Active:       { label: 'Active',       className: 'status-active',       icon: 'fa-check-circle' },
+  Backup:       { label: 'Backup',       className: 'status-backup',       icon: 'fa-archive' },
+  Broken:       { label: 'Broken',       className: 'status-broken',       icon: 'fa-times-circle' },
+  Repair:       { label: 'Repair',       className: 'status-repair',       icon: 'fa-tools' },
+  Disposed:     { label: 'Disposed',     className: 'text-red-600 bg-red-100', icon: 'fa-trash-alt' },
+  'In Transit': { label: 'In Transit',   className: 'text-blue-600 bg-blue-100', icon: 'fa-truck' },
 };
-
-export const categoryConfig: Record<string, { icon: string; color: string; bg: string }> = {
-  // ── Komputer & Display ──
-  Laptop:          { icon: 'fa-laptop',          color: 'text-purple-400',  bg: 'bg-purple-500/20' },
-  PC:              { icon: 'fa-desktop',          color: 'text-blue-400',    bg: 'bg-blue-500/20' },
-  Monitor:         { icon: 'fa-desktop',          color: 'text-cyan-400',    bg: 'bg-cyan-500/20' },
-  Tablet:          { icon: 'fa-tablet-alt',       color: 'text-sky-400',     bg: 'bg-sky-500/20' },
-  // ── Jaringan ──
-  Network:         { icon: 'fa-wifi',             color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-  'Access Point':  { icon: 'fa-wifi',             color: 'text-green-400',   bg: 'bg-green-500/20' },
-  'ACCESS POINT':  { icon: 'fa-wifi',             color: 'text-green-400',   bg: 'bg-green-500/20' },
-  Switch:          { icon: 'fa-network-wired',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
-  SWITCH:          { icon: 'fa-network-wired',    color: 'text-yellow-400',  bg: 'bg-yellow-500/20' },
-  Router:          { icon: 'fa-globe',            color: 'text-red-400',     bg: 'bg-red-500/20' },
-  ROUTER:          { icon: 'fa-globe',            color: 'text-red-400',     bg: 'bg-red-500/20' },
-  Firewall:        { icon: 'fa-shield-alt',       color: 'text-orange-400',  bg: 'bg-orange-500/20' },
-  // ── Server & Storage ──
-  Server:          { icon: 'fa-server',           color: 'text-indigo-400',  bg: 'bg-indigo-500/20' },
-  Storage:         { icon: 'fa-hdd',              color: 'text-teal-400',    bg: 'bg-teal-500/20' },
-  NAS:             { icon: 'fa-hdd',              color: 'text-violet-400',  bg: 'bg-violet-500/20' },
-  // ── Cetak & Scan ──
-  Printer:         { icon: 'fa-print',            color: 'text-orange-400',  bg: 'bg-orange-500/20' },
-  Scanner:         { icon: 'fa-qrcode',           color: 'text-amber-400',   bg: 'bg-amber-500/20' },
-  // ── Aksesoris & Perangkat ──
-  Accessories:     { icon: 'fa-keyboard',         color: 'text-pink-400',    bg: 'bg-pink-500/20' },
-  Phone:           { icon: 'fa-phone-alt',        color: 'text-rose-400',    bg: 'bg-rose-500/20' },
-  PHONE:           { icon: 'fa-phone-alt',        color: 'text-rose-400',    bg: 'bg-rose-500/20' },
-  UPS:             { icon: 'fa-battery-full',     color: 'text-lime-400',    bg: 'bg-lime-500/20' },
-  Camera:          { icon: 'fa-camera',           color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/20' },
-  Projector:       { icon: 'fa-tv',               color: 'text-slate-300',   bg: 'bg-slate-500/20' },
-  // ── Default ──
-  default:         { icon: 'fa-box',              color: 'text-slate-400',   bg: 'bg-slate-500/20' },
-};
-
-export function getCategoryConfig(category: string) {
-  if (!category) return categoryConfig['default'];
-  // 1. Exact match
-  if (categoryConfig[category]) return categoryConfig[category];
-  // 2. Case-insensitive match
-  const lowerCat = category.toLowerCase();
-  const matchedKey = Object.keys(categoryConfig).find(
-    (k) => k.toLowerCase() === lowerCat
-  );
-  return matchedKey ? categoryConfig[matchedKey] : categoryConfig['default'];
-}

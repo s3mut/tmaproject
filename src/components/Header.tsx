@@ -7,6 +7,7 @@ const tabTitles: Record<TabName, TabConfig> = {
   items:     { title: 'Daftar Aset',   subtitle: 'Semua aset terdaftar' },
   history:   { title: 'Mutasi Aset',   subtitle: 'Riwayat perpindahan' },
   sites:     { title: 'Daftar Site',   subtitle: 'Lokasi cabang & operasional' },
+  opname:    { title: 'Stock Opname',  subtitle: 'Audit fisik aset' },
   profile:   { title: 'Profil',        subtitle: 'Pengaturan akun' },
 };
 

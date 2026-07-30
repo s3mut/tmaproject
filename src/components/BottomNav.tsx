@@ -1,4 +1,4 @@
-export type TabName = 'dashboard' | 'items' | 'history' | 'sites' | 'profile';
+export type TabName = 'dashboard' | 'items' | 'history' | 'sites' | 'opname' | 'profile';
 
 interface NavItem { tab: TabName; icon: string; label: string; }
 
@@ -6,7 +6,7 @@ const navItems: NavItem[] = [
   { tab: 'dashboard', icon: 'fa-home',       label: 'Beranda' },
   { tab: 'items',     icon: 'fa-server',     label: 'Aset' },
   { tab: 'history',   icon: 'fa-exchange-alt', label: 'Mutasi' },
-  { tab: 'sites',     icon: 'fa-building',   label: 'Sites' },
+  { tab: 'opname',    icon: 'fa-qrcode',     label: 'Opname' },
   { tab: 'profile',   icon: 'fa-user',       label: 'Profil' },
 ];
 

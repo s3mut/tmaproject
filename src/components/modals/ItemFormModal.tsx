@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { AssetDetail, AssetStatus, Site } from '../../types/inventory';
+import type { AssetDetail, AssetStatus, Site, Category } from '../../types/inventory';
 
 interface FormData {
   serial_number: string;
   aktiva: string;
-  category: string;
+  category_id: number;
   brand: string;
   model_type: string;
   computer_name: string;
@@ -18,6 +18,7 @@ interface Props {
   isOpen: boolean;
   editItem: AssetDetail | null;
   sites: Site[];
+  categories: Category[];
   onClose: () => void;
   onSubmit: (data: FormData) => void;
 }
@@ -25,7 +26,7 @@ interface Props {
 const defaultForm: FormData = {
   serial_number: '',
   aktiva: '',
-  category: 'Laptop',
+  category_id: 0,
   brand: '',
   model_type: '',
   computer_name: '',
@@ -35,18 +36,22 @@ const defaultForm: FormData = {
   description: '',
 };
 
-const CATEGORIES = ['Laptop', 'Monitor', 'Printer', 'Network', 'Accessories', 'Server', 'Storage'];
-
-const ItemFormModal = ({ isOpen, editItem, sites, onClose, onSubmit }: Props) => {
+const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit }: Props) => {
   const [form, setForm] = useState<FormData>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (categories.length > 0 && form.category_id === 0) {
+      setForm(prev => ({ ...prev, category_id: categories[0].id }));
+    }
+  }, [categories, form.category_id]);
 
   useEffect(() => {
     if (editItem) {
       setForm({
         serial_number:  editItem.serial_number,
         aktiva:         editItem.aktiva ?? '',
-        category:       editItem.category,
+        category_id:    editItem.category_id,
         brand:          editItem.brand ?? '',
         model_type:     editItem.model_type ?? '',
         computer_name:  editItem.computer_name ?? '',
@@ -56,9 +61,9 @@ const ItemFormModal = ({ isOpen, editItem, sites, onClose, onSubmit }: Props) =>
         description:    editItem.description ?? '',
       });
     } else {
-      setForm(defaultForm);
+      setForm({ ...defaultForm, category_id: categories.length > 0 ? categories[0].id : 0 });
     }
-  }, [editItem, isOpen]);
+  }, [editItem, isOpen, categories]);
 
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -112,8 +117,8 @@ const ItemFormModal = ({ isOpen, editItem, sites, onClose, onSubmit }: Props) =>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Kategori <span className="text-red-400">*</span></label>
-              <select value={form.category} onChange={(e) => set('category', e.target.value)} className={inputCls} required>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              <select value={form.category_id} onChange={(e) => set('category_id', Number(e.target.value))} className={inputCls} required>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
@@ -123,6 +128,8 @@ const ItemFormModal = ({ isOpen, editItem, sites, onClose, onSubmit }: Props) =>
                 <option value="Backup">Backup</option>
                 <option value="Broken">Broken</option>
                 <option value="Repair">Repair</option>
+                <option value="Disposed">Disposed (Dihapus)</option>
+                <option value="In Transit">In Transit</option>
               </select>
             </div>
           </div>

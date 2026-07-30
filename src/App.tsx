@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useInventory } from './hooks/useInventory';
-import type { AssetDetail, MasterAsset } from './types/inventory';
+import type { AssetDetail } from './types/inventory';
 
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
@@ -15,12 +15,16 @@ import DashboardView from './views/DashboardView';
 import ItemsView from './views/ItemsView';
 import HistoryView from './views/HistoryView';
 import SitesView from './views/SitesView';
+import OpnameView from './views/OpnameView';
 import ProfileView from './views/ProfileView';
 
 declare global { interface Window { Telegram?: any; } }
 
 function App() {
-  const { assets, mutations, sites, stats, loading, error, addAsset, editAsset, removeAsset, mutateAsset } = useInventory();
+  const { 
+    assets, mutations, sites, categories, stats, 
+    loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation 
+  } = useInventory();
 
   const [activeTab, setActiveTab]           = useState<TabName>('dashboard');
   const [searchValue, setSearchValue]       = useState('');
@@ -92,12 +96,12 @@ function App() {
     if (!detailItem) return;
     if (window.confirm('Yakin ingin menghapus aset ini?')) {
       removeAsset(detailItem.id)
-        .then(() => { setDetailOpen(false); setDetailItem(null); showToast('Aset berhasil dihapus!'); })
+        .then(() => { setDetailOpen(false); setDetailItem(null); showToast('Aset berhasil dihapus (soft delete)!'); })
         .catch((e: any) => showToast(e.message, 'error'));
     }
   };
 
-  const handleFormSubmit = async (data: Omit<MasterAsset, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleFormSubmit = async (data: any) => {
     try {
       if (editItem) {
         await editAsset(editItem.id, data);
@@ -121,7 +125,7 @@ function App() {
       await mutateAsset(detailItem.id, detailItem.site_alias ?? null, toSiteCode, notes);
       setMutationOpen(false);
       setDetailItem(null);
-      showToast('Mutasi aset berhasil dicatat!');
+      showToast('Mutasi aset (Pending) berhasil dicatat!');
     } catch (e: any) {
       showToast(e.message, 'error');
     }
@@ -154,6 +158,7 @@ function App() {
           <DashboardView
             stats={stats}
             assets={assets}
+            categories={categories}
             loading={loading}
             onItemClick={handleItemClick}
             onCategoryClick={handleCategoryClick}
@@ -162,6 +167,7 @@ function App() {
         {activeTab === 'items' && (
           <ItemsView
             assets={assets}
+            sites={sites}
             searchValue={searchValue}
             loading={loading}
             initialCategory={selectedCategory}
@@ -178,9 +184,18 @@ function App() {
               await mutateAsset(assetId, fromSiteAlias, toSiteAlias, notes);
               showToast('Mutasi aset berhasil dicatat!');
             }}
+            onApproveMutation={async (mutationId, assetId, toSiteCode) => {
+              try {
+                await approveAssetMutation(mutationId, assetId, toSiteCode);
+                showToast('Aset berhasil diterima!');
+              } catch (e: any) {
+                showToast(e.message, 'error');
+              }
+            }}
           />
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
+        {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} />}
         {activeTab === 'profile' && <ProfileView />}
       </main>
 
@@ -196,6 +211,7 @@ function App() {
         isOpen={formOpen}
         editItem={editItem}
         sites={sites}
+        categories={categories}
         onClose={() => { setFormOpen(false); setEditItem(null); }}
         onSubmit={handleFormSubmit}
       />

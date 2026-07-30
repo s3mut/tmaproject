@@ -1,4 +1,3 @@
-import { getCategoryConfig } from '../types/inventory';
 import type { AssetDetail } from '../types/inventory';
 import StatusBadge from './StatusBadge';
 
@@ -8,16 +7,14 @@ interface Props {
 }
 
 const ItemCard = ({ item, onClick }: Props) => {
-  const cat = getCategoryConfig(item.category);
-
   return (
     <div
       className="item-card rounded-xl p-4 card-hover cursor-pointer"
       onClick={() => onClick(item.id)}
     >
       <div className="flex items-start gap-3">
-        <div className={`category-icon ${cat.bg} ${cat.color} flex-shrink-0`}>
-          <i className={`fas ${cat.icon}`}></i>
+        <div className={`category-icon ${item.category_color_bg} ${item.category_color_text} flex-shrink-0`}>
+          <i className={`fas ${item.category_icon}`}></i>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
@@ -40,7 +37,7 @@ const ItemCard = ({ item, onClick }: Props) => {
                 {item.computer_name}
               </span>
             )}
-            <span className="text-slate-600">{item.category}</span>
+            <span className="text-slate-600">{item.category_name}</span>
           </div>
         </div>
       </div>

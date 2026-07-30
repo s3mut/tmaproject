@@ -1,12 +1,12 @@
-import type { AssetDetail } from '../types/inventory';
-import { getCategoryConfig } from '../types/inventory';
+import type { AssetDetail, Category } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 
-interface Stats { total: number; active: number; backup: number; broken: number; repair: number; }
+interface Stats { total: number; active: number; backup: number; broken: number; repair: number; inTransit: number; }
 
 interface Props {
   stats: Stats;
   assets: AssetDetail[];
+  categories: Category[];
   loading: boolean;
   onItemClick: (id: number) => void;
   onCategoryClick: (cat: string) => void;
@@ -18,7 +18,7 @@ const StatCard = ({ label, value, color, icon, gradient, border }: {
   <div className="rounded-xl p-4" style={{ background: gradient, borderWidth: 1, borderStyle: 'solid', borderColor: border }}>
     <div className="flex items-center justify-between mb-2">
       <span className="text-xs text-slate-400">{label}</span>
-      <div className={`category-icon ${color.replace('text-', 'bg-').replace('-400', '-500/20')} ${color}`} style={{ width: 32, height: 32, fontSize: '0.9rem' }}>
+      <div className={`category-icon ${color.replace('text-', 'bg-').replace('-400', '-500/20').replace('-600', '-500/20')} ${color}`} style={{ width: 32, height: 32, fontSize: '0.9rem' }}>
         <i className={`fas ${icon}`}></i>
       </div>
     </div>
@@ -45,33 +45,24 @@ const SkeletonCategory = () => (
   </div>
 );
 
-const DashboardView = ({ stats, assets, loading, onItemClick, onCategoryClick }: Props) => {
+const DashboardView = ({ stats, assets, categories, loading, onItemClick, onCategoryClick }: Props) => {
   const recentAssets = [...assets].slice(0, 5);
-
-  // Derivasi kategori unik dari data aset yang sudah ter-load
-  const dynamicCategories = [
-    { key: 'all', label: 'Semua', icon: 'fa-th-large', color: 'text-blue-400', bg: 'bg-blue-500/20' },
-    ...Array.from(new Set(assets.map((a) => a.category)))
-      .sort()
-      .map((cat) => {
-        const cfg = getCategoryConfig(cat);
-        return { key: cat, label: cat, icon: cfg.icon, color: cfg.color, bg: cfg.bg };
-      }),
-  ];
 
   return (
     <div className="fade-in">
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="stat-card rounded-xl p-4 col-span-2">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400">Total Aset</span>
-            <div className="category-icon bg-blue-500/20 text-blue-400" style={{ width: 32, height: 32, fontSize: '0.9rem' }}>
-              <i className="fas fa-server"></i>
+        <div className="stat-card rounded-xl p-4 col-span-2 flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-slate-400">Total Aset Aktif</span>
             </div>
+            <p className="text-3xl font-bold text-white">{stats.total}</p>
           </div>
-          <p className="text-3xl font-bold text-white">{stats.total}</p>
-          <p className="text-xs text-slate-500 mt-1">semua kategori</p>
+          <div className="text-right">
+            <div className="text-xs text-slate-400 mb-1">In Transit</div>
+            <p className="text-xl font-bold text-blue-400">{stats.inTransit}</p>
+          </div>
         </div>
 
         <StatCard label="Active"  value={stats.active}  color="text-green-400"  icon="fa-check-circle"
@@ -84,21 +75,28 @@ const DashboardView = ({ stats, assets, loading, onItemClick, onCategoryClick }:
           gradient="linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.05))" border="rgba(234,179,8,0.2)" />
       </div>
 
-      {/* Categories — dinamis dari data database */}
+      {/* Categories — dinamis dari database */}
       <h2 className="text-sm font-semibold text-slate-300 mb-3">Kategori</h2>
       <div className="flex gap-3 overflow-x-auto pb-4 mb-4 scrollbar-hide pr-16">
         {loading ? (
-          // Skeleton saat loading
           [1, 2, 3, 4].map((i) => <SkeletonCategory key={i} />)
         ) : (
-          dynamicCategories.map(({ key, label, icon, color, bg }) => (
-            <div key={key} className="flex-shrink-0 text-center cursor-pointer" onClick={() => onCategoryClick(key)}>
-              <div className={`category-icon ${bg} ${color} mx-auto mb-1`}>
-                <i className={`fas ${icon}`}></i>
+          <>
+            <div className="flex-shrink-0 text-center cursor-pointer" onClick={() => onCategoryClick('all')}>
+              <div className="category-icon bg-blue-500/20 text-blue-400 mx-auto mb-1">
+                <i className="fas fa-th-large"></i>
               </div>
-              <span className="text-xs text-slate-400">{label}</span>
+              <span className="text-xs text-slate-400">Semua</span>
             </div>
-          ))
+            {categories.map((cat) => (
+              <div key={cat.id} className="flex-shrink-0 text-center cursor-pointer" onClick={() => onCategoryClick(cat.name)}>
+                <div className={`category-icon ${cat.color_bg} ${cat.color_text} mx-auto mb-1`}>
+                  <i className={`fas ${cat.icon}`}></i>
+                </div>
+                <span className="text-xs text-slate-400">{cat.name}</span>
+              </div>
+            ))}
+          </>
         )}
       </div>
 

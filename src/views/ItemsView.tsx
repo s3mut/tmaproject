@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import type { AssetDetail, AssetStatus } from '../types/inventory';
+import type { AssetDetail, AssetStatus, Site } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 
 // Urutan tampilan status yang diinginkan
@@ -7,13 +7,14 @@ const STATUS_ORDER: AssetStatus[] = ['Active', 'Backup', 'Broken', 'Repair'];
 
 interface Props {
   assets: AssetDetail[];
+  sites: Site[];
   searchValue: string;
   loading: boolean;
   initialCategory?: string;
   onItemClick: (id: number) => void;
 }
 
-const ItemsView = ({ assets, searchValue, loading, initialCategory, onItemClick }: Props) => {
+const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, onItemClick }: Props) => {
   const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>('all');
 
   // Build dynamic status filter chips dari data aktual di database
@@ -29,7 +30,7 @@ const ItemsView = ({ assets, searchValue, loading, initialCategory, onItemClick 
 
     // Filter kategori (dari klik dashboard)
     if (initialCategory && initialCategory !== 'all') {
-      result = result.filter((a) => a.category === initialCategory);
+      result = result.filter((a) => a.category_name === initialCategory);
     }
 
     // Filter status — case-insensitive + null dianggap 'Active'
@@ -48,11 +49,26 @@ const ItemsView = ({ assets, searchValue, loading, initialCategory, onItemClick 
         (a.model_type ?? '').toLowerCase().includes(term) ||
         (a.computer_name ?? '').toLowerCase().includes(term) ||
         (a.site_name ?? '').toLowerCase().includes(term) ||
-        a.category.toLowerCase().includes(term)
+        (a.category_name ?? '').toLowerCase().includes(term)
       );
     }
     return result;
   }, [assets, activeFilter, searchValue, initialCategory]);
+
+  const groupedAssets = useMemo(() => {
+    // Map sites to easy lookup for regions
+    const siteRegionMap = new Map(sites.map(s => [s.site_alias, s.region || 'Tanpa Region']));
+    
+    // Group filtered assets
+    const groups: Record<string, AssetDetail[]> = {};
+    filtered.forEach(a => {
+      const region = a.site_alias ? (siteRegionMap.get(a.site_alias) || 'Tanpa Region') : 'Tanpa Region';
+      if (!groups[region]) groups[region] = [];
+      groups[region].push(a);
+    });
+
+    return groups;
+  }, [filtered, sites]);
 
   return (
     <div className="fade-in">
@@ -82,8 +98,27 @@ const ItemsView = ({ assets, searchValue, loading, initialCategory, onItemClick 
           <p className="text-slate-500 text-sm">Tidak ada aset ditemukan</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((a) => <ItemCard key={a.id} item={a} onClick={onItemClick} />)}
+        <div className="space-y-6">
+          {Object.entries(groupedAssets)
+            .sort(([regionA], [regionB]) => {
+              if (regionA === 'Tanpa Region') return 1;
+              if (regionB === 'Tanpa Region') return -1;
+              return regionA.localeCompare(regionB);
+            })
+            .map(([region, regionAssets]) => (
+            <div key={region} className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                <i className="fas fa-map-marker-alt text-red-400"></i>
+                {region}
+                <span className="text-xs font-normal text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
+                  {regionAssets.length}
+                </span>
+              </h3>
+              {regionAssets.map((a) => (
+                <ItemCard key={a.id} item={a} onClick={onItemClick} />
+              ))}
+            </div>
+          ))}
         </div>
       )}
     </div>

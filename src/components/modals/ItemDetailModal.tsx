@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { getCategoryConfig } from '../../types/inventory';
 import type { AssetDetail } from '../../types/inventory';
 import StatusBadge from '../StatusBadge';
 
@@ -23,7 +22,6 @@ const DetailRow = ({ label, value }: { label: string; value: string | null | und
 
 const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: Props) => {
   if (!item) return null;
-  const cat = getCategoryConfig(item.category);
   const [copied, setCopied] = useState(false);
 
   const copySerial = () => {
@@ -52,8 +50,8 @@ const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: 
 
         {/* Header Info */}
         <div className="text-center mb-5">
-          <div className={`w-20 h-20 rounded-2xl ${cat.bg} ${cat.color} flex items-center justify-center mx-auto mb-3 text-2xl`}>
-            <i className={`fas ${cat.icon}`}></i>
+          <div className={`w-20 h-20 rounded-2xl ${item.category_color_bg} ${item.category_color_text} flex items-center justify-center mx-auto mb-3 text-2xl`}>
+            <i className={`fas ${item.category_icon}`}></i>
           </div>
           <h3 className="text-lg font-bold text-white">{item.brand} {item.model_type ?? ''}</h3>
           {/* Serial Number — tap to copy */}
@@ -72,8 +70,8 @@ const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: 
 
         {/* Details Grid */}
         <div className="space-y-2 mb-4">
-          <DetailRow label="Kategori"       value={item.category} />
-          <DetailRow label="Aktiva"          value={item.aktiva} />
+          <DetailRow label="Kategori"       value={item.category_name} />
+          <DetailRow label="Aktiva"         value={item.aktiva} />
           <DetailRow label="Computer Name"  value={item.computer_name} />
           <DetailRow label="Site"           value={item.site_name} />
           <DetailRow label="Lokasi Code"    value={item.full_location_code} />

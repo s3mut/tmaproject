@@ -3,120 +3,112 @@ import type { AssetMutation, MutationDetail } from '../types/inventory';
 
 // Ambil riwayat mutasi dengan detail join
 export async function getMutations(): Promise<MutationDetail[]> {
-  // Attempt 1: Query dengan FK constraint names sesuai docs/schema.sql
-  let { data, error } = await supabase
+  const { data: rawMutations, error: rawErr } = await supabase
     .from('asset_mutations')
-    .select(`
-      *,
-      master_assets!fk_mutation_asset (
-        serial_number,
-        category,
-        brand,
-        model_type
-      ),
-      from_site:sites!fk_mutation_from_site (site_name),
-      to_site:sites!fk_mutation_to_site (site_name),
-      telegram_users!fk_mutation_user (name)
-    `)
+    .select('*')
     .order('mutation_date', { ascending: false })
     .limit(50);
 
-  // Attempt 2: Fallback jika constraint name menggunakan penamaan default postgres
-  if (error) {
-    console.warn('[mutationService] Attempt 1 failed, trying default constraint names:', error.message);
-    const res2 = await supabase
-      .from('asset_mutations')
-      .select(`
-        *,
-        master_assets!asset_mutations_asset_id_fkey (
-          serial_number,
-          category,
-          brand,
-          model_type
-        ),
-        from_site:sites!asset_mutations_from_site_code_fkey (site_name),
-        to_site:sites!asset_mutations_to_site_code_fkey (site_name),
-        telegram_users!asset_mutations_moved_by_fkey (name)
-      `)
-      .order('mutation_date', { ascending: false })
-      .limit(50);
-    
-    data = res2.data;
-    error = res2.error;
-  }
+  if (rawErr) throw new Error(rawErr.message);
+  if (!rawMutations || rawMutations.length === 0) return [];
 
-  // Attempt 3: Fallback manual join jika relasi FK tidak terdaftar di schema cache PostgREST
-  if (error || !data) {
-    console.warn('[mutationService] Relational query failed, executing manual fallback join:', error?.message);
-    const { data: rawMutations, error: rawErr } = await supabase
-      .from('asset_mutations')
-      .select('*')
-      .order('mutation_date', { ascending: false })
-      .limit(50);
+  // Fetch related tables secara terpisah agar data tetap tampil (manual join approach)
+  // Ini lebih aman menghindari error relasi dari PostgREST schema cache
+  const [assetRes, siteRes, userRes, catRes] = await Promise.all([
+    supabase.from('master_assets').select('id, serial_number, category_id, brand, model_type'),
+    supabase.from('sites').select('site_code, site_name, site_alias'),
+    supabase.from('telegram_users').select('telegram_id, name'),
+    supabase.from('master_categories').select('id, name'),
+  ]);
 
-    if (rawErr) throw new Error(rawErr.message);
-    if (!rawMutations || rawMutations.length === 0) return [];
+  const assetMap = new Map((assetRes.data ?? []).map((a: any) => [a.id, a]));
+  const siteMap = new Map((siteRes.data ?? []).map((s: any) => [s.site_code, s.site_name]));
+  const userMap = new Map((userRes.data ?? []).map((u: any) => [u.telegram_id, u.name]));
+  const catMap = new Map((catRes.data ?? []).map((c: any) => [c.id, c.name]));
 
-    // Fetch related tables secara terpisah agar data tetap tampil
-    const [assetRes, siteRes, userRes] = await Promise.all([
-      supabase.from('master_assets').select('id, serial_number, category, brand, model_type'),
-      supabase.from('sites').select('site_code, site_name'),
-      supabase.from('telegram_users').select('telegram_id, name'),
-    ]);
-
-    const assetMap = new Map((assetRes.data ?? []).map((a: any) => [a.id, a]));
-    const siteMap = new Map((siteRes.data ?? []).map((s: any) => [s.site_code, s.site_name]));
-    const userMap = new Map((userRes.data ?? []).map((u: any) => [u.telegram_id, u.name]));
-
-    return rawMutations.map((row: any) => {
-      const asset = assetMap.get(row.asset_id);
-      return {
-        id: row.id,
-        asset_id: row.asset_id,
-        from_site_code: row.from_site_code,
-        to_site_code: row.to_site_code,
-        moved_by: row.moved_by,
-        notes: row.notes,
-        mutation_date: row.mutation_date,
-        asset_serial_number: asset?.serial_number ?? '-',
-        asset_category: asset?.category ?? '-',
-        asset_brand: asset?.brand ?? null,
-        asset_model_type: asset?.model_type ?? null,
-        from_site_name: row.from_site_code ? (siteMap.get(row.from_site_code) ?? null) : null,
-        to_site_name: siteMap.get(row.to_site_code) ?? '-',
-        moved_by_name: userMap.get(row.moved_by) ?? 'Unknown',
-      };
-    });
-  }
-
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    asset_id: row.asset_id,
-    from_site_code: row.from_site_code,
-    to_site_code: row.to_site_code,
-    moved_by: row.moved_by,
-    notes: row.notes,
-    mutation_date: row.mutation_date,
-    asset_serial_number: row.master_assets?.serial_number ?? '-',
-    asset_category: row.master_assets?.category ?? '-',
-    asset_brand: row.master_assets?.brand ?? null,
-    asset_model_type: row.master_assets?.model_type ?? null,
-    from_site_name: row.from_site?.site_name ?? null,
-    to_site_name: row.to_site?.site_name ?? '-',
-    moved_by_name: row.telegram_users?.name ?? 'Unknown',
-  }));
+  return rawMutations.map((row: any) => {
+    const asset = assetMap.get(row.asset_id);
+    return {
+      id: row.id,
+      asset_id: row.asset_id,
+      from_site_code: row.from_site_code,
+      to_site_code: row.to_site_code,
+      moved_by: row.moved_by,
+      notes: row.notes,
+      status: row.status,
+      received_by: row.received_by,
+      received_at: row.received_at,
+      mutation_date: row.mutation_date,
+      asset_serial_number: asset?.serial_number ?? '-',
+      asset_category_name: asset?.category_id ? (catMap.get(asset.category_id) ?? '-') : '-',
+      asset_brand: asset?.brand ?? null,
+      asset_model_type: asset?.model_type ?? null,
+      from_site_name: row.from_site_code ? (siteMap.get(row.from_site_code) ?? null) : null,
+      to_site_name: siteMap.get(row.to_site_code) ?? '-',
+      moved_by_name: userMap.get(row.moved_by) ?? 'Unknown',
+      received_by_name: row.received_by ? (userMap.get(row.received_by) ?? 'Unknown') : null,
+    };
+  });
 }
 
-// Buat mutasi baru (pindah aset)
+// Buat mutasi baru (pindah aset) - Handover Protocol
 export async function createMutation(
-  mutation: Omit<AssetMutation, 'id' | 'mutation_date'>
+  mutation: Omit<AssetMutation, 'id' | 'mutation_date' | 'status' | 'received_by' | 'received_at'>
 ): Promise<AssetMutation> {
+  // 1. Insert mutasi dengan status Pending
   const { data, error } = await supabase
     .from('asset_mutations')
-    .insert(mutation)
+    .insert({ ...mutation, status: 'Pending' })
     .select()
     .single();
 
   if (error) throw new Error(error.message);
+
+  // 2. Update status aset menjadi 'In Transit'
+  await supabase
+    .from('master_assets')
+    .update({ status: 'In Transit' })
+    .eq('id', mutation.asset_id);
+
   return data;
+}
+
+// Setujui mutasi yang Pending
+export async function approveMutation(
+  mutationId: number,
+  assetId: number,
+  toSiteCode: string,
+  receivedBy: number
+): Promise<void> {
+  // 1. Dapatkan site_alias dari toSiteCode
+  const { data: site } = await supabase
+    .from('sites')
+    .select('site_alias')
+    .eq('site_code', toSiteCode)
+    .single();
+
+  if (!site) throw new Error('Site tujuan tidak ditemukan');
+
+  // 2. Update mutasi menjadi Completed
+  const { error: mutError } = await supabase
+    .from('asset_mutations')
+    .update({
+      status: 'Completed',
+      received_by: receivedBy,
+      received_at: new Date().toISOString()
+    })
+    .eq('id', mutationId);
+
+  if (mutError) throw new Error(mutError.message);
+
+  // 3. Update aset lokasi ke site_alias baru dan status ke Active
+  const { error: assetError } = await supabase
+    .from('master_assets')
+    .update({
+      site_alias: site.site_alias,
+      status: 'Active'
+    })
+    .eq('id', assetId);
+
+  if (assetError) throw new Error(assetError.message);
 }
