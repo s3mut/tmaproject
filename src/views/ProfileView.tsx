@@ -1,21 +1,17 @@
-import { useState, useEffect } from 'react';
-import type { TelegramUser } from '../types/inventory';
-import { syncTelegramUser, getTelegramSDKUser } from '../services/userService';
+import { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { getTelegramSDKUser } from '../services/userService';
 import RequestAccessModal from '../components/modals/RequestAccessModal';
+import SetPasswordModal from '../components/modals/SetPasswordModal';
 
 interface Props {
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
 }
 
 const ProfileView = ({ onShowToast }: Props) => {
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const { currentUser, authMethod, logout, refreshUser } = useAuth();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-
-  useEffect(() => {
-    syncTelegramUser()
-      .then((data) => setUser(data))
-      .catch((err) => console.error('Gagal sync telegram user:', err));
-  }, []);
+  const [setPassModalOpen, setSetPassModalOpen] = useState(false);
 
   const sdkUser = getTelegramSDKUser();
 
@@ -25,8 +21,9 @@ const ProfileView = ({ onShowToast }: Props) => {
     guest: 'text-slate-400 bg-slate-500/15 border-slate-500/30',
   };
 
-  const isGuest = user?.role === 'guest';
-  const isPending = user?.notes?.includes('PENDING_APPROVAL');
+  const isGuest   = currentUser?.role === 'guest';
+  const isPending = currentUser?.notes?.includes('PENDING_APPROVAL');
+  const isTelegramLogin = authMethod === 'telegram';
 
   const menuItems = [
     {
@@ -44,10 +41,16 @@ const ProfileView = ({ onShowToast }: Props) => {
       title: 'Sinkronisasi Data', subtitle: 'Refresh dari Supabase',
       onClick: () => window.location.reload(),
     },
+    // Hanya tampilkan Set Password Web jika login via Telegram
+    ...(isTelegramLogin ? [{
+      icon: 'fa-key', color: 'text-blue-400', bg: 'bg-blue-500/20',
+      title: 'Password Akses Web', subtitle: 'Set / ubah password untuk login via browser',
+      onClick: () => setSetPassModalOpen(true),
+    }] : []),
     {
       icon: 'fa-shield-alt', color: 'text-orange-400', bg: 'bg-orange-500/20',
-      title: 'Info Koneksi', subtitle: `Telegram ID: ${user?.telegram_id || sdkUser.id}`,
-      onClick: () => alert(`Terhubung ke Supabase\nUser: ${user?.name || sdkUser.first_name}\nRole: ${user?.role || 'guest'}`),
+      title: 'Info Koneksi', subtitle: `Telegram ID: ${currentUser?.telegram_id || sdkUser.id}`,
+      onClick: () => alert(`Terhubung ke Supabase\nUser: ${currentUser?.name}\nRole: ${currentUser?.role}\nLogin via: ${authMethod}`),
     },
   ];
 
@@ -56,18 +59,23 @@ const ProfileView = ({ onShowToast }: Props) => {
       {/* Avatar & User Info */}
       <div className="text-center py-6 glass rounded-2xl p-6 relative overflow-hidden">
         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-3 text-white text-xl font-bold shadow-lg shadow-blue-500/30">
-          {(user?.name || sdkUser.first_name || 'IT').split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
+          {(currentUser?.name || 'IT').split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
         </div>
-        <h2 className="text-lg font-bold text-white">{user?.name || sdkUser.first_name || 'Pengguna Telegram'}</h2>
-        
-        {sdkUser.username && (
+        <h2 className="text-lg font-bold text-white">{currentUser?.name || 'Pengguna'}</h2>
+
+        {sdkUser.username && isTelegramLogin && (
           <p className="text-xs text-blue-400 font-medium">@{sdkUser.username}</p>
         )}
 
-        <div className="flex items-center justify-center gap-2 mt-2">
-          <span className="text-xs text-slate-400 font-mono">ID: {user?.telegram_id || sdkUser.id}</span>
-          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${roleColor[user?.role || 'guest']}`}>
-            {(user?.role || 'GUEST').toUpperCase()}
+        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+          <span className="text-xs text-slate-400 font-mono">ID: {currentUser?.telegram_id || '—'}</span>
+          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${roleColor[currentUser?.role || 'guest']}`}>
+            {(currentUser?.role || 'GUEST').toUpperCase()}
+          </span>
+          {/* Badge metode login */}
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${isTelegramLogin ? 'bg-blue-500/15 text-blue-400' : 'bg-slate-700 text-slate-400'}`}>
+            <i className={`fab ${isTelegramLogin ? 'fa-telegram' : 'fa-globe'} text-[10px]`}></i>
+            {isTelegramLogin ? 'Telegram' : 'Web'}
           </span>
         </div>
       </div>
@@ -82,8 +90,8 @@ const ProfileView = ({ onShowToast }: Props) => {
             <div>
               <h3 className="text-sm font-bold text-white">Akses Tim IT (Guest)</h3>
               <p className="text-xs text-amber-200/80 mt-0.5">
-                {isPending 
-                  ? 'Pengajuan akses Anda sedang dalam proses verifikasi oleh Admin IT.' 
+                {isPending
+                  ? 'Pengajuan akses Anda sedang dalam proses verifikasi oleh Admin IT.'
                   : 'Akun Anda berstatus Guest (akses terbatas). Ajukan verifikasi ke Admin untuk mendapatkan akses penuh Tim IT.'}
               </p>
             </div>
@@ -121,6 +129,16 @@ const ProfileView = ({ onShowToast }: Props) => {
         ))}
       </div>
 
+      {/* Logout button (hanya untuk web login) */}
+      {authMethod === 'web' && (
+        <button
+          onClick={logout}
+          className="w-full py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+        >
+          <i className="fas fa-sign-out-alt"></i> Keluar dari Akses Web
+        </button>
+      )}
+
       {/* Database Status Badge */}
       <div className="glass rounded-xl p-3 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -128,24 +146,36 @@ const ProfileView = ({ onShowToast }: Props) => {
         </div>
         <div>
           <p className="text-xs font-medium text-white">Database Supabase (PostgreSQL)</p>
-          <p className="text-xs text-slate-500">Auto-Synced with Telegram WebApp SDK</p>
+          <p className="text-xs text-slate-500">
+            {isTelegramLogin ? 'Auto-Synced via Telegram SDK' : 'Login via Browser (Web Session)'}
+          </p>
         </div>
         <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
       </div>
 
       {/* Request Access Modal */}
-      {user && (
+      {currentUser && (
         <RequestAccessModal
           isOpen={requestModalOpen}
-          currentUser={user}
+          currentUser={currentUser}
           onClose={() => setRequestModalOpen(false)}
           onSuccess={(msg) => {
             if (onShowToast) onShowToast(msg, 'success');
             else alert(msg);
-            syncTelegramUser().then((u) => setUser(u));
+            refreshUser();
           }}
         />
       )}
+
+      {/* Set Web Password Modal (Telegram login only) */}
+      <SetPasswordModal
+        isOpen={setPassModalOpen}
+        onClose={() => setSetPassModalOpen(false)}
+        onSuccess={(msg) => {
+          if (onShowToast) onShowToast(msg, 'success');
+          else alert(msg);
+        }}
+      />
     </div>
   );
 };

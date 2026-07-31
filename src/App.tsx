@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useInventory, HARDCODED_USER } from './hooks/useInventory';
+import { useInventory } from './hooks/useInventory';
 import type { AssetDetail } from './types/inventory';
+import { useAuth } from './contexts/AuthContext';
 
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
@@ -18,10 +19,12 @@ import HistoryView from './views/HistoryView';
 import SitesView from './views/SitesView';
 import OpnameView from './views/OpnameView';
 import ProfileView from './views/ProfileView';
+import LoginView from './views/LoginView';
 
 declare global { interface Window { Telegram?: any; } }
 
 function App() {
+  const { currentUser, authMethod, isLoading: authLoading } = useAuth();
   const { 
     assets, mutations, sites, categories, stats, 
     loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation, refresh
@@ -136,7 +139,6 @@ function App() {
   // QR Scan — Real scanner result handler
   const handleScanResult = (scannedText: string) => {
     const trimmed = scannedText.trim();
-    // Cari aset berdasarkan serial_number (case-insensitive) atau external_id
     const found = assets.find(
       (a) =>
         a.serial_number.toLowerCase() === trimmed.toLowerCase() ||
@@ -152,6 +154,29 @@ function App() {
 
   const showFab = activeTab === 'dashboard' || activeTab === 'items';
 
+  // ── Auth Loading Screen ─────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/40">
+          <i className="fas fa-boxes-stacked text-2xl text-white"></i>
+        </div>
+        <div className="space-y-1 text-center">
+          <p className="text-sm font-semibold text-white">TransitTMA</p>
+          <p className="text-xs text-slate-400 flex items-center gap-1.5">
+            <i className="fas fa-spinner fa-spin text-blue-400"></i> Memeriksa sesi...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Web Login Gate (non-Telegram, belum auth) ───────────────────────────────
+  if (!currentUser && authMethod === null) {
+    return <LoginView />;
+  }
+
+  // ── Main App ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen pb-20">
       <Toast message={toast.message} visible={toast.visible} type={toast.type} />
@@ -159,7 +184,7 @@ function App() {
       <Header
         activeTab={activeTab}
         searchValue={searchValue}
-        userRole={HARDCODED_USER.role}
+        userRole={currentUser?.role}
         onSearchChange={setSearchValue}
         onScanClick={() => setQrOpen(true)}
         onImportCSVClick={() => setCsvImportOpen(true)}
@@ -249,7 +274,7 @@ function App() {
       />
       <CSVImportModal
         isOpen={csvImportOpen}
-        userRole={HARDCODED_USER.role}
+        userRole={currentUser?.role ?? 'guest'}
         categories={categories}
         sites={sites}
         onClose={() => setCsvImportOpen(false)}

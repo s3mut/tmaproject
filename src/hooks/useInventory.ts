@@ -4,13 +4,6 @@ import { getAssets, createAsset, updateAsset, deleteAsset, getCategories } from 
 import { getMutations, createMutation, approveMutation } from '../services/mutationService';
 import { getSites } from '../services/siteService';
 
-// ─── Hardcoded Telegram User (sementara, sebelum auth diimplementasi) ───
-export const HARDCODED_USER: { telegram_id: number; name: string; role: string } = {
-  telegram_id: 999999999,
-  name: 'Admin IT',
-  role: 'admin',
-};
-
 export function useInventory() {
   const [assets, setAssets] = useState<AssetDetail[]>([]);
   const [mutations, setMutations] = useState<MutationDetail[]>([]);
@@ -86,13 +79,14 @@ export function useInventory() {
     assetId: number,
     fromSiteCode: string | null,
     toSiteCode: string,
-    notes: string
+    notes: string,
+    movedBy: number = 0
   ) => {
     await createMutation({
       asset_id: assetId,
       from_site_code: fromSiteCode,
       to_site_code: toSiteCode,
-      moved_by: HARDCODED_USER.telegram_id,
+      moved_by: movedBy,
       notes: notes || null,
     });
     // asset.site_alias TIDAK langsung diupdate! Statusnya saja jadi 'In Transit' di dalam createMutation
@@ -100,8 +94,8 @@ export function useInventory() {
   }, [fetchAll]);
 
   // Approve mutasi (Checker - Asset Received)
-  const approveAssetMutation = useCallback(async (mutationId: number, assetId: number, toSiteCode: string) => {
-    await approveMutation(mutationId, assetId, toSiteCode, HARDCODED_USER.telegram_id);
+  const approveAssetMutation = useCallback(async (mutationId: number, assetId: number, toSiteCode: string, receivedBy: number = 0) => {
+    await approveMutation(mutationId, assetId, toSiteCode, receivedBy);
     await fetchAll();
   }, [fetchAll]);
 
