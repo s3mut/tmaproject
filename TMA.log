@@ -312,6 +312,48 @@ Solusi & Perubahan File:
       - Handler Node.js / Supabase Edge Function untuk memproses callback query saat Admin menekan tombol persetujuan di Telegram.
       - Meng-update role pengguna di Supabase (`telegram_users`) secara real-time, meng-edit pesan notifikasi Admin, dan mengirim notifikasi Telegram DM konfirmasi ke pengguna.
 
+--------------------------------------------------------------------------------
+STEP 17: DUAL AUTHENTICATION — TELEGRAM AUTO-LOGIN & WEB FORM LOGIN (2026-07-31)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Akses via Telegram Mini App: Auto-login menggunakan Telegram ID dari SDK tanpa form apapun.
+  - Akses via browser web: Tampilkan halaman login dengan form Telegram ID + Password.
+
+Mekanisme (Opsi A — Telegram ID + Password):
+  - Password disimpan sebagai bcrypt hash di kolom `web_password` tabel `telegram_users`.
+  - Verifikasi dilakukan di sisi server via Supabase RPC function (hash tidak pernah expose ke client).
+  - Session web disimpan di sessionStorage (logout otomatis saat browser ditutup).
+  - Fitur Set Password Web tersedia dari dalam aplikasi (hanya saat login via Telegram).
+
+Perubahan File:
+  [A] Database SQL (`docs/web_auth_rpc.sql`):
+      - ALTER TABLE: tambah kolom `web_password` (TEXT) dan `has_web_access` (BOOLEAN) ke `telegram_users`.
+      - RPC `verify_web_login(telegram_id, password)`: verifikasi login web secara aman di server.
+      - RPC `set_web_password(telegram_id, password)`: set/ubah password web dengan bcrypt hash.
+      - RPC `remove_web_access(telegram_id)`: hapus password web dan cabut akses web user.
+
+  [B] AuthContext (`src/contexts/AuthContext.tsx`):
+      - React Context dengan state: `currentUser`, `authMethod` ('telegram'|'web'|null), `isLoading`.
+      - Auto-detect saat mount: jika Telegram SDK tersedia → auto-login; jika ada web session → restore session.
+      - Fungsi: `loginWithWeb()`, `logout()`, `refreshUser()`.
+
+  [C] authService.ts (`src/services/authService.ts`):
+      - Fungsi `isTelegramContext()`, `verifyWebLogin()`, `setWebPassword()`, `removeWebAccess()`.
+      - Session management: `saveWebSession()`, `loadWebSession()`, `clearWebSession()` via sessionStorage.
+
+  [D] LoginView.tsx (`src/views/LoginView.tsx`):
+      - Halaman login modern untuk akses browser dengan input Telegram ID + Password.
+      - Tampilkan info banner auto-login Telegram.
+
+  [E] SetPasswordModal.tsx (`src/components/modals/SetPasswordModal.tsx`):
+      - Modal multi-step dari dalam app (login Telegram only): set password, ubah password, hapus akses web.
+
+  [F] Integrasi App-wide:
+      - `src/main.tsx`: Wrap App dengan <AuthProvider>.
+      - `src/App.tsx`: Ganti HARDCODED_USER dengan useAuth(), tampilkan LoginView jika belum autentikasi.
+      - `src/hooks/useInventory.ts`: Hapus HARDCODED_USER; mutateAsset & approveAssetMutation kini menerima movedBy/receivedBy secara eksplisit.
+      - `src/views/ProfileView.tsx`: Integrasi AuthContext, tombol set password web, tombol logout web.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
