@@ -366,6 +366,26 @@ Perbaikan:
   - `docs/schema.sql`: Menambahkan 'Retired' ke dalam deklarasi `CREATE TYPE asset_status`.
   - `docs/add_retired_status.sql`: Membuat SQL migration untuk meng-alter `asset_status` ENUM (menambahkan 'Retired' setelah 'In Transit') pada database yang sudah berjalan.
 
+--------------------------------------------------------------------------------
+STEP 19: REMOVE ASSET STATUS 'BROKEN' & REPLACE WITH 'RETIRED' (2026-07-31)
+--------------------------------------------------------------------------------
+Kebutuhan: Menghapus status 'Broken' sepenuhnya dari sistem dan menggantinya dengan 'Retired'.
+
+Perubahan Codebase:
+  - `src/types/inventory.ts`: Menghapus 'Broken' dari `AssetStatus` dan `assetStatusConfig`.
+  - `src/hooks/useInventory.ts`: Mengubah kalkulasi stat `broken` menjadi `retired` di interface `stats`.
+  - `src/views/DashboardView.tsx`: Mengubah label dan properti data pada `<StatCard>` dari `broken` menjadi `retired` dan memperbarui `interface Stats`.
+  - `src/views/ItemsView.tsx`: Menghapus 'Broken' dari konstanta `STATUS_ORDER`.
+  - `src/services/csvImportService.ts`: Menghapus 'Broken' dari `validStatuses`.
+  - `src/components/modals/ItemFormModal.tsx`: Menghapus `<option>` 'Broken' dari dropdown.
+  - `docs/schema.sql`: Menghapus 'Broken' dari definisi standar `CREATE TYPE asset_status`.
+
+Perubahan Database:
+  - Dibuat file migrasi `docs/replace_broken_with_retired.sql` untuk:
+    1. Update data existing (`UPDATE master_assets SET status = 'Retired' WHERE status = 'Broken'`).
+    2. Me-*rename* enum lama dan membuat enum baru tanpa 'Broken'.
+    3. Mengubah tipe kolom `status` di tabel `master_assets` agar menggunakan enum yang baru.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
