@@ -133,13 +133,21 @@ function App() {
     }
   };
 
-  // QR Scan
-  const handleSimulateScan = () => {
-    setQrOpen(false);
-    if (assets.length === 0) return;
-    const r = assets[Math.floor(Math.random() * assets.length)];
-    showToast(`QR terdeteksi: ${r.serial_number}`);
-    setTimeout(() => handleItemClick(r.id), 500);
+  // QR Scan — Real scanner result handler
+  const handleScanResult = (scannedText: string) => {
+    const trimmed = scannedText.trim();
+    // Cari aset berdasarkan serial_number (case-insensitive) atau external_id
+    const found = assets.find(
+      (a) =>
+        a.serial_number.toLowerCase() === trimmed.toLowerCase() ||
+        (a.external_id && a.external_id.toLowerCase() === trimmed.toLowerCase())
+    );
+    if (found) {
+      showToast(`✅ Aset ditemukan: ${found.serial_number}`);
+      setTimeout(() => handleItemClick(found.id), 400);
+    } else {
+      showToast(`⚠️ Aset tidak ditemukan: "${trimmed}"`, 'error');
+    }
   };
 
   const showFab = activeTab === 'dashboard' || activeTab === 'items';
@@ -237,7 +245,7 @@ function App() {
       <QRScannerModal
         isOpen={qrOpen}
         onClose={() => setQrOpen(false)}
-        onSimulateScan={handleSimulateScan}
+        onScanResult={handleScanResult}
       />
       <CSVImportModal
         isOpen={csvImportOpen}
