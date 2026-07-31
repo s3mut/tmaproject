@@ -354,6 +354,18 @@ Perubahan File:
       - `src/hooks/useInventory.ts`: Hapus HARDCODED_USER; mutateAsset & approveAssetMutation kini menerima movedBy/receivedBy secara eksplisit.
       - `src/views/ProfileView.tsx`: Integrasi AuthContext, tombol set password web, tombol logout web.
 
+--------------------------------------------------------------------------------
+STEP 18: FIX ASSET STATUS 'RETIRED' (2026-07-31)
+--------------------------------------------------------------------------------
+Bug: Opsi status 'Retired' tidak bisa dimasukkan karena tidak terdaftar di ENUM PostgreSQL dan TypeScript types.
+
+Perbaikan:
+  - `src/types/inventory.ts`: Menambahkan 'Retired' ke dalam union type `AssetStatus` dan mengonfigurasikan `assetStatusConfig`.
+  - `src/components/modals/ItemFormModal.tsx`: Menambahkan opsi <option value="Retired">Retired (Pensiun)</option> di dropdown status form.
+  - `src/services/csvImportService.ts`: Menambahkan 'Retired' ke dalam array `validStatuses` agar baris CSV dengan status ini tidak ditolak saat import.
+  - `docs/schema.sql`: Menambahkan 'Retired' ke dalam deklarasi `CREATE TYPE asset_status`.
+  - `docs/add_retired_status.sql`: Membuat SQL migration untuk meng-alter `asset_status` ENUM (menambahkan 'Retired' setelah 'In Transit') pada database yang sudah berjalan.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
