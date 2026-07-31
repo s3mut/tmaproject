@@ -21,7 +21,7 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  loginWithWeb: (telegramId: number, password: string) => Promise<void>;
+  loginWithWeb: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -92,11 +92,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // ── Login via web form ────────────────────────────────────────────────────
-  const loginWithWeb = useCallback(async (telegramId: number, password: string) => {
+  const loginWithWeb = useCallback(async (identifier: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const user = await verifyWebLogin(telegramId, password);
+      const user = await verifyWebLogin(identifier, password);
       saveWebSession(user);
       setCurrentUser(user);
       setAuthMethod('web');

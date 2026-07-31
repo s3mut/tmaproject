@@ -32,6 +32,7 @@ export interface Category {
 export interface TelegramUser {
   telegram_id: number;     // BIGINT PK
   name: string;
+  username: string | null;
   role: UserRole;
   is_active: boolean;
   notes: string | null;

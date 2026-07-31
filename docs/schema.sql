@@ -39,6 +39,7 @@ CREATE TABLE master_categories (
 CREATE TABLE telegram_users (
     telegram_id BIGINT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    username VARCHAR(100),
     role user_role DEFAULT 'guest',
     is_active BOOLEAN DEFAULT TRUE,
     notes TEXT,

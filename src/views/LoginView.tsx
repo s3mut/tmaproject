@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const LoginView = () => {
   const { loginWithWeb, isLoading } = useAuth();
-  const [telegramId, setTelegramId] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword]     = useState('');
   const [showPass, setShowPass]     = useState(false);
   const [error, setError]           = useState<string | null>(null);
@@ -12,9 +12,9 @@ const LoginView = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const id = parseInt(telegramId, 10);
-    if (isNaN(id) || id <= 0) {
-      setError('Masukkan Telegram ID yang valid (angka).');
+    const trimmedId = identifier.trim();
+    if (!trimmedId) {
+      setError('Telegram ID atau Username wajib diisi.');
       return;
     }
     if (!password) {
@@ -23,9 +23,9 @@ const LoginView = () => {
     }
     setSubmitting(true);
     try {
-      await loginWithWeb(id, password);
+      await loginWithWeb(trimmedId, password);
     } catch (err: any) {
-      setError(err.message || 'Gagal login. Periksa Telegram ID dan password.');
+      setError(err.message || 'Gagal login. Periksa kembali ID/Username dan password.');
     } finally {
       setSubmitting(false);
     }
@@ -51,7 +51,7 @@ const LoginView = () => {
         <div className="glass rounded-3xl p-6 shadow-2xl border border-slate-700/50 space-y-5">
           <div className="space-y-1">
             <h2 className="text-base font-bold text-white">Masuk ke Akun</h2>
-            <p className="text-xs text-slate-400">Gunakan Telegram ID dan password yang telah diset dari aplikasi.</p>
+            <p className="text-xs text-slate-400">Gunakan Telegram Username atau ID, dan password yang telah diset dari TMA.</p>
           </div>
 
           {/* Error Banner */}
@@ -63,10 +63,10 @@ const LoginView = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-            {/* Telegram ID */}
+            {/* Telegram ID / Username */}
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-slate-400">
-                Telegram ID <span className="text-blue-400">(Username Anda)</span>
+                Telegram ID <span className="text-blue-400">atau @Username</span>
               </label>
               <div className="relative">
                 <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
@@ -74,16 +74,16 @@ const LoginView = () => {
                 </div>
                 <input
                   id="login-telegram-id"
-                  type="number"
-                  value={telegramId}
-                  onChange={(e) => setTelegramId(e.target.value)}
-                  placeholder="Contoh: 123456789"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Contoh: @budi atau 12345678"
                   required
                   className="form-input w-full pl-9 pr-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-600 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
                 />
               </div>
               <p className="text-[10px] text-slate-500 pl-1">
-                Cek Telegram ID Anda via <span className="text-blue-400 font-medium">@userinfobot</span> di Telegram.
+                Gunakan <span className="text-blue-400 font-medium">@username</span> yang terdaftar di Telegram Anda.
               </p>
             </div>
 

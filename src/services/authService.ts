@@ -19,15 +19,15 @@ export function isTelegramContext(): boolean {
  * Password diproses di server menggunakan bcrypt — hash tidak pernah expose ke client.
  */
 export async function verifyWebLogin(
-  telegramId: number,
+  identifier: string,
   password: string
 ): Promise<TelegramUser> {
-  if (!telegramId || !password) {
-    throw new Error('Telegram ID dan password wajib diisi.');
+  if (!identifier || !password) {
+    throw new Error('Telegram ID/Username dan password wajib diisi.');
   }
 
-  const { data, error } = await supabase.rpc('verify_web_login', {
-    p_telegram_id: telegramId,
+  const { data, error } = await supabase.rpc('verify_web_login_v2', {
+    p_identifier: identifier,
     p_password: password,
   });
 
@@ -36,13 +36,14 @@ export async function verifyWebLogin(
   }
 
   if (!data || data.length === 0) {
-    throw new Error('Telegram ID atau password salah, atau akun belum memiliki akses web.');
+    throw new Error('Telegram ID/Username atau password salah, atau akun belum memiliki akses web.');
   }
 
   const row = data[0];
   return {
     telegram_id: row.telegram_id,
     name: row.name,
+    username: row.username,
     role: row.role as TelegramUser['role'],
     is_active: row.is_active,
     notes: row.notes,

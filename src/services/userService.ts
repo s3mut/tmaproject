@@ -53,6 +53,7 @@ export async function syncTelegramUser(): Promise<TelegramUser> {
   const newUser: Partial<TelegramUser> = {
     telegram_id: sdkUser.id,
     name: displayName,
+    username: sdkUser.username || null,
     role: 'guest',
     is_active: true,
     notes: 'Terdaftar otomatis dari TMA',
@@ -70,6 +71,7 @@ export async function syncTelegramUser(): Promise<TelegramUser> {
     return {
       telegram_id: sdkUser.id,
       name: displayName,
+      username: sdkUser.username || null,
       role: 'guest',
       is_active: true,
       notes: null,
@@ -100,6 +102,7 @@ export async function requestITAccess(
     .upsert({
       telegram_id: user.telegram_id,
       name: user.name,
+      username: sdkUser.username || user.username || null,
       role: 'guest',
       notes: updatedNote,
       is_active: true,
