@@ -3,7 +3,7 @@
 // ============================================================
 
 // ----- ENUMs -----
-export type AssetStatus = 'Active' | 'Backup' | 'Broken' | 'Repair' | 'Disposed' | 'In Transit';
+export type AssetStatus = 'Active' | 'Backup' | 'Broken' | 'Repair' | 'Disposed' | 'In Transit' | 'Retired';
 export type UserRole = 'admin' | 'user' | 'guest';
 export type MutationStatus = 'Pending' | 'Completed' | 'Rejected';
 export type OpnameStatus = 'Ditemukan' | 'Hilang' | 'Nyasar';
@@ -124,4 +124,5 @@ export const assetStatusConfig: Record<AssetStatus, { label: string; className: 
   Repair:       { label: 'Repair',       className: 'status-repair',       icon: 'fa-tools' },
   Disposed:     { label: 'Disposed',     className: 'text-red-600 bg-red-100', icon: 'fa-trash-alt' },
   'In Transit': { label: 'In Transit',   className: 'text-blue-600 bg-blue-100', icon: 'fa-truck' },
+  Retired:      { label: 'Retired',      className: 'text-slate-500 bg-slate-200', icon: 'fa-power-off' },
 };

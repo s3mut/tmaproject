@@ -130,6 +130,7 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
                 <option value="Repair">Repair</option>
                 <option value="Disposed">Disposed (Dihapus)</option>
                 <option value="In Transit">In Transit</option>
+                <option value="Retired">Retired (Pensiun)</option>
               </select>
             </div>
           </div>

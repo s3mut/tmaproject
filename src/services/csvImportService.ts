@@ -120,7 +120,7 @@ export function parseCSVText(csvText: string, categories: Category[], sites: Sit
     }
 
     // Normalisasi status
-    const validStatuses: AssetStatus[] = ['Active', 'Backup', 'Broken', 'Repair', 'Disposed', 'In Transit'];
+    const validStatuses: AssetStatus[] = ['Active', 'Backup', 'Broken', 'Repair', 'Disposed', 'In Transit', 'Retired'];
     const matchedStatus = validStatuses.find(s => s.toLowerCase() === rawStatus.toLowerCase()) || 'Active';
 
     // Check category match
