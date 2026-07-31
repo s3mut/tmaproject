@@ -17,7 +17,7 @@ export function useInventory() {
     total: assets.length,
     active:  assets.filter((a) => a.status === 'Active').length,
     backup:  assets.filter((a) => a.status === 'Backup').length,
-    broken:  assets.filter((a) => a.status === 'Broken').length,
+    retired: assets.filter((a) => a.status === 'Retired').length,
     repair:  assets.filter((a) => a.status === 'Repair').length,
     inTransit: assets.filter((a) => a.status === 'In Transit').length,
   };

@@ -126,7 +126,6 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
               <select value={form.status} onChange={(e) => set('status', e.target.value as AssetStatus)} className={inputCls}>
                 <option value="Active">Active</option>
                 <option value="Backup">Backup</option>
-                <option value="Broken">Broken</option>
                 <option value="Repair">Repair</option>
                 <option value="Disposed">Disposed (Dihapus)</option>
                 <option value="In Transit">In Transit</option>

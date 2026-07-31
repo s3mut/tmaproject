@@ -8,7 +8,7 @@
 -- 0. Membuat Tipe Data ENUM
 -- ==========================================
 CREATE TYPE user_role AS ENUM ('admin', 'user', 'guest');
-CREATE TYPE asset_status AS ENUM ('Active', 'Backup', 'Broken', 'Repair', 'Disposed', 'In Transit', 'Retired');
+CREATE TYPE asset_status AS ENUM ('Active', 'Backup', 'Repair', 'Disposed', 'In Transit', 'Retired');
 CREATE TYPE mutation_status AS ENUM ('Pending', 'Completed', 'Rejected');
 CREATE TYPE opname_status AS ENUM ('Ditemukan', 'Hilang', 'Nyasar');
 

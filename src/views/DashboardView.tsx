@@ -1,7 +1,7 @@
 import type { AssetDetail, Category } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 
-interface Stats { total: number; active: number; backup: number; broken: number; repair: number; inTransit: number; }
+interface Stats { total: number; active: number; backup: number; retired: number; repair: number; inTransit: number; }
 
 interface Props {
   stats: Stats;
@@ -69,8 +69,8 @@ const DashboardView = ({ stats, assets, categories, loading, onItemClick, onCate
           gradient="linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05))" border="rgba(34,197,94,0.2)" />
         <StatCard label="Backup"  value={stats.backup}  color="text-blue-400"   icon="fa-archive"
           gradient="linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05))" border="rgba(59,130,246,0.2)" />
-        <StatCard label="Broken"  value={stats.broken}  color="text-red-400"    icon="fa-times-circle"
-          gradient="linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05))" border="rgba(239,68,68,0.2)" />
+        <StatCard label="Retired" value={stats.retired} color="text-slate-500"    icon="fa-power-off"
+          gradient="linear-gradient(135deg, rgba(100,116,139,0.1), rgba(100,116,139,0.05))" border="rgba(100,116,139,0.2)" />
         <StatCard label="Repair"  value={stats.repair}  color="text-yellow-400" icon="fa-tools"
           gradient="linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.05))" border="rgba(234,179,8,0.2)" />
       </div>

@@ -3,7 +3,7 @@ import type { AssetDetail, AssetStatus, Site } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 
 // Urutan tampilan status yang diinginkan
-const STATUS_ORDER: AssetStatus[] = ['Active', 'Backup', 'Broken', 'Repair'];
+const STATUS_ORDER: AssetStatus[] = ['Active', 'Backup', 'Repair', 'Retired', 'Disposed', 'In Transit'];
 
 interface Props {
   assets: AssetDetail[];
