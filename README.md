@@ -12,7 +12,7 @@
 
 ## 🌟 Fitur Utama
 
-- **📊 Dashboard Interaktif**: Ringkasan statistik status aset (Active, Backup, Broken, Repair, In Transit, Disposed) & navigasi cepat per kategori.
+- **📊 Dashboard Interaktif**: Ringkasan statistik status aset (Active, Backup, Broken, Repair, In Transit, Disposed, Retired) & navigasi cepat per kategori.
 - **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** lokasi site operasional.
 - **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit* saat diterima oleh penerima).
 - **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi untuk mencatat status ditemukannya aset (*Ditemukan*, *Hilang*, *Nyasar*).
