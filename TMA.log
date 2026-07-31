@@ -386,6 +386,26 @@ Perubahan Database:
     2. Me-*rename* enum lama dan membuat enum baru tanpa 'Broken'.
     3. Mengubah tipe kolom `status` di tabel `master_assets` agar menggunakan enum yang baru.
 
+--------------------------------------------------------------------------------
+STEP 20: WEB LOGIN USING @USERNAME (2026-07-31)
+--------------------------------------------------------------------------------
+Kebutuhan: Mengizinkan pengguna login ke web browser menggunakan `@username` Telegram mereka selain menggunakan angka Telegram ID yang sulit dihafal.
+
+Perubahan Database:
+  - Dibuat script migrasi `docs/add_username_for_login.sql` untuk:
+    1. Menambahkan kolom `username VARCHAR(100)` ke tabel `telegram_users`.
+    2. Membuat fungsi RPC baru `verify_web_login_v2(p_identifier TEXT, p_password TEXT)` yang mengecek login menggunakan `telegram_id` atau `username` secara fleksibel.
+  - Memperbarui `docs/schema.sql` untuk mencerminkan kolom `username`.
+
+Perubahan Codebase:
+  - `src/types/inventory.ts`: Menambahkan `username: string | null;` ke interface `TelegramUser`.
+  - `src/services/userService.ts`:
+    - Mengupdate `syncTelegramUser` untuk otomatis menyimpan/meng-*update* `username` dari `Telegram WebApp SDK`.
+    - Menambahkan penyimpanan `username` ke blok `upsert` pada fungsi `requestITAccess`.
+  - `src/services/authService.ts`: Mengubah `verifyWebLogin` untuk memanggil RPC `verify_web_login_v2` dan meneruskan parameter `identifier` berbentuk string.
+  - `src/contexts/AuthContext.tsx`: Memperbarui signature `loginWithWeb` agar menerima `identifier` bukan `telegramId`.
+  - `src/views/LoginView.tsx`: Mengubah label dan input type form login dari `<input type="number">` menjadi `<input type="text">` untuk mendukung format ID maupun `@username`.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
