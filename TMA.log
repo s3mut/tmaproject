@@ -406,6 +406,57 @@ Perubahan Codebase:
   - `src/contexts/AuthContext.tsx`: Memperbarui signature `loginWithWeb` agar menerima `identifier` bukan `telegramId`.
   - `src/views/LoginView.tsx`: Mengubah label dan input type form login dari `<input type="number">` menjadi `<input type="text">` untuk mendukung format ID maupun `@username`.
 
+--------------------------------------------------------------------------------
+STEP 21: FIX WEB AUTH — SESSION RESTORE, RLS BYPASS & MISSING RPC (2026-08-02)
+--------------------------------------------------------------------------------
+Kebutuhan: Memperbaiki beberapa masalah web auth yang ditemukan saat pengujian:
+  1. User dummy tidak bisa login karena session langsung hilang setelah page di-refresh.
+  2. Error "fungsi set_web_password tidak ditemukan" saat mencoba set password dari Profil.
+  3. Kolom `web_password` dan `has_web_access` belum ada di database Supabase produksi.
+
+Root Cause yang Ditemukan:
+  - `AuthContext.tsx` saat restore session melakukan SELECT langsung ke tabel `telegram_users`,
+    yang diblokir oleh Row Level Security (RLS) Supabase untuk role `anon`. Hasilnya `null`,
+    sehingga session dihapus dan pengguna dikembalikan ke halaman login.
+  - Script migrasi `web_auth_rpc.sql` (yang membuat kolom & RPC functions) belum dieksekusi
+    di database produksi, sehingga kolom `web_password` / `has_web_access` tidak ada.
+
+Perbaikan Codebase:
+  - `src/contexts/AuthContext.tsx`: Session restore TIDAK lagi melakukan query langsung ke
+    tabel (yang terkena RLS). Data user di-*reconstruct* dari `sessionStorage` yang sudah
+    diverifikasi valid saat proses login via RPC `SECURITY DEFINER`.
+  - `src/services/authService.ts`: Menambahkan `username` ke interface `WebSession` dan
+    fungsi `saveWebSession` agar username tidak hilang saat session di-restore.
+
+Perubahan Database:
+  - Diperbarui `docs/setup_web_auth_and_dummy_users.sql` menjadi skrip **ALL-IN-ONE** yang
+    mencakup seluruh fungsi yang diperlukan:
+    - `verify_web_login_v2` (Login via username / telegram_id)
+    - `set_web_password` (Set password dari Telegram Mini App)
+    - `remove_web_access` (Hapus akses web)
+  - Ditambahkan kolom `web_password` dan `has_web_access` ke definisi `docs/schema.sql`
+    agar schema referensi selalu lengkap dan konsisten.
+  - Script aman dijalankan berulang kali (idempotent).
+
+--------------------------------------------------------------------------------
+STEP 22: DASHBOARD STATS FILTER BY CATEGORY (2026-08-02)
+--------------------------------------------------------------------------------
+Kebutuhan: Kartu statistik di halaman Dashboard (Total, Active, Backup, Retired, Repair,
+In Transit) dapat difilter berdasarkan kategori aset yang dipilih oleh pengguna.
+Contoh: Klik kategori "Hub" → semua angka statistik menampilkan data Hub saja.
+
+Implementasi:
+  - `src/views/DashboardView.tsx`: Di-refactor secara menyeluruh:
+    - Komponen sekarang mengelola state `selectedCat` secara internal.
+    - Menghitung stats menggunakan `useMemo` berdasarkan `filteredAssets` (bukan `stats`
+      global dari `useInventory`).
+    - Chip kategori ditampilkan dengan efek **active/selected state** (ring/highlight)
+      untuk menunjukkan kategori yang sedang aktif.
+    - Tombol **Reset** kecil muncul di header kartu total saat filter sedang aktif.
+    - Label "Aset Terbaru" berubah menjadi "Aset — [NamaKategori]" saat difilter.
+  - `src/App.tsx`: Menghapus prop `stats={stats}` dari `<DashboardView>` (tidak lagi
+    diperlukan karena stats dihitung secara internal di komponen).
+
 ================================================================================
                                  END OF LOG
 ================================================================================

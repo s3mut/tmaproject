@@ -12,7 +12,7 @@
 
 ## 🌟 Fitur Utama
 
-- **📊 Dashboard Interaktif**: Ringkasan statistik status aset (Active, Backup, Repair, In Transit, Disposed, Retired) & navigasi cepat per kategori.
+- **📊 Dashboard Interaktif**: Ringkasan statistik status aset (Active, Backup, Repair, In Transit, Disposed, Retired) dengan **filter interaktif per kategori** — klik kategori untuk melihat total & breakdown status aset kategori tersebut saja.
 - **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** lokasi site operasional.
 - **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit* saat diterima oleh penerima).
 - **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi untuk mencatat status ditemukannya aset (*Ditemukan*, *Hilang*, *Nyasar*).
@@ -24,8 +24,8 @@
   - Upload ulang CSV yang sama aman 100% karena menggunakan UPSERT berbasis `serial_number`.
 - **🔐 Dual Authentication (Telegram Auto-Login & Web Form Login)**:
   - **Via Telegram Mini App**: Auto-login menggunakan Telegram ID dari SDK (`window.Telegram.WebApp`) — tanpa form, tanpa password.
-  - **Via Browser Web**: Halaman login dengan form **Telegram ID + Password** (bcrypt hash, diverifikasi di server via Supabase RPC).
-  - **Set Password Web**: User dapat mengatur password akses web dari dalam aplikasi saat login via Telegram.
+  - **Via Browser Web**: Halaman login dengan form **Telegram Username / ID + Password** (bcrypt hash, diverifikasi di server via Supabase RPC `SECURITY DEFINER` — tidak terkena RLS).
+  - **Set Password Web**: User dapat mengatur password akses web dari dalam aplikasi saat login via Telegram (menu Profil → Password Akses Web).
   - **Logout Web**: Sesi web menggunakan `sessionStorage` (logout otomatis saat browser ditutup).
 - **🤖 Interactive Telegram Bot Access Request & Approval**:
   - Otomatis mengidentifikasi Telegram ID, Nama, & Username pengguna dari Telegram WebApp SDK.
@@ -129,7 +129,9 @@ Eksekusi file SQL yang berada di folder `docs/` secara berurutan di Supabase SQL
 | 1 | `docs/schema.sql` | Membuat tabel dasar, type ENUM, dan VIEW |
 | 2 | `docs/seed_categories.sql` | Mengisi data master kategori (ID 44–80) |
 | 3 | `docs/auto_category_trigger.sql` | Memasang trigger validasi strict kategori |
-| 4 | `docs/web_auth_rpc.sql` | **Wajib untuk fitur Web Login**: kolom `web_password` + RPC functions |
+| 4 | `docs/setup_web_auth_and_dummy_users.sql` | **Wajib**: Setup lengkap Web Auth (kolom password, semua fungsi RPC) + 3 akun dummy untuk testing |
+
+> **⚠️ Catatan**: Script nomor 4 bersifat **idempotent** (aman dijalankan berulang kali) dan sudah mencakup semua kebutuhan setup web login.
 
 ### 5. Jalankan Local Development Server
 ```bash
@@ -144,9 +146,18 @@ Untuk pengguna yang ingin login via browser (bukan Telegram):
 1. Buka aplikasi **via Telegram Mini App** terlebih dahulu (auto-login).
 2. Buka tab **Profil** → klik menu **"Password Akses Web"**.
 3. Set password minimal 8 karakter.
-4. Sekarang Anda dapat login via browser menggunakan **Telegram ID + Password** di halaman [Login Web](https://tmaproject.vercel.app).
+4. Sekarang Anda dapat login via browser menggunakan **Telegram @Username atau ID + Password**.
 
-> **Tips**: Cek Telegram ID Anda via `@userinfobot` di Telegram.
+> **Tips**: Gunakan `@username` Telegram Anda — lebih mudah diingat dibanding angka Telegram ID.
+
+### Akun Dummy (untuk Testing)
+Jalankan `docs/setup_web_auth_and_dummy_users.sql` di Supabase untuk mendapatkan 3 akun test:
+
+| Username | Role | Password |
+|----------|------|----------|
+| `@admin_dummy` | admin | `password123` |
+| `@user_dummy` | user | `password123` |
+| `@guest_dummy` | guest | `password123` |
 
 ---
 
