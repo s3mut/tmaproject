@@ -42,6 +42,8 @@ CREATE TABLE telegram_users (
     username VARCHAR(100),
     role user_role DEFAULT 'guest',
     is_active BOOLEAN DEFAULT TRUE,
+    web_password TEXT DEFAULT NULL,
+    has_web_access BOOLEAN DEFAULT FALSE,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
