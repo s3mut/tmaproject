@@ -1,10 +1,8 @@
+import { useState, useMemo } from 'react';
 import type { AssetDetail, Category } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 
-interface Stats { total: number; active: number; backup: number; retired: number; repair: number; inTransit: number; }
-
 interface Props {
-  stats: Stats;
   assets: AssetDetail[];
   categories: Category[];
   loading: boolean;
@@ -45,8 +43,32 @@ const SkeletonCategory = () => (
   </div>
 );
 
-const DashboardView = ({ stats, assets, categories, loading, onItemClick, onCategoryClick }: Props) => {
-  const recentAssets = [...assets].slice(0, 5);
+const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryClick }: Props) => {
+  const [selectedCat, setSelectedCat] = useState<string>('all');
+
+  // Filter aset berdasarkan kategori yang dipilih
+  const filteredAssets = useMemo(() => {
+    if (selectedCat === 'all') return assets;
+    return assets.filter(a => a.category_name === selectedCat);
+  }, [assets, selectedCat]);
+
+  // Hitung stats dari filtered assets
+  const stats = useMemo(() => ({
+    total:     filteredAssets.length,
+    active:    filteredAssets.filter(a => a.status === 'Active').length,
+    backup:    filteredAssets.filter(a => a.status === 'Backup').length,
+    retired:   filteredAssets.filter(a => a.status === 'Retired').length,
+    repair:    filteredAssets.filter(a => a.status === 'Repair').length,
+    inTransit: filteredAssets.filter(a => a.status === 'In Transit').length,
+  }), [filteredAssets]);
+
+  const recentAssets = filteredAssets.slice(0, 5);
+
+  const handleCatSelect = (catName: string) => {
+    setSelectedCat(catName);
+    // Juga trigger navigasi ke tab Items (filter tetap konsisten)
+    onCategoryClick(catName);
+  };
 
   return (
     <div className="fade-in">
@@ -55,7 +77,17 @@ const DashboardView = ({ stats, assets, categories, loading, onItemClick, onCate
         <div className="stat-card rounded-xl p-4 col-span-2 flex justify-between items-center">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs text-slate-400">Total Aset Aktif</span>
+              <span className="text-xs text-slate-400">
+                {selectedCat === 'all' ? 'Total Aset Aktif' : `Total — ${selectedCat}`}
+              </span>
+              {selectedCat !== 'all' && (
+                <button
+                  onClick={() => setSelectedCat('all')}
+                  className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all flex items-center gap-1"
+                >
+                  <i className="fas fa-times"></i> Reset
+                </button>
+              )}
             </div>
             <p className="text-3xl font-bold text-white">{stats.total}</p>
           </div>
@@ -69,7 +101,7 @@ const DashboardView = ({ stats, assets, categories, loading, onItemClick, onCate
           gradient="linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05))" border="rgba(34,197,94,0.2)" />
         <StatCard label="Backup"  value={stats.backup}  color="text-blue-400"   icon="fa-archive"
           gradient="linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05))" border="rgba(59,130,246,0.2)" />
-        <StatCard label="Retired" value={stats.retired} color="text-slate-500"    icon="fa-power-off"
+        <StatCard label="Retired" value={stats.retired} color="text-slate-500"  icon="fa-power-off"
           gradient="linear-gradient(135deg, rgba(100,116,139,0.1), rgba(100,116,139,0.05))" border="rgba(100,116,139,0.2)" />
         <StatCard label="Repair"  value={stats.repair}  color="text-yellow-400" icon="fa-tools"
           gradient="linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.05))" border="rgba(234,179,8,0.2)" />
@@ -82,26 +114,53 @@ const DashboardView = ({ stats, assets, categories, loading, onItemClick, onCate
           [1, 2, 3, 4].map((i) => <SkeletonCategory key={i} />)
         ) : (
           <>
-            <div className="flex-shrink-0 text-center cursor-pointer" onClick={() => onCategoryClick('all')}>
-              <div className="category-icon bg-blue-500/20 text-blue-400 mx-auto mb-1">
+            {/* Chip: Semua */}
+            <div
+              className="flex-shrink-0 text-center cursor-pointer"
+              onClick={() => setSelectedCat('all')}
+            >
+              <div className={`category-icon mx-auto mb-1 transition-all ${
+                selectedCat === 'all'
+                  ? 'bg-blue-500 text-white ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900'
+                  : 'bg-blue-500/20 text-blue-400'
+              }`}>
                 <i className="fas fa-th-large"></i>
               </div>
-              <span className="text-xs text-slate-400">Semua</span>
+              <span className={`text-xs transition-colors ${selectedCat === 'all' ? 'text-blue-400 font-semibold' : 'text-slate-400'}`}>
+                Semua
+              </span>
             </div>
-            {categories.map((cat) => (
-              <div key={cat.id} className="flex-shrink-0 text-center cursor-pointer" onClick={() => onCategoryClick(cat.name)}>
-                <div className={`category-icon ${cat.color_bg} ${cat.color_text} mx-auto mb-1`}>
-                  <i className={`fas ${cat.icon}`}></i>
+
+            {/* Chip: Per kategori */}
+            {categories.map((cat) => {
+              const isActive = selectedCat === cat.name;
+              return (
+                <div
+                  key={cat.id}
+                  className="flex-shrink-0 text-center cursor-pointer"
+                  onClick={() => handleCatSelect(cat.name)}
+                >
+                  <div className={`category-icon mx-auto mb-1 transition-all ${
+                    isActive
+                      ? `${cat.color_bg.replace('/20', '')} ${cat.color_text} ring-2 ring-offset-2 ring-offset-slate-900 ${cat.color_text.replace('text-', 'ring-')}`
+                      : `${cat.color_bg} ${cat.color_text}`
+                  }`}>
+                    <i className={`fas ${cat.icon}`}></i>
+                  </div>
+                  <span className={`text-xs transition-colors ${isActive ? `${cat.color_text} font-semibold` : 'text-slate-400'}`}>
+                    {cat.name}
+                  </span>
                 </div>
-                <span className="text-xs text-slate-400">{cat.name}</span>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
       </div>
 
       {/* Recent Assets */}
-      <h2 className="text-sm font-semibold text-slate-300 mb-3">Aset Terbaru</h2>
+      <h2 className="text-sm font-semibold text-slate-300 mb-3">
+        {selectedCat === 'all' ? 'Aset Terbaru' : `Aset — ${selectedCat}`}
+      </h2>
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
@@ -109,7 +168,9 @@ const DashboardView = ({ stats, assets, categories, loading, onItemClick, onCate
       ) : recentAssets.length === 0 ? (
         <div className="text-center py-8">
           <i className="fas fa-server text-3xl text-slate-700 mb-3 block"></i>
-          <p className="text-slate-500 text-sm">Belum ada aset terdaftar</p>
+          <p className="text-slate-500 text-sm">
+            {selectedCat === 'all' ? 'Belum ada aset terdaftar' : `Tidak ada aset kategori "${selectedCat}"`}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -26,7 +26,7 @@ declare global { interface Window { Telegram?: any; } }
 function App() {
   const { currentUser, authMethod, isLoading: authLoading } = useAuth();
   const { 
-    assets, mutations, sites, categories, stats, 
+    assets, mutations, sites, categories,
     loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation, refresh
   } = useInventory();
 
@@ -193,7 +193,6 @@ function App() {
       <main className="px-4 pt-4">
         {activeTab === 'dashboard' && (
           <DashboardView
-            stats={stats}
             assets={assets}
             categories={categories}
             loading={loading}
