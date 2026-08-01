@@ -57,22 +57,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // 2. Tidak di Telegram → cek apakah ada web session tersimpan
         const session = loadWebSession();
         if (session) {
-          // Re-fetch user terbaru dari Supabase agar role selalu up-to-date
-          const { supabase } = await import('../lib/supabase');
-          const { data } = await supabase
-            .from('telegram_users')
-            .select('*')
-            .eq('telegram_id', session.telegramId)
-            .eq('is_active', true)
-            .single();
-
-          if (data) {
-            setCurrentUser(data as TelegramUser);
-            setAuthMethod('web');
-            return;
-          }
-          // Session tidak valid → hapus
-          clearWebSession();
+          // Gunakan data dari session langsung (tidak re-fetch ke tabel agar tidak terkena RLS anon).
+          // Data sudah valid karena diperiksa via RPC SECURITY DEFINER saat login.
+          setCurrentUser({
+            telegram_id: session.telegramId,
+            name: session.name,
+            username: session.username ?? null,
+            role: session.role as TelegramUser['role'],
+            is_active: true,
+            notes: null,
+            created_at: new Date().toISOString(),
+          });
+          setAuthMethod('web');
+          return;
         }
 
         // 3. Tidak ada auth → tampilkan halaman login

@@ -92,6 +92,7 @@ const SESSION_KEY = 'transittma_web_session';
 export interface WebSession {
   telegramId: number;
   name: string;
+  username: string | null;
   role: string;
   loggedAt: number;
 }
@@ -100,6 +101,7 @@ export function saveWebSession(user: TelegramUser): void {
   const session: WebSession = {
     telegramId: user.telegram_id,
     name: user.name,
+    username: user.username ?? null,
     role: user.role,
     loggedAt: Date.now(),
   };
