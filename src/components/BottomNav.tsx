@@ -13,13 +13,20 @@ const navItems: NavItem[] = [
 interface Props {
   activeTab: TabName;
   onTabChange: (tab: TabName) => void;
+  isGuest?: boolean;
 }
 
-const BottomNav = ({ activeTab, onTabChange }: Props) => {
+const BottomNav = ({ activeTab, onTabChange, isGuest }: Props) => {
+  const visibleNavItems = navItems.filter(item => {
+    if (isGuest && (item.tab === 'history' || item.tab === 'opname')) {
+      return false;
+    }
+    return true;
+  });
   return (
     <nav className="bottom-nav">
       <div className="flex items-center justify-around px-2">
-        {navItems.map(({ tab, icon, label }) => (
+        {visibleNavItems.map(({ tab, icon, label }) => (
           <button
             key={tab}
             className={`nav-item ${activeTab === tab ? 'active' : ''}`}

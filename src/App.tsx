@@ -96,6 +96,10 @@ function App() {
 
   // Item actions
   const handleItemClick = (id: number) => {
+    if (currentUser?.role === 'guest') {
+      showToast('Akses ditolak: Guest hanya dapat melihat statistik.', 'error');
+      return;
+    }
     const item = assets.find((a) => a.id === id);
     if (item) { setDetailItem(item); setDetailOpen(true); }
   };
@@ -195,7 +199,8 @@ function App() {
     }
   };
 
-  const showFab = activeTab === 'dashboard' || activeTab === 'items';
+  const isGuest = currentUser?.role === 'guest';
+  const showFab = !isGuest && (activeTab === 'dashboard' || activeTab === 'items');
 
   // ── Auth Loading Screen ─────────────────────────────────────────────────────
   if (authLoading) {
@@ -288,7 +293,7 @@ function App() {
         </button>
       )}
 
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} isGuest={isGuest} />
 
       <ItemFormModal
         isOpen={formOpen}

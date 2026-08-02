@@ -26,21 +26,24 @@ const ProfileView = ({ onShowToast, onOpenReport }: Props) => {
   const isPending = currentUser?.notes?.includes('PENDING_APPROVAL');
   const isTelegramLogin = authMethod === 'telegram';
 
-  const menuItems = [
+  let menuItems = [
     {
       icon: 'fa-file-export', color: 'text-blue-400', bg: 'bg-blue-500/20',
       title: 'Laporan Aset (Retired)', subtitle: 'Export data barang yang dipensiunkan',
       onClick: () => onOpenReport ? onOpenReport() : alert('Fitur laporan belum tersedia!'),
+      hideGuest: true,
     },
     {
       icon: 'fa-qrcode', color: 'text-purple-400', bg: 'bg-purple-500/20',
       title: 'Generate QR Labels', subtitle: 'Cetak label aset',
       onClick: () => alert('Fitur QR Labels akan segera tersedia!'),
+      hideGuest: true,
     },
     {
       icon: 'fa-sync-alt', color: 'text-emerald-400', bg: 'bg-emerald-500/20',
       title: 'Sinkronisasi Data', subtitle: 'Refresh dari Supabase',
       onClick: () => window.location.reload(),
+      hideGuest: true,
     },
     // Hanya tampilkan Set Password Web jika login via Telegram
     ...(isTelegramLogin ? [{
@@ -55,6 +58,10 @@ const ProfileView = ({ onShowToast, onOpenReport }: Props) => {
       onClick: () => onShowToast?.(`✅ ${currentUser?.name} | Role: ${(currentUser?.role || 'guest').toUpperCase()} | Login: ${authMethod === 'telegram' ? 'Telegram' : 'Web Browser'}`, 'success'),
     },
   ];
+
+  if (isGuest) {
+    menuItems = menuItems.filter(item => !(item as any).hideGuest);
+  }
 
   return (
     <div className="fade-in space-y-4">
