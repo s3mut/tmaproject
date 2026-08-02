@@ -18,6 +18,8 @@ CREATE INDEX IF NOT EXISTS idx_telegram_users_username
   ON telegram_users(LOWER(username));
 
 -- ─── STEP 4: verify_web_login_v2 — Login via @username atau Telegram ID ──────
+DROP FUNCTION IF EXISTS public.verify_web_login_v2(TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.verify_web_login_v2(
   p_identifier TEXT,
   p_password   TEXT
@@ -64,6 +66,8 @@ GRANT EXECUTE ON FUNCTION public.verify_web_login_v2(TEXT, TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION public.verify_web_login_v2(TEXT, TEXT) TO authenticated;
 
 -- ─── STEP 5: set_web_password — Set password dari Telegram Mini App ──────────
+DROP FUNCTION IF EXISTS public.set_web_password(BIGINT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.set_web_password(
   p_telegram_id  BIGINT,
   p_new_password TEXT
@@ -93,6 +97,8 @@ GRANT EXECUTE ON FUNCTION public.set_web_password(BIGINT, TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION public.set_web_password(BIGINT, TEXT) TO authenticated;
 
 -- ─── STEP 6: remove_web_access ───────────────────────────────────────────────
+DROP FUNCTION IF EXISTS public.remove_web_access(BIGINT);
+
 CREATE OR REPLACE FUNCTION public.remove_web_access(
   p_telegram_id BIGINT
 )
