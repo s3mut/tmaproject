@@ -1,67 +1,81 @@
 -- ============================================================
--- ALL-IN-ONE: Setup LENGKAP Web Auth + Dummy Users + set_web_password
+-- DIAGNOSTIC + FIX: Web Auth untuk Dummy Users
 -- Jalankan SELURUH script ini di Supabase SQL Editor
 -- Aman dijalankan berulang kali (idempotent)
 -- ============================================================
 
--- ─── LANGKAH 1: Ekstensi pgcrypto ────────────────────────────────────────────
+-- ─── STEP 1: Pastikan pgcrypto extension aktif ────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- ─── LANGKAH 2: Tambahkan kolom Web Auth ─────────────────────────────────────
+-- ─── STEP 2: Pastikan kolom web auth sudah ada ───────────────────────────────
 ALTER TABLE telegram_users
-  ADD COLUMN IF NOT EXISTS username VARCHAR(100) DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS web_password TEXT DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS has_web_access BOOLEAN DEFAULT FALSE;
+  ADD COLUMN IF NOT EXISTS username      VARCHAR(100) DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS web_password  TEXT         DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS has_web_access BOOLEAN     DEFAULT FALSE;
 
--- ─── LANGKAH 3: verify_web_login_v2 (Login via username/ID) ──────────────────
+-- ─── STEP 3: Pastikan kolom username bisa diindex / lookup ──────────────────
+CREATE INDEX IF NOT EXISTS idx_telegram_users_username
+  ON telegram_users(LOWER(username));
+
+-- ─── STEP 4: verify_web_login_v2 — Login via @username atau Telegram ID ──────
 CREATE OR REPLACE FUNCTION public.verify_web_login_v2(
   p_identifier TEXT,
-  p_password TEXT
+  p_password   TEXT
 )
 RETURNS TABLE(
   telegram_id BIGINT,
-  name TEXT,
-  username VARCHAR(100),
-  role TEXT,
-  is_active BOOLEAN,
-  notes TEXT,
-  created_at TIMESTAMPTZ
+  name        TEXT,
+  username    VARCHAR(100),
+  role        TEXT,
+  is_active   BOOLEAN,
+  notes       TEXT,
+  created_at  TIMESTAMPTZ
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
   RETURN QUERY
   SELECT
-    u.telegram_id, u.name, u.username, u.role::TEXT,
-    u.is_active, u.notes, u.created_at
+    u.telegram_id,
+    u.name,
+    u.username,
+    u.role::TEXT,
+    u.is_active,
+    u.notes,
+    u.created_at
   FROM telegram_users u
   WHERE
     (
-      (p_identifier ~ '^[0-9]+$' AND u.telegram_id::TEXT = p_identifier)
+      -- login dengan angka Telegram ID
+      (p_identifier ~ '^[0-9]+$' AND u.telegram_id = p_identifier::BIGINT)
+      -- login dengan @username (case-insensitive, hapus @ jika ada)
       OR (LOWER(u.username) = LOWER(REPLACE(p_identifier, '@', '')))
     )
-    AND u.web_password IS NOT NULL
     AND u.has_web_access = TRUE
-    AND u.is_active = TRUE
-    AND u.web_password = crypt(p_password, u.web_password);
+    AND u.web_password   IS NOT NULL
+    AND u.is_active      = TRUE
+    AND u.web_password   = crypt(p_password, u.web_password);
 END;
 $$;
+
 GRANT EXECUTE ON FUNCTION public.verify_web_login_v2(TEXT, TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION public.verify_web_login_v2(TEXT, TEXT) TO authenticated;
 
--- ─── LANGKAH 4: set_web_password (Set password dari Telegram Mini App) ────────
+-- ─── STEP 5: set_web_password — Set password dari Telegram Mini App ──────────
 CREATE OR REPLACE FUNCTION public.set_web_password(
-  p_telegram_id BIGINT,
+  p_telegram_id  BIGINT,
   p_new_password TEXT
 )
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_hashed TEXT;
-  v_rows INT;
+  v_rows   INT;
 BEGIN
   IF length(p_new_password) < 8 THEN
     RAISE EXCEPTION 'Password minimal 8 karakter.';
@@ -74,16 +88,18 @@ BEGIN
   RETURN v_rows > 0;
 END;
 $$;
+
 GRANT EXECUTE ON FUNCTION public.set_web_password(BIGINT, TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION public.set_web_password(BIGINT, TEXT) TO authenticated;
 
--- ─── LANGKAH 5: remove_web_access (Hapus akses web) ──────────────────────────
+-- ─── STEP 6: remove_web_access ───────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.remove_web_access(
   p_telegram_id BIGINT
 )
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_rows INT;
@@ -95,30 +111,57 @@ BEGIN
   RETURN v_rows > 0;
 END;
 $$;
+
 GRANT EXECUTE ON FUNCTION public.remove_web_access(BIGINT) TO anon;
 GRANT EXECUTE ON FUNCTION public.remove_web_access(BIGINT) TO authenticated;
 
--- ─── LANGKAH 6: Insert Akun Dummy (UPSERT aman) ──────────────────────────────
--- Password: password123
-INSERT INTO telegram_users (telegram_id, name, username, role, is_active, has_web_access, web_password)
+-- ─── STEP 7: Insert / Update Dummy Users (UPSERT) ────────────────────────────
+-- Password semua: password123
+-- Login via: @admin_dummy / @user_dummy / @guest_dummy
+INSERT INTO telegram_users
+  (telegram_id, name, username, role, is_active, has_web_access, web_password)
 VALUES
-  (10001, 'Admin Dummy', 'admin_dummy', 'admin', TRUE, TRUE, crypt('password123', gen_salt('bf', 10))),
-  (10002, 'User Dummy',  'user_dummy',  'user',  TRUE, TRUE, crypt('password123', gen_salt('bf', 10))),
-  (10003, 'Guest Dummy', 'guest_dummy', 'guest', TRUE, TRUE, crypt('password123', gen_salt('bf', 10)))
+  (10001, 'Admin Dummy', 'admin_dummy', 'admin', TRUE, TRUE,
+    crypt('password123', gen_salt('bf', 10))),
+  (10002, 'User Dummy',  'user_dummy',  'user',  TRUE, TRUE,
+    crypt('password123', gen_salt('bf', 10))),
+  (10003, 'Guest Dummy', 'guest_dummy', 'guest', TRUE, TRUE,
+    crypt('password123', gen_salt('bf', 10)))
 ON CONFLICT (telegram_id) DO UPDATE
 SET
-  username       = EXCLUDED.username,
-  role           = EXCLUDED.role,
-  has_web_access = TRUE,
-  web_password   = EXCLUDED.web_password,
-  is_active      = TRUE;
+  username        = EXCLUDED.username,
+  name            = EXCLUDED.name,
+  role            = EXCLUDED.role,
+  has_web_access  = TRUE,
+  web_password    = EXCLUDED.web_password,
+  is_active       = TRUE;
 
--- ─── LANGKAH 7: Reload PostgREST schema cache ────────────────────────────────
+-- ─── STEP 8: Reload schema cache PostgREST ───────────────────────────────────
 NOTIFY pgrst, 'reload schema';
 
--- ─── Verifikasi ──────────────────────────────────────────────────────────────
+-- ─── STEP 9: VERIFIKASI — Cek apakah login dummy akan berhasil ───────────────
+-- Pastikan output menunjukkan ✅ Password Set dan has_web_access = TRUE
 SELECT
-  telegram_id, name, username, role, is_active, has_web_access,
-  CASE WHEN web_password IS NOT NULL THEN '✅ Password Set' ELSE '❌ Belum Set' END AS web_status
+  telegram_id,
+  name,
+  username,
+  role,
+  is_active,
+  has_web_access,
+  CASE
+    WHEN web_password IS NOT NULL THEN '✅ Password Set'
+    ELSE '❌ Belum Set'
+  END AS web_status,
+  -- Test crypt: apakah password123 cocok?
+  CASE
+    WHEN web_password = crypt('password123', web_password) THEN '✅ Password Cocok'
+    ELSE '❌ Password TIDAK Cocok'
+  END AS password_check
 FROM telegram_users
-WHERE telegram_id IN (10001, 10002, 10003);
+WHERE telegram_id IN (10001, 10002, 10003)
+ORDER BY telegram_id;
+
+-- ─── STEP 10: TEST LOGIN LANGSUNG ────────────────────────────────────────────
+-- Jika STEP 9 semua ✅, coba test login function:
+SELECT * FROM public.verify_web_login_v2('@admin_dummy', 'password123');
+-- Harus mengembalikan 1 baris data user admin_dummy
