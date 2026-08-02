@@ -160,6 +160,25 @@ function App() {
     }
   };
 
+  const handleBulkStatusChange = async (assetIds: number[], newStatus: any, notes: string) => {
+    try {
+      const { changeAssetStatus } = await import('./services/assetService');
+      const teleId = currentUser?.telegram_id ?? 0;
+      
+      // Loop berurutan untuk mengubah status (bisa juga pakai Promise.all jika butuh paralel)
+      for (const id of assetIds) {
+        await changeAssetStatus(id, newStatus, teleId, notes || `Batch Update via Opname`);
+      }
+      
+      // Refresh state global agar data aset terupdate
+      refreshInventory();
+      showToast(`Berhasil mengubah status ${assetIds.length} aset menjadi ${newStatus}!`);
+    } catch (e: any) {
+      showToast(e.message, 'error');
+      throw e;
+    }
+  };
+
   // QR Scan — Real scanner result handler
   const handleScanResult = (scannedText: string) => {
     const trimmed = scannedText.trim();
@@ -258,7 +277,7 @@ function App() {
           />
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
-        {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} />}
+        {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} onBulkStatusChange={handleBulkStatusChange} />}
         {activeTab === 'profile' && <ProfileView onShowToast={showToast} onOpenReport={() => setActiveTab('report')} />}
         {activeTab === 'report' && <ReportView onBack={() => setActiveTab('profile')} onShowToast={showToast} />}
       </main>
