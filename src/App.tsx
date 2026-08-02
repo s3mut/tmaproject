@@ -20,6 +20,7 @@ import HistoryView from './views/HistoryView';
 import SitesView from './views/SitesView';
 import OpnameView from './views/OpnameView';
 import ProfileView from './views/ProfileView';
+import ReportView from './views/ReportView';
 import LoginView from './views/LoginView';
 
 declare global { interface Window { Telegram?: any; } }
@@ -122,6 +123,16 @@ function App() {
   const handleFormSubmit = async (data: any) => {
     try {
       if (editItem) {
+        // Jika status berubah, catat di log audit
+        if (data.status && data.status !== editItem.status) {
+          const { changeAssetStatus } = await import('../services/assetService');
+          await changeAssetStatus(
+            editItem.id,
+            data.status,
+            currentUser?.telegram_id ?? 0,
+            data.description || 'Diubah via form Edit'
+          );
+        }
         await editAsset(editItem.id, data);
         showToast('Aset berhasil diupdate!');
       } else {
@@ -248,7 +259,8 @@ function App() {
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
         {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} />}
-        {activeTab === 'profile' && <ProfileView onShowToast={showToast} />}
+        {activeTab === 'profile' && <ProfileView onShowToast={showToast} onOpenReport={() => setActiveTab('report')} />}
+        {activeTab === 'report' && <ReportView onBack={() => setActiveTab('profile')} onShowToast={showToast} />}
       </main>
 
       {showFab && (

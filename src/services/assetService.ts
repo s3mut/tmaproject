@@ -83,3 +83,36 @@ export async function getCategories(): Promise<Category[]> {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+// Ubah Status Aset (dengan Logging Audit Trail)
+export async function changeAssetStatus(
+  assetId: number,
+  newStatus: string,
+  telegramId: number,
+  notes: string = ''
+): Promise<void> {
+  const { error } = await supabase.rpc('change_asset_status', {
+    p_asset_id: assetId,
+    p_new_status: newStatus,
+    p_telegram_id: telegramId,
+    p_notes: notes
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+// Ambil Laporan Aset Retired
+export async function getRetiredReports(telegramId?: number): Promise<any[]> {
+  let query = supabase
+    .from('view_retired_reports')
+    .select('*')
+    .order('retired_at', { ascending: false });
+    
+  if (telegramId) {
+    query = query.eq('retired_by_id', telegramId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}

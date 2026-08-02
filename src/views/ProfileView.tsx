@@ -6,9 +6,10 @@ import SetPasswordModal from '../components/modals/SetPasswordModal';
 
 interface Props {
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
+  onOpenReport?: () => void;
 }
 
-const ProfileView = ({ onShowToast }: Props) => {
+const ProfileView = ({ onShowToast, onOpenReport }: Props) => {
   const { currentUser, authMethod, logout, refreshUser } = useAuth();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [setPassModalOpen, setSetPassModalOpen] = useState(false);
@@ -28,8 +29,8 @@ const ProfileView = ({ onShowToast }: Props) => {
   const menuItems = [
     {
       icon: 'fa-file-export', color: 'text-blue-400', bg: 'bg-blue-500/20',
-      title: 'Export Data', subtitle: 'CSV atau Excel',
-      onClick: () => alert('Fitur export akan segera tersedia!'),
+      title: 'Laporan Aset (Retired)', subtitle: 'Export data barang yang dipensiunkan',
+      onClick: () => onOpenReport ? onOpenReport() : alert('Fitur laporan belum tersedia!'),
     },
     {
       icon: 'fa-qrcode', color: 'text-purple-400', bg: 'bg-purple-500/20',
