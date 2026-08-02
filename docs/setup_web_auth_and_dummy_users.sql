@@ -35,7 +35,7 @@ RETURNS TABLE(
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 BEGIN
   RETURN QUERY
@@ -75,7 +75,7 @@ CREATE OR REPLACE FUNCTION public.set_web_password(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_hashed TEXT;
@@ -105,7 +105,7 @@ CREATE OR REPLACE FUNCTION public.remove_web_access(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_rows INT;
