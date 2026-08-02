@@ -49,8 +49,9 @@ const ProfileView = ({ onShowToast }: Props) => {
     }] : []),
     {
       icon: 'fa-shield-alt', color: 'text-orange-400', bg: 'bg-orange-500/20',
-      title: 'Info Koneksi', subtitle: `Telegram ID: ${currentUser?.telegram_id || sdkUser.id}`,
-      onClick: () => alert(`Terhubung ke Supabase\nUser: ${currentUser?.name}\nRole: ${currentUser?.role}\nLogin via: ${authMethod}`),
+      title: 'Info Koneksi',
+      subtitle: `${currentUser?.username ? `@${currentUser.username} • ` : ''}ID: ${currentUser?.telegram_id || sdkUser.id}`,
+      onClick: () => onShowToast?.(`✅ ${currentUser?.name} | Role: ${(currentUser?.role || 'guest').toUpperCase()} | Login: ${authMethod === 'telegram' ? 'Telegram' : 'Web Browser'}`, 'success'),
     },
   ];
 

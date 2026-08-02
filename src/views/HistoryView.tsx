@@ -29,6 +29,10 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Filter state for the history list
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'Pending' | 'Completed' | 'Rejected'>('all');
+  const [historySearch, setHistorySearch] = useState('');
+
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const term = searchQuery.toLowerCase();
@@ -41,6 +45,24 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
   }, [assets, searchQuery]);
 
   const availableSites = sites.filter((s) => s.site_alias !== selectedAsset?.site_alias);
+
+  const filteredMutations = useMemo(() => {
+    let result = mutations;
+    if (historyFilter !== 'all') {
+      result = result.filter(m => m.status === historyFilter);
+    }
+    if (historySearch.trim()) {
+      const term = historySearch.toLowerCase();
+      result = result.filter(m =>
+        m.asset_serial_number.toLowerCase().includes(term) ||
+        (m.asset_brand ?? '').toLowerCase().includes(term) ||
+        (m.asset_model_type ?? '').toLowerCase().includes(term) ||
+        (m.from_site_name ?? '').toLowerCase().includes(term) ||
+        (m.to_site_name ?? '').toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [mutations, historyFilter, historySearch]);
 
   const resetForm = () => {
     setShowForm(false);
@@ -185,20 +207,66 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
 
       {/* Riwayat Mutasi */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">
-          <i className="fas fa-history mr-2 text-slate-500"></i>
-          Daftar Mutasi
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-300">
+            <i className="fas fa-history mr-2 text-slate-500"></i>
+            Daftar Mutasi
+            {!loading && (
+              <span className="ml-2 text-xs font-normal text-slate-500">
+                ({filteredMutations.length}{filteredMutations.length !== mutations.length && `/${mutations.length}`})
+              </span>
+            )}
+          </h3>
+        </div>
+
+        {/* Filter + Search */}
+        {!loading && mutations.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {/* Filter chips */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {(['all', 'Pending', 'Completed', 'Rejected'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setHistoryFilter(f)}
+                  className={`filter-chip flex-shrink-0 ${historyFilter === f ? 'active' : ''}`}
+                >
+                  {f === 'all' ? 'Semua' : f === 'Pending' ? 'In Transit' : f}
+                </button>
+              ))}
+            </div>
+            {/* Search */}
+            <div className="relative">
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Cari aset, S/N, atau site..."
+                className="form-input w-full pl-8 py-2 text-xs rounded-lg"
+              />
+              {historySearch && (
+                <button
+                  onClick={() => setHistorySearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  <i className="fas fa-times text-xs"></i>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-8">
             <i className="fas fa-spinner fa-spin text-2xl text-blue-400 mb-3 block"></i>
           </div>
-        ) : mutations.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-sm">Belum ada mutasi</div>
+        ) : filteredMutations.length === 0 ? (
+          <div className="text-center py-8 text-slate-500 text-sm">
+            {mutations.length === 0 ? 'Belum ada mutasi' : 'Tidak ada mutasi sesuai filter'}
+          </div>
         ) : (
           <div className="space-y-3">
-            {mutations.map((m) => (
+            {filteredMutations.map((m) => (
               <div key={m.id} className="glass rounded-xl p-4 relative overflow-hidden">
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${m.status === 'Pending' ? 'bg-amber-500' : m.status === 'Completed' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
                 <div className="flex items-start justify-between gap-2 pl-2">

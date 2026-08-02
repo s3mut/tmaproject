@@ -8,6 +8,7 @@ interface Props {
   loading: boolean;
   onItemClick: (id: number) => void;
   onCategoryClick: (cat: string) => void;
+  onViewAll?: () => void;
 }
 
 const StatCard = ({ label, value, color, icon, gradient, border }: {
@@ -43,7 +44,7 @@ const SkeletonCategory = () => (
   </div>
 );
 
-const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryClick }: Props) => {
+const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryClick, onViewAll }: Props) => {
   const [selectedCat, setSelectedCat] = useState<string>('all');
 
   // Filter aset berdasarkan kategori yang dipilih
@@ -158,9 +159,19 @@ const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryCli
       </div>
 
       {/* Recent Assets */}
-      <h2 className="text-sm font-semibold text-slate-300 mb-3">
-        {selectedCat === 'all' ? 'Aset Terbaru' : `Aset — ${selectedCat}`}
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-slate-300">
+          {selectedCat === 'all' ? 'Aset Terbaru' : `Aset — ${selectedCat}`}
+        </h2>
+        {onViewAll && !loading && assets.length > 0 && (
+          <button
+            onClick={() => { onViewAll(); setSelectedCat('all'); }}
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+          >
+            Lihat Semua <i className="fas fa-arrow-right text-[10px]"></i>
+          </button>
+        )}
+      </div>
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}

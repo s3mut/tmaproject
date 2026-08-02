@@ -143,6 +143,19 @@ const LoginView = () => {
           <div className="ml-auto w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0"></div>
         </div>
 
+        {/* Cara mendapatkan akses */}
+        <div className="mt-3 glass rounded-2xl px-4 py-3.5 border border-slate-700/40">
+          <p className="text-[10px] font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
+            <i className="fas fa-question-circle text-amber-400"></i>
+            Belum punya akses?
+          </p>
+          <ol className="text-[10px] text-slate-500 space-y-1 list-decimal list-inside">
+            <li>Buka <span className="text-slate-400">Telegram</span> → cari bot TransitTMA → Start</li>
+            <li>Di tab <span className="text-slate-400">Profil</span>, klik <span className="text-blue-400">Password Akses Web</span></li>
+            <li>Set password, lalu login di sini dengan <span className="text-slate-400">@username</span></li>
+          </ol>
+        </div>
+
         <p className="text-center text-[10px] text-slate-600 mt-5">
           © {new Date().getFullYear()} TransitTMA — IT Asset Management
         </p>

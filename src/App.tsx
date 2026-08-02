@@ -12,6 +12,7 @@ import ItemDetailModal from './components/modals/ItemDetailModal';
 import QRScannerModal from './components/modals/QRScannerModal';
 import MutationModal from './components/modals/MutationModal';
 import CSVImportModal from './components/modals/CSVImportModal';
+import ConfirmModal from './components/modals/ConfirmModal';
 
 import DashboardView from './views/DashboardView';
 import ItemsView from './views/ItemsView';
@@ -42,6 +43,7 @@ function App() {
   const [csvImportOpen, setCsvImportOpen]   = useState(false);
   const [editItem, setEditItem]             = useState<AssetDetail | null>(null);
   const [detailItem, setDetailItem]         = useState<AssetDetail | null>(null);
+  const [confirmOpen, setConfirmOpen]       = useState(false);
 
   // Toast
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' as 'success' | 'error' });
@@ -99,11 +101,14 @@ function App() {
 
   const handleDeleteClick = () => {
     if (!detailItem) return;
-    if (window.confirm('Yakin ingin menghapus aset ini?')) {
-      removeAsset(detailItem.id)
-        .then(() => { setDetailOpen(false); setDetailItem(null); showToast('Aset berhasil dihapus (soft delete)!'); })
-        .catch((e: any) => showToast(e.message, 'error'));
-    }
+    setConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!detailItem) return;
+    removeAsset(detailItem.id)
+      .then(() => { setDetailOpen(false); setDetailItem(null); setConfirmOpen(false); showToast('Aset berhasil dihapus (soft delete)!'); })
+      .catch((e: any) => { setConfirmOpen(false); showToast(e.message, 'error'); });
   };
 
   const handleFormSubmit = async (data: any) => {
@@ -198,6 +203,7 @@ function App() {
             loading={loading}
             onItemClick={handleItemClick}
             onCategoryClick={handleCategoryClick}
+            onViewAll={() => { setSelectedCategory('all'); setActiveTab('items'); }}
           />
         )}
         {activeTab === 'items' && (
@@ -281,6 +287,15 @@ function App() {
           refresh();
           showToast(`Berhasil mengunggah ${count} unit aset dari CSV!`);
         }}
+      />
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="Hapus Aset?"
+        message={`Aset "${detailItem?.brand ?? ''} ${detailItem?.model_type ?? detailItem?.serial_number ?? ''}" akan dihapus dari inventaris. Tindakan ini bisa dibatalkan oleh Admin melalui database.`}
+        confirmLabel="Ya, Hapus Aset"
+        icon="fa-trash-alt"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmOpen(false)}
       />
     </div>
   );

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { AssetDetail, Site } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
+import QRScannerModal from '../components/modals/QRScannerModal';
 
 interface Props {
   assets: AssetDetail[];
@@ -9,115 +10,167 @@ interface Props {
 
 const OpnameView = ({ assets, sites }: Props) => {
   const [selectedSite, setSelectedSite] = useState<string>('');
-  const [scanning, setScanning] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedAssets, setScannedAssets] = useState<AssetDetail[]>([]);
+  const [lastScanMsg, setLastScanMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   // Filter assets by selected site
-  const siteAssets = assets.filter(a => a.site_alias === selectedSite);
+  const siteAssets = useMemo(
+    () => assets.filter(a => a.site_alias === selectedSite),
+    [assets, selectedSite]
+  );
 
-  // Stats for the opname
   const totalAssets = siteAssets.length;
-  const foundAssets = scannedAssets.length;
-  const missingAssets = totalAssets - foundAssets;
+  const foundCount  = scannedAssets.length;
+  const remaining   = totalAssets - foundCount;
+  const progress    = totalAssets > 0 ? Math.round((foundCount / totalAssets) * 100) : 0;
 
-  const handleSimulateScan = () => {
-    if (!selectedSite || siteAssets.length === 0) return;
-    
-    // Simulate finding a random asset that hasn't been scanned yet
-    const remaining = siteAssets.filter(a => !scannedAssets.some(sa => sa.id === a.id));
-    if (remaining.length > 0) {
-      const asset = remaining[Math.floor(Math.random() * remaining.length)];
-      setScannedAssets(prev => [asset, ...prev]);
+  const handleScanResult = (text: string) => {
+    const trimmed = text.trim().toLowerCase();
+
+    // Cari aset di site yang dipilih
+    const found = siteAssets.find(
+      a => a.serial_number.toLowerCase() === trimmed ||
+           (a.external_id && a.external_id.toLowerCase() === trimmed)
+    );
+
+    if (!found) {
+      setLastScanMsg({ text: `❌ Aset tidak ditemukan di site ini: "${text}"`, ok: false });
+      return;
     }
+    if (scannedAssets.some(a => a.id === found.id)) {
+      setLastScanMsg({ text: `⚠️ Aset sudah discanned: ${found.serial_number}`, ok: false });
+      return;
+    }
+
+    setScannedAssets(prev => [found, ...prev]);
+    setLastScanMsg({ text: `✅ Ditemukan: ${found.brand ?? ''} ${found.serial_number}`, ok: true });
+  };
+
+  const resetSession = () => {
+    setScannedAssets([]);
+    setLastScanMsg(null);
   };
 
   return (
     <div className="fade-in space-y-4">
-      <div className="card p-4">
-        <h2 className="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
+      {/* Header Card */}
+      <div className="glass rounded-2xl p-5">
+        <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
           <i className="fas fa-clipboard-check text-blue-400"></i>
           Sesi Stock Opname
         </h2>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
-              Pilih Lokasi Audit
-            </label>
-            <select
-              className="form-input"
-              value={selectedSite}
-              onChange={(e) => {
-                setSelectedSite(e.target.value);
-                setScannedAssets([]); // reset on site change
-              }}
-              disabled={scanning}
-            >
-              <option value="">-- Pilih Site --</option>
-              {sites.map((s) => (
-                <option key={s.site_code} value={s.site_alias ?? s.site_code}>
-                  {s.site_name}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          {selectedSite && (
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="bg-slate-800 rounded-lg p-2">
-                <div className="text-xs text-slate-400">Total</div>
-                <div className="text-lg font-bold text-slate-200">{totalAssets}</div>
-              </div>
-              <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-500/20">
-                <div className="text-xs text-emerald-400">Ditemukan</div>
-                <div className="text-lg font-bold text-emerald-400">{foundAssets}</div>
-              </div>
-              <div className="bg-red-900/30 rounded-lg p-2 border border-red-500/20">
-                <div className="text-xs text-red-400">Sisa</div>
-                <div className="text-lg font-bold text-red-400">{missingAssets}</div>
-              </div>
-            </div>
-          )}
-
-          {selectedSite && !scanning && (
-            <button
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-colors"
-              onClick={() => setScanning(true)}
-            >
-              <i className="fas fa-qrcode mr-2"></i> Mulai Scan Barcode
-            </button>
-          )}
-
-          {scanning && (
-            <div className="space-y-3">
-              <div className="bg-slate-800 p-6 rounded-xl border-2 border-dashed border-blue-500/50 text-center">
-                <i className="fas fa-camera text-4xl text-slate-500 mb-3 animate-pulse"></i>
-                <p className="text-slate-300 text-sm">Kamera Aktif...</p>
-                <p className="text-slate-500 text-xs mt-1">Arahkan ke QR/Barcode Aset</p>
-                
-                <button
-                  className="mt-4 px-4 py-2 bg-slate-700 text-sm rounded-lg text-slate-300"
-                  onClick={handleSimulateScan}
-                >
-                  [Simulasi Scan Asset]
-                </button>
-              </div>
-              
-              <button
-                className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
-                onClick={() => setScanning(false)}
-              >
-                Jeda Scan
-              </button>
-            </div>
-          )}
+        {/* Pilih Site */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium text-slate-400 mb-1.5">
+            Pilih Lokasi Audit
+          </label>
+          <select
+            className="form-input w-full"
+            value={selectedSite}
+            onChange={(e) => {
+              setSelectedSite(e.target.value);
+              resetSession();
+            }}
+            disabled={scannerOpen}
+          >
+            <option value="">-- Pilih Site --</option>
+            {sites.map((s) => (
+              <option key={s.site_code} value={s.site_alias ?? s.site_code}>
+                {s.site_name} ({s.site_alias ?? s.site_code})
+              </option>
+            ))}
+          </select>
         </div>
+
+        {/* Stats */}
+        {selectedSite && (
+          <>
+            <div className="grid grid-cols-3 gap-2 text-center mb-4">
+              <div className="bg-slate-800 rounded-xl p-3">
+                <div className="text-xs text-slate-400 mb-1">Total</div>
+                <div className="text-2xl font-bold text-white">{totalAssets}</div>
+              </div>
+              <div className="bg-emerald-900/30 rounded-xl p-3 border border-emerald-500/20">
+                <div className="text-xs text-emerald-400 mb-1">Ditemukan</div>
+                <div className="text-2xl font-bold text-emerald-400">{foundCount}</div>
+              </div>
+              <div className="bg-amber-900/30 rounded-xl p-3 border border-amber-500/20">
+                <div className="text-xs text-amber-400 mb-1">Belum Scan</div>
+                <div className="text-2xl font-bold text-amber-400">{remaining}</div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            {totalAssets > 0 && (
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-slate-400 mb-1.5">
+                  <span>Progress Opname</span>
+                  <span className="font-semibold text-white">{progress}%</span>
+                </div>
+                <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${progress}%`,
+                      background: progress === 100
+                        ? 'linear-gradient(90deg, #10b981, #059669)'
+                        : 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                    }}
+                  />
+                </div>
+                {progress === 100 && (
+                  <p className="text-xs text-emerald-400 text-center mt-2 font-semibold">
+                    🎉 Semua aset di site ini berhasil ditemukan!
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Last Scan Message */}
+            {lastScanMsg && (
+              <div className={`text-xs px-3 py-2.5 rounded-xl mb-3 font-medium ${
+                lastScanMsg.ok
+                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
+                  : 'bg-red-500/15 border border-red-500/30 text-red-400'
+              }`}>
+                {lastScanMsg.text}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2"
+                onClick={() => setScannerOpen(true)}
+              >
+                <i className="fas fa-qrcode"></i>
+                Scan Aset
+              </button>
+              {scannedAssets.length > 0 && (
+                <button
+                  className="px-4 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium transition-all"
+                  onClick={resetSession}
+                  title="Reset sesi opname"
+                >
+                  <i className="fas fa-redo"></i>
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
+      {/* Daftar Aset Ditemukan */}
       {scannedAssets.length > 0 && (
-        <div className="space-y-3 mt-6">
-          <h3 className="text-sm font-bold text-slate-300 flex items-center justify-between">
-            <span>Aset Ditemukan ({scannedAssets.length})</span>
+        <div>
+          <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+            <i className="fas fa-check-circle text-emerald-400"></i>
+            Aset Ditemukan
+            <span className="text-xs font-normal text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
+              {scannedAssets.length}
+            </span>
           </h3>
           <div className="space-y-2">
             {scannedAssets.map((asset) => (
@@ -126,6 +179,33 @@ const OpnameView = ({ assets, sites }: Props) => {
           </div>
         </div>
       )}
+
+      {/* Belum Scan */}
+      {selectedSite && scannedAssets.length > 0 && remaining > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+            <i className="fas fa-clock text-amber-400"></i>
+            Belum Discanned
+            <span className="text-xs font-normal text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
+              {remaining}
+            </span>
+          </h3>
+          <div className="space-y-2 opacity-60">
+            {siteAssets
+              .filter(a => !scannedAssets.some(s => s.id === a.id))
+              .map((asset) => (
+                <ItemCard key={asset.id} item={asset} onClick={() => {}} />
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* QR Scanner Modal */}
+      <QRScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScanResult={handleScanResult}
+      />
     </div>
   );
 };

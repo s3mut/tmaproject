@@ -73,7 +73,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, onIte
   return (
     <div className="fade-in">
       {/* Filter Chips — dinamis dari data database */}
-      <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-2 scrollbar-hide">
         {statusFilters.map(({ key, label }) => (
           <button
             key={key}
@@ -84,6 +84,19 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, onIte
           </button>
         ))}
       </div>
+
+      {/* Counter hasil */}
+      {!loading && (
+        <p className="text-xs text-slate-500 mb-4">
+          {filtered.length === assets.length
+            ? `${assets.length} aset`
+            : <><span className="text-blue-400 font-semibold">{filtered.length}</span> dari {assets.length} aset</>
+          }
+          {initialCategory && initialCategory !== 'all' && (
+            <span className="ml-1 text-slate-600">• Kategori: <span className="text-slate-400">{initialCategory}</span></span>
+          )}
+        </p>
+      )}
 
       {loading ? (
         <div className="text-center py-12">
