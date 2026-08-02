@@ -25,7 +25,7 @@ CREATE OR REPLACE FUNCTION public.verify_web_login_v2(
 RETURNS TABLE(
   telegram_id BIGINT,
   name        TEXT,
-  username    VARCHAR(100),
+  username    TEXT,
   role        TEXT,
   is_active   BOOLEAN,
   notes       TEXT,
@@ -39,11 +39,11 @@ BEGIN
   RETURN QUERY
   SELECT
     u.telegram_id,
-    u.name,
-    u.username,
+    u.name::TEXT,
+    u.username::TEXT,
     u.role::TEXT,
     u.is_active,
-    u.notes,
+    u.notes::TEXT,
     u.created_at
   FROM telegram_users u
   WHERE
@@ -51,7 +51,7 @@ BEGIN
       -- login dengan angka Telegram ID
       (p_identifier ~ '^[0-9]+$' AND u.telegram_id = p_identifier::BIGINT)
       -- login dengan @username (case-insensitive, hapus @ jika ada)
-      OR (LOWER(u.username) = LOWER(REPLACE(p_identifier, '@', '')))
+      OR (LOWER(u.username::TEXT) = LOWER(REPLACE(p_identifier, '@', '')))
     )
     AND u.has_web_access = TRUE
     AND u.web_password   IS NOT NULL
