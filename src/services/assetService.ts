@@ -1,15 +1,33 @@
 import { supabase } from '../lib/supabase';
 import type { MasterAsset, AssetDetail, Category } from '../types/inventory';
 
-// Ambil semua aset dari VIEW (sudah difilter deleted_at IS NULL di database view)
-export async function getAssets(): Promise<AssetDetail[]> {
-  const { data, error } = await supabase
-    .from('view_assets_detail')
-    .select('*')
-    .order('created_at', { ascending: false });
+const PAGE_SIZE = 1000; // Batas default PostgREST per request
 
-  if (error) throw new Error(error.message);
-  return data ?? [];
+// Ambil SEMUA aset dari VIEW menggunakan pagination loop
+// (PostgREST membatasi 1000 baris per request secara default)
+export async function getAssets(): Promise<AssetDetail[]> {
+  const allAssets: AssetDetail[] = [];
+  let from = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('view_assets_detail')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw new Error(error.message);
+
+    const rows = data ?? [];
+    allAssets.push(...rows);
+
+    // Jika jumlah yang dikembalikan kurang dari PAGE_SIZE, berarti sudah halaman terakhir
+    hasMore = rows.length === PAGE_SIZE;
+    from += PAGE_SIZE;
+  }
+
+  return allAssets;
 }
 
 // Tambah aset baru
