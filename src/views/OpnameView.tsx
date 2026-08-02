@@ -52,6 +52,22 @@ const OpnameView = ({ assets, sites }: Props) => {
     setLastScanMsg(null);
   };
 
+  // Group sites by region for the dropdown
+  const groupedSites = useMemo(() => {
+    const groups: Record<string, Site[]> = {};
+    sites.forEach(s => {
+      const region = s.region || 'Tanpa Region';
+      if (!groups[region]) groups[region] = [];
+      groups[region].push(s);
+    });
+    // Urutkan region abjad, 'Tanpa Region' di bawah
+    return Object.entries(groups).sort((a, b) => {
+      if (a[0] === 'Tanpa Region') return 1;
+      if (b[0] === 'Tanpa Region') return -1;
+      return a[0].localeCompare(b[0]);
+    });
+  }, [sites]);
+
   return (
     <div className="fade-in space-y-4">
       {/* Header Card */}
@@ -76,10 +92,14 @@ const OpnameView = ({ assets, sites }: Props) => {
             disabled={scannerOpen}
           >
             <option value="">-- Pilih Site --</option>
-            {sites.map((s) => (
-              <option key={s.site_code} value={s.site_alias ?? s.site_code}>
-                {s.site_name} ({s.site_alias ?? s.site_code})
-              </option>
+            {groupedSites.map(([region, regionSites]) => (
+              <optgroup key={region} label={`📍 Region: ${region}`}>
+                {regionSites.map((s) => (
+                  <option key={s.site_code} value={s.site_alias ?? s.site_code}>
+                    {s.site_name} ({s.site_alias ?? s.site_code})
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
