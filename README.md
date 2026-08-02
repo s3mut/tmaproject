@@ -12,10 +12,11 @@
 
 ## 🌟 Fitur Utama
 
-- **📊 Dashboard Interaktif**: Ringkasan statistik status aset (Active, Backup, Repair, In Transit, Disposed, Retired) dengan **filter interaktif per kategori** — klik kategori untuk melihat total & breakdown status aset kategori tersebut saja.
-- **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** lokasi site operasional.
-- **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit* saat diterima oleh penerima).
-- **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi untuk mencatat status ditemukannya aset (*Ditemukan*, *Hilang*, *Nyasar*).
+- **📊 Dashboard Interaktif**: Ringkasan statistik status aset (Active, Backup, Repair, In Transit, Disposed, Retired) dengan **filter interaktif per kategori**. Seluruh kartu statistik dapat diklik untuk navigasi langsung menuju tab Aset dengan filter status & kategori yang terpasang otomatis.
+- **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** dalam bentuk *collapsible/accordion* yang informatif, dilengkapi indikator *breakdown* status per wilayah dan penghitung hasil filter secara reponsif.
+- **⚡ Paginated Auto-Fetch (Bebas Limit 1.000 Baris)**: Mampu memuat seluruh inventaris perusahaan (6.000+ unit aset) dengan sempurna tanpa terhalang batas default 1.000 baris per request dari PostgREST/Supabase.
+- **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit* saat diterima oleh penerima), dilengkapi filter status dan pencarian real-time di riwayat mutasi.
+- **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi terintegrasi kamera yang memisahkan status barang yang sudah di-scan dengan yang belum diverifikasi, lengkap dengan *progress bar* visual.
 - **📷 QR / Barcode Scanner Nyata**: Scanner kamera langsung di Telegram Mini App menggunakan `html5-qrcode` — mendukung QR Code, Code 128, Code 39, EAN-13, dan format lainnya. Otomatis membuka detail aset saat kode terdeteksi.
 - **📤 Import CSV Massal (Khusus Role Admin)**:
   - Validasi kategori *strict* terhadap database `master_categories` untuk mencegah typo / data kotor.
@@ -53,6 +54,7 @@ TransitTMA/
 │   ├── auto_category_trigger.sql   # Trigger Validation Strict Kategori
 │   ├── import_assets_from_csv.sql  # Script Staging & Migrasi CSV
 │   ├── web_auth_rpc.sql            # SQL Migration: Web Auth (web_password + RPC)
+│   ├── diagnostic_web_auth.sql     # SQL Diagnostik & Pengujian Web Login
 │   └── bot_webhook_handler.js      # Telegram Bot Webhook Handler (Node.js)
 ├── src/
 │   ├── components/                 # Reusable UI Components & Modals
@@ -60,6 +62,7 @@ TransitTMA/
 │   │   ├── BottomNav.tsx           # Bottom Tab Navigation
 │   │   ├── ItemCard.tsx            # Card Component Tampilan Aset
 │   │   └── modals/                 # Interactive Modal Components
+│   │       ├── ConfirmModal.tsx    # Modal Konfirmasi Pengganti window.confirm
 │   │       ├── CSVImportModal.tsx  # Uploader & Validator CSV Khusus Admin
 │   │       ├── ItemFormModal.tsx   # Form Tambah / Edit Aset
 │   │       ├── ItemDetailModal.tsx # Detail Aset & Aksis
