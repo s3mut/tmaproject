@@ -46,7 +46,7 @@ BEGIN
     u.role::TEXT,
     u.is_active,
     u.notes::TEXT,
-    u.created_at
+    u.created_at::TIMESTAMPTZ
   FROM telegram_users u
   WHERE
     (
