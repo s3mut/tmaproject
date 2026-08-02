@@ -109,6 +109,61 @@ STEP 6: TESTING & BUILD VERIFICATION
 - Memastikan tidak ada type mismatch atau lint error.
 - Aplikasi siap di-deploy ke Vercel dan dihubungkan ke Bot Father Telegram Mini App.
 
+--------------------------------------------------------------------------------
+STEP 23: UX OPTIMIZATIONS (CONFIRM MODAL, REAL OPNAME SCANNER, TOAST ALERT) (2026-08-02)
+--------------------------------------------------------------------------------
+Kebutuhan & Peningkatan UX:
+  1. Penggunaan `window.confirm()` tidak berfungsi stabil dalam WebView Telegram Mini App.
+  2. Alur Stock Opname masih bersifat simulasi/placeholder.
+  3. Kurang informatifnya filter di History & Items, serta notifikasi di Profile & Login.
+
+Implementasi & Perubahan:
+  - `src/components/modals/ConfirmModal.tsx`: Dibuat modal konfirmasi kustom baru untuk menggantikan
+    `window.confirm()` pada penghapusan aset atau aksi kritis lainnya di `App.tsx`.
+  - `src/views/OpnameView.tsx`: Diatur ulang untuk terhubung langsung dengan `QRScannerModal`,
+    dilengkapi progress bar, daftar aset ter-scan, serta pemisahan daftar unit yang belum di-scan.
+  - `src/views/HistoryView.tsx`: Ditambahkan filter chip status (Semua, In Transit, Completed, Rejected)
+    serta kotak pencarian real-time berdasar nomor seri, nama aset, atau lokasi.
+  - `src/views/ItemsView.tsx`: Ditambahkan indikator hitungan hasil filter ("X dari Y aset").
+  - `src/views/ProfileView.tsx`: Mengganti pemanggilan `window.alert()` dengan sistem notifikasi toast.
+  - `src/views/LoginView.tsx`: Ditambahkan informasi panduan singkat cara mendapatkan akses bagi pengguna baru.
+
+--------------------------------------------------------------------------------
+STEP 24: CLICKABLE STAT CARDS & REGION ACCORDION IN ASSET VIEW (2026-08-02)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  1. Kartu statistik di Dashboard (Total, Active, Backup, Repair, Retired, In Transit) dapat diklik dan
+     langsung mengarahkan ke tab Aset dengan filter status dan kategori yang sedang aktif.
+  2. Tampilan daftar aset di tab Aset dikelompokkan berdasarkan Region dalam bentuk accordion/collapsible
+     yang baru terbuka saat di-klik atau saat pencarian/filter aktif.
+
+Implementasi & Perubahan:
+  - `src/views/DashboardView.tsx` & `src/App.tsx`: Menambahkan handler `onStatusClick` yang mengarahkan
+    pengguna ke tab Aset (`ItemsView`) sambil meneruskan filter status dan kategori dari Dashboard.
+  - `src/views/ItemsView.tsx`: Di-refactor menggunakan pola komponen `RegionCard` (accordion/collapsible).
+    - Menampilkan breakdown status di header setiap region (misal: 5 Active • 2 Backup).
+    - Hanya region pertama terbuka secara default; saat ada pencarian atau filter aktif, seluruh region
+      secara otomatis terbuka agar hasil pencarian langsung terlihat.
+
+--------------------------------------------------------------------------------
+STEP 25: SUPABASE 1000-ROW LIMIT BYPASS & WEB AUTH SQL FIX (2026-08-02)
+--------------------------------------------------------------------------------
+Masalah:
+  1. Pembacaan jumlah total aset di aplikasi tertahan di angka 1.000 meskipun database memiliki > 6.000 record.
+  2. Error eksekusi SQL: `42804: Returned type character varying(100) does not match expected type text in column 2`
+     saat memverifikasi login web dummy user via fungsi RPC `verify_web_login_v2`.
+
+Root Cause & Solusi:
+  - Limit 1.000 Baris PostgREST: API Supabase membatasi maksimal 1.000 baris per request secara default.
+    - `src/services/assetService.ts`: Fungsi `getAssets()` diubah menggunakan loop pagination bertahan dengan
+      `.range(from, to)` dengan ukuran chunk 1.000 sampai seluruh data (> 6.000 record) berhasil diunduh.
+  - PostgreSQL Mismatched Return Type: Kolom `name`, `username`, dan `notes` bertipe `VARCHAR` / varian
+    teks yang harus persis cocok dengan deklarasi `RETURNS TABLE` di PL/pgSQL.
+    - `docs/setup_web_auth_and_dummy_users.sql`: Mengubah tipe `username` menjadi `TEXT` pada `RETURNS TABLE`,
+      dan melakukan eksplisit type cast (`u.name::TEXT`, `u.username::TEXT`, `u.notes::TEXT`) di query `SELECT`.
+    - Dibuat file sekunder `docs/diagnostic_web_auth.sql` untuk membantu inspeksi dan pengujian verifikasi kata
+      sandi dummy user secara mandiri di SQL Editor Supabase.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
