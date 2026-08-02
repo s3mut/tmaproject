@@ -9,12 +9,18 @@ interface Props {
   onItemClick: (id: number) => void;
   onCategoryClick: (cat: string) => void;
   onViewAll?: () => void;
+  onStatusClick?: (status: string, category: string) => void;
 }
 
-const StatCard = ({ label, value, color, icon, gradient, border }: {
+const StatCard = ({ label, value, color, icon, gradient, border, onClick }: {
   label: string; value: number; color: string; icon: string; gradient: string; border: string;
+  onClick?: () => void;
 }) => (
-  <div className="rounded-xl p-4" style={{ background: gradient, borderWidth: 1, borderStyle: 'solid', borderColor: border }}>
+  <div
+    className={`rounded-xl p-4 transition-all ${onClick ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+    style={{ background: gradient, borderWidth: 1, borderStyle: 'solid', borderColor: border }}
+    onClick={onClick}
+  >
     <div className="flex items-center justify-between mb-2">
       <span className="text-xs text-slate-400">{label}</span>
       <div className={`category-icon ${color.replace('text-', 'bg-').replace('-400', '-500/20').replace('-600', '-500/20')} ${color}`} style={{ width: 32, height: 32, fontSize: '0.9rem' }}>
@@ -22,6 +28,7 @@ const StatCard = ({ label, value, color, icon, gradient, border }: {
       </div>
     </div>
     <p className={`text-2xl font-bold ${color}`}>{value}</p>
+    {onClick && <p className="text-[10px] text-slate-600 mt-1">Tap untuk lihat →</p>}
   </div>
 );
 
@@ -44,7 +51,7 @@ const SkeletonCategory = () => (
   </div>
 );
 
-const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryClick, onViewAll }: Props) => {
+const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryClick: _onCategoryClick, onViewAll, onStatusClick }: Props) => {
   const [selectedCat, setSelectedCat] = useState<string>('all');
 
   // Filter aset berdasarkan kategori yang dipilih
@@ -65,25 +72,33 @@ const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryCli
 
   const recentAssets = filteredAssets.slice(0, 5);
 
+  // Klik kategori: hanya update filter stats di Dashboard (TIDAK navigasi ke tab Items)
   const handleCatSelect = (catName: string) => {
     setSelectedCat(catName);
-    // Juga trigger navigasi ke tab Items (filter tetap konsisten)
-    onCategoryClick(catName);
+  };
+
+  // Klik stat card: navigasi ke Items dengan status + kategori aktif
+  const handleStatClick = (status: string) => {
+    if (onStatusClick) onStatusClick(status, selectedCat);
   };
 
   return (
     <div className="fade-in">
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="stat-card rounded-xl p-4 col-span-2 flex justify-between items-center">
+        {/* Total card — klik untuk lihat semua */}
+        <div
+          className={`stat-card rounded-xl p-4 col-span-2 flex justify-between items-center ${onStatusClick ? 'cursor-pointer hover:ring-1 hover:ring-white/10 transition-all active:scale-[0.99]' : ''}`}
+          onClick={() => handleStatClick('all')}
+        >
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs text-slate-400">
-                {selectedCat === 'all' ? 'Total Aset Aktif' : `Total — ${selectedCat}`}
+                {selectedCat === 'all' ? 'Total Aset' : `Total — ${selectedCat}`}
               </span>
               {selectedCat !== 'all' && (
                 <button
-                  onClick={() => setSelectedCat('all')}
+                  onClick={(e) => { e.stopPropagation(); setSelectedCat('all'); }}
                   className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all flex items-center gap-1"
                 >
                   <i className="fas fa-times"></i> Reset
@@ -91,21 +106,30 @@ const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryCli
               )}
             </div>
             <p className="text-3xl font-bold text-white">{stats.total}</p>
+            {onStatusClick && <p className="text-[10px] text-slate-600 mt-1">Tap untuk lihat semua →</p>}
           </div>
-          <div className="text-right">
+          <div
+            className="text-right cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); handleStatClick('In Transit'); }}
+          >
             <div className="text-xs text-slate-400 mb-1">In Transit</div>
             <p className="text-xl font-bold text-blue-400">{stats.inTransit}</p>
+            {onStatusClick && <p className="text-[10px] text-slate-600 mt-0.5">Tap →</p>}
           </div>
         </div>
 
         <StatCard label="Active"  value={stats.active}  color="text-green-400"  icon="fa-check-circle"
-          gradient="linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05))" border="rgba(34,197,94,0.2)" />
+          gradient="linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05))" border="rgba(34,197,94,0.2)"
+          onClick={() => handleStatClick('Active')} />
         <StatCard label="Backup"  value={stats.backup}  color="text-blue-400"   icon="fa-archive"
-          gradient="linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05))" border="rgba(59,130,246,0.2)" />
+          gradient="linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05))" border="rgba(59,130,246,0.2)"
+          onClick={() => handleStatClick('Backup')} />
         <StatCard label="Retired" value={stats.retired} color="text-slate-500"  icon="fa-power-off"
-          gradient="linear-gradient(135deg, rgba(100,116,139,0.1), rgba(100,116,139,0.05))" border="rgba(100,116,139,0.2)" />
+          gradient="linear-gradient(135deg, rgba(100,116,139,0.1), rgba(100,116,139,0.05))" border="rgba(100,116,139,0.2)"
+          onClick={() => handleStatClick('Retired')} />
         <StatCard label="Repair"  value={stats.repair}  color="text-yellow-400" icon="fa-tools"
-          gradient="linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.05))" border="rgba(234,179,8,0.2)" />
+          gradient="linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.05))" border="rgba(234,179,8,0.2)"
+          onClick={() => handleStatClick('Repair')} />
       </div>
 
       {/* Categories — dinamis dari database */}

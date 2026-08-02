@@ -34,6 +34,7 @@ function App() {
   const [activeTab, setActiveTab]           = useState<TabName>('dashboard');
   const [searchValue, setSearchValue]       = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus]     = useState<string>('all');
 
   // Modals state
   const [formOpen, setFormOpen]             = useState(false);
@@ -79,9 +80,16 @@ function App() {
     setSearchValue('');
   };
 
-  // Category click from dashboard
+  // Category click from dashboard (hanya update tab tanpa status)
   const handleCategoryClick = (cat: string) => {
     setSelectedCategory(cat);
+    setActiveTab('items');
+  };
+
+  // Status click from Dashboard stat card → navigasi ke Items dengan status + kategori
+  const handleStatusClick = (status: string, category: string) => {
+    setSelectedCategory(category);
+    setSelectedStatus(status);
     setActiveTab('items');
   };
 
@@ -203,7 +211,8 @@ function App() {
             loading={loading}
             onItemClick={handleItemClick}
             onCategoryClick={handleCategoryClick}
-            onViewAll={() => { setSelectedCategory('all'); setActiveTab('items'); }}
+            onViewAll={() => { setSelectedCategory('all'); setSelectedStatus('all'); setActiveTab('items'); }}
+            onStatusClick={handleStatusClick}
           />
         )}
         {activeTab === 'items' && (
@@ -213,6 +222,7 @@ function App() {
             searchValue={searchValue}
             loading={loading}
             initialCategory={selectedCategory}
+            initialStatus={selectedStatus}
             onItemClick={handleItemClick}
           />
         )}

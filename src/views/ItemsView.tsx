@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { AssetDetail, AssetStatus, Site } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 
@@ -11,11 +11,23 @@ interface Props {
   searchValue: string;
   loading: boolean;
   initialCategory?: string;
+  initialStatus?: string;
   onItemClick: (id: number) => void;
 }
 
-const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, onItemClick }: Props) => {
-  const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>('all');
+const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initialStatus, onItemClick }: Props) => {
+  const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>(
+    (initialStatus && initialStatus !== 'all') ? initialStatus as AssetStatus : 'all'
+  );
+
+  // Sync filter saat initialStatus berubah (dari klik stat card Dashboard)
+  useEffect(() => {
+    if (initialStatus && initialStatus !== 'all') {
+      setActiveFilter(initialStatus as AssetStatus);
+    } else {
+      setActiveFilter('all');
+    }
+  }, [initialStatus]);
 
   // Build dynamic status filter chips dari data aktual di database
   const statusFilters = useMemo(() => [
