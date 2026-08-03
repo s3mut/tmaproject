@@ -12,6 +12,50 @@ interface Props {
   onStatusClick?: (status: string, category: string) => void;
 }
 
+interface CategoryGroup {
+  key: string;
+  label: string;
+  icon: string;
+  color_text: string;
+  color_bg: string;
+  items: Category[];
+}
+
+const PRESET_GROUPS = [
+  {
+    key: 'monitor',
+    label: 'Monitor',
+    icon: 'fa-desktop',
+    color_text: 'text-blue-400',
+    color_bg: 'bg-blue-500/20',
+    keywords: ['monitor', 'display', 'screen'],
+  },
+  {
+    key: 'computer',
+    label: 'Komputer / PC',
+    icon: 'fa-laptop',
+    color_text: 'text-purple-400',
+    color_bg: 'bg-purple-500/20',
+    keywords: ['pc', 'komputer', 'laptop', 'desktop', 'server', 'all-in-one', 'aio'],
+  },
+  {
+    key: 'printer',
+    label: 'Printer & Scanner',
+    icon: 'fa-print',
+    color_text: 'text-emerald-400',
+    color_bg: 'bg-emerald-500/20',
+    keywords: ['printer', 'scanner', 'cetak', 'thermal', 'barcode scanner'],
+  },
+  {
+    key: 'network',
+    label: 'Network & Perangkat',
+    icon: 'fa-network-wired',
+    color_text: 'text-amber-400',
+    color_bg: 'bg-amber-500/20',
+    keywords: ['switch', 'router', 'access point', 'ap', 'network', 'hub', 'wifi', 'cctv', 'camera', 'ups'],
+  },
+];
+
 function formatTime7Days(isoString: string): string {
   const date = new Date(isoString);
   const now = new Date();
@@ -55,22 +99,78 @@ const SkeletonCard = () => (
 );
 
 const SkeletonCategory = () => (
-  <div className="flex-shrink-0 text-center animate-pulse">
-    <div className="w-12 h-12 rounded-xl bg-slate-700 mx-auto mb-1"></div>
-    <div className="h-2 bg-slate-700 rounded w-10 mx-auto"></div>
+  <div className="flex-shrink-0 animate-pulse">
+    <div className="w-24 h-9 rounded-xl bg-slate-700"></div>
   </div>
 );
 
 const DashboardView = ({ assets, mutations = [], categories, loading, onItemClick, onCategoryClick: _onCategoryClick, onViewAll, onStatusClick }: Props) => {
-  const [selectedCat, setSelectedCat] = useState<string>('all');
+  const [selectedGroupKey, setSelectedGroupKey] = useState<string>('all');
+  const [selectedSubCatName, setSelectedSubCatName] = useState<string>('all');
 
-  // Filter aset berdasarkan kategori yang dipilih
+  // Dynamic Grouping of Master Categories
+  const categoryGroups = useMemo(() => {
+    const groups: CategoryGroup[] = PRESET_GROUPS.map((p) => ({
+      key: p.key,
+      label: p.label,
+      icon: p.icon,
+      color_text: p.color_text,
+      color_bg: p.color_bg,
+      items: [],
+    }));
+
+    const unassigned: Category[] = [];
+
+    categories.forEach((cat) => {
+      const nameLower = cat.name.toLowerCase();
+      const matchedPreset = PRESET_GROUPS.find((p) =>
+        p.keywords.some((kw) => nameLower.includes(kw))
+      );
+      if (matchedPreset) {
+        const target = groups.find((g) => g.key === matchedPreset.key);
+        if (target) target.items.push(cat);
+      } else {
+        unassigned.push(cat);
+      }
+    });
+
+    const activeGroups = groups.filter((g) => g.items.length > 0);
+
+    if (unassigned.length > 0) {
+      activeGroups.push({
+        key: 'other',
+        label: 'Lainnya',
+        icon: 'fa-boxes-stacked',
+        color_text: 'text-slate-400',
+        color_bg: 'bg-slate-700/50',
+        items: unassigned,
+      });
+    }
+
+    return activeGroups;
+  }, [categories]);
+
+  const activeGroup = useMemo(() => {
+    return categoryGroups.find((g) => g.key === selectedGroupKey) ?? null;
+  }, [categoryGroups, selectedGroupKey]);
+
+  const activeCategoryNames = useMemo(() => {
+    if (selectedGroupKey === 'all') return null;
+    if (!activeGroup) return null;
+
+    if (selectedSubCatName !== 'all') {
+      return [selectedSubCatName];
+    }
+    return activeGroup.items.map((c) => c.name);
+  }, [selectedGroupKey, activeGroup, selectedSubCatName]);
+
+  // Filter aset berdasarkan kategori/group yang dipilih
   const filteredAssets = useMemo(() => {
-    if (selectedCat === 'all') return assets;
-    return assets.filter(a => a.category_name === selectedCat);
-  }, [assets, selectedCat]);
+    if (!activeCategoryNames) return assets;
+    return assets.filter(a => activeCategoryNames.includes(a.category_name));
+  }, [assets, activeCategoryNames]);
 
-  // Filter mutasi 7 hari terakhir
+  // Filter mutasi 7 hari terakhir berdasarkan kategori/group yang dipilih
   const recentMutations = useMemo(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -79,10 +179,10 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
       const mutDate = new Date(m.mutation_date);
       const isWithin7Days = mutDate >= sevenDaysAgo;
       if (!isWithin7Days) return false;
-      if (selectedCat !== 'all' && m.asset_category_name !== selectedCat) return false;
+      if (activeCategoryNames && !activeCategoryNames.includes(m.asset_category_name)) return false;
       return true;
     }).slice(0, 5);
-  }, [mutations, selectedCat]);
+  }, [mutations, activeCategoryNames]);
 
   // Hitung stats dari filtered assets
   const stats = useMemo(() => ({
@@ -94,14 +194,14 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
     inTransit: filteredAssets.filter(a => a.status === 'In Transit').length,
   }), [filteredAssets]);
 
-  // Klik kategori: hanya update filter stats di Dashboard
-  const handleCatSelect = (catName: string) => {
-    setSelectedCat(catName);
-  };
-
   // Klik stat card: navigasi ke Items dengan status + kategori aktif
   const handleStatClick = (status: string) => {
-    if (onStatusClick) onStatusClick(status, selectedCat);
+    if (onStatusClick) {
+      const catToPass = selectedSubCatName !== 'all'
+        ? selectedSubCatName
+        : (activeGroup && activeGroup.items.length === 1 ? activeGroup.items[0].name : 'all');
+      onStatusClick(status, catToPass);
+    }
   };
 
   return (
@@ -116,11 +216,19 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs text-slate-400">
-                {selectedCat === 'all' ? 'Total Aset' : `Total — ${selectedCat}`}
+                {selectedGroupKey === 'all'
+                  ? 'Total Aset'
+                  : selectedSubCatName !== 'all'
+                  ? `Total — ${selectedSubCatName}`
+                  : `Total — ${activeGroup?.label ?? selectedGroupKey}`}
               </span>
-              {selectedCat !== 'all' && (
+              {selectedGroupKey !== 'all' && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setSelectedCat('all'); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedGroupKey('all');
+                    setSelectedSubCatName('all');
+                  }}
                   className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all flex items-center gap-1"
                 >
                   <i className="fas fa-times"></i> Reset
@@ -154,48 +262,59 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
           onClick={() => handleStatClick('Repair')} />
       </div>
 
-      {/* Categories — dinamis dari database */}
-      <h2 className="text-sm font-semibold text-slate-300 mb-3">Kategori</h2>
-      <div className="flex gap-3 overflow-x-auto pb-4 mb-4 scrollbar-hide pr-16">
+      {/* Categories Group Section */}
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-semibold text-slate-300">Kategori Aset</h2>
+        {selectedGroupKey !== 'all' && (
+          <button
+            onClick={() => { setSelectedGroupKey('all'); setSelectedSubCatName('all'); }}
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors"
+          >
+            <i className="fas fa-undo text-[10px]"></i> Reset Filter
+          </button>
+        )}
+      </div>
+
+      {/* Main Parent Group Chips */}
+      <div className="flex gap-2.5 overflow-x-auto pb-3 mb-2 scrollbar-hide pr-4">
         {loading ? (
           [1, 2, 3, 4].map((i) => <SkeletonCategory key={i} />)
         ) : (
           <>
             {/* Chip: Semua */}
             <div
-              className="flex-shrink-0 text-center cursor-pointer"
-              onClick={() => setSelectedCat('all')}
+              className={`flex-shrink-0 cursor-pointer px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-semibold ${
+                selectedGroupKey === 'all'
+                  ? 'bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900 shadow-lg shadow-blue-500/20'
+                  : 'bg-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+              }`}
+              onClick={() => { setSelectedGroupKey('all'); setSelectedSubCatName('all'); }}
             >
-              <div className={`category-icon mx-auto mb-1 transition-all ${
-                selectedCat === 'all'
-                  ? 'bg-blue-500 text-white ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900'
-                  : 'bg-blue-500/20 text-blue-400'
-              }`}>
-                <i className="fas fa-th-large"></i>
-              </div>
-              <span className={`text-xs transition-colors ${selectedCat === 'all' ? 'text-blue-400 font-semibold' : 'text-slate-400'}`}>
-                Semua
-              </span>
+              <i className="fas fa-th-large text-sm"></i>
+              <span>Semua</span>
             </div>
 
-            {/* Chip: Per kategori */}
-            {categories.map((cat) => {
-              const isActive = selectedCat === cat.name;
+            {/* Parent Group Chips */}
+            {categoryGroups.map((grp) => {
+              const isActive = selectedGroupKey === grp.key;
+              const count = assets.filter((a) => grp.items.some((c) => c.name === a.category_name)).length;
               return (
                 <div
-                  key={cat.id}
-                  className="flex-shrink-0 text-center cursor-pointer"
-                  onClick={() => handleCatSelect(cat.name)}
-                >
-                  <div className={`category-icon mx-auto mb-1 transition-all ${
+                  key={grp.key}
+                  className={`flex-shrink-0 cursor-pointer px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-semibold ${
                     isActive
-                      ? `${cat.color_bg.replace('/20', '')} ${cat.color_text} ring-2 ring-offset-2 ring-offset-slate-900 ${cat.color_text.replace('text-', 'ring-')}`
-                      : `${cat.color_bg} ${cat.color_text}`
-                  }`}>
-                    <i className={`fas ${cat.icon}`}></i>
-                  </div>
-                  <span className={`text-xs transition-colors ${isActive ? `${cat.color_text} font-semibold` : 'text-slate-400'}`}>
-                    {cat.name}
+                      ? `${grp.color_bg.replace('/20', '')} ${grp.color_text} ring-2 ring-offset-2 ring-offset-slate-900 ${grp.color_text.replace('text-', 'ring-')} shadow-lg`
+                      : `${grp.color_bg} ${grp.color_text} hover:opacity-90`
+                  }`}
+                  onClick={() => {
+                    setSelectedGroupKey(grp.key);
+                    setSelectedSubCatName('all');
+                  }}
+                >
+                  <i className={`fas ${grp.icon} text-sm`}></i>
+                  <span>{grp.label}</span>
+                  <span className="text-[10px] opacity-80 px-1.5 py-0.2 bg-black/20 rounded-full">
+                    {count}
                   </span>
                 </div>
               );
@@ -204,15 +323,56 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
         )}
       </div>
 
+      {/* Sub-Categories Chips (Shows when a Parent Group with > 1 subcategories is selected) */}
+      {activeGroup && activeGroup.items.length > 1 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+          <span className="text-[11px] text-slate-400 font-medium flex-shrink-0 pl-1">
+            Sub:
+          </span>
+          <button
+            onClick={() => setSelectedSubCatName('all')}
+            className={`px-3 py-1 rounded-lg text-xs font-medium flex-shrink-0 transition-all ${
+              selectedSubCatName === 'all'
+                ? 'bg-slate-200 text-slate-900 font-semibold shadow-sm'
+                : 'bg-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            Semua {activeGroup.label}
+          </button>
+          {activeGroup.items.map((sub) => {
+            const isSubActive = selectedSubCatName === sub.name;
+            const subCount = assets.filter((a) => a.category_name === sub.name).length;
+            return (
+              <button
+                key={sub.id}
+                onClick={() => setSelectedSubCatName(sub.name)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium flex-shrink-0 transition-all flex items-center gap-1.5 ${
+                  isSubActive
+                    ? 'bg-blue-500/30 text-blue-300 border border-blue-400/50 font-semibold'
+                    : 'bg-slate-800/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-700/40'
+                }`}
+              >
+                <i className={`fas ${sub.icon} text-[10px]`}></i>
+                {sub.name} <span className="text-[10px] opacity-70">({subCount})</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Aset Terakhir Dipindah (7 Hari Terakhir) */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 mt-2">
         <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
           <i className="fas fa-truck-moving text-blue-400"></i>
-          {selectedCat === 'all' ? 'Terakhir Dipindah (7 Hari)' : `Mutasi — ${selectedCat} (7 Hari)`}
+          {selectedGroupKey === 'all'
+            ? 'Terakhir Dipindah (7 Hari)'
+            : selectedSubCatName !== 'all'
+            ? `Mutasi — ${selectedSubCatName} (7 Hari)`
+            : `Mutasi — ${activeGroup?.label} (7 Hari)`}
         </h2>
         {onViewAll && !loading && (
           <button
-            onClick={() => { onViewAll(); setSelectedCat('all'); }}
+            onClick={() => { onViewAll(); setSelectedGroupKey('all'); setSelectedSubCatName('all'); }}
             className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors font-medium"
           >
             Lihat Semua <i className="fas fa-arrow-right text-[10px]"></i>
