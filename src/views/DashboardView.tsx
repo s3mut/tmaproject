@@ -1,15 +1,25 @@
 import { useState, useMemo } from 'react';
-import type { AssetDetail, Category } from '../types/inventory';
-import ItemCard from '../components/ItemCard';
+import type { AssetDetail, Category, MutationDetail } from '../types/inventory';
 
 interface Props {
   assets: AssetDetail[];
+  mutations?: MutationDetail[];
   categories: Category[];
   loading: boolean;
   onItemClick: (id: number) => void;
   onCategoryClick: (cat: string) => void;
   onViewAll?: () => void;
   onStatusClick?: (status: string, category: string) => void;
+}
+
+function formatTime7Days(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diff = (now.getTime() - date.getTime()) / 1000;
+  if (diff < 60) return 'Baru saja';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m lalu`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}j lalu`;
+  return `${Math.floor(diff / 86400)} hari lalu`;
 }
 
 const StatCard = ({ label, value, color, icon, gradient, border, onClick }: {
@@ -51,7 +61,7 @@ const SkeletonCategory = () => (
   </div>
 );
 
-const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryClick: _onCategoryClick, onViewAll, onStatusClick }: Props) => {
+const DashboardView = ({ assets, mutations = [], categories, loading, onItemClick, onCategoryClick: _onCategoryClick, onViewAll, onStatusClick }: Props) => {
   const [selectedCat, setSelectedCat] = useState<string>('all');
 
   // Filter aset berdasarkan kategori yang dipilih
@@ -59,6 +69,20 @@ const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryCli
     if (selectedCat === 'all') return assets;
     return assets.filter(a => a.category_name === selectedCat);
   }, [assets, selectedCat]);
+
+  // Filter mutasi 7 hari terakhir
+  const recentMutations = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    return (mutations || []).filter((m) => {
+      const mutDate = new Date(m.mutation_date);
+      const isWithin7Days = mutDate >= sevenDaysAgo;
+      if (!isWithin7Days) return false;
+      if (selectedCat !== 'all' && m.asset_category_name !== selectedCat) return false;
+      return true;
+    }).slice(0, 5);
+  }, [mutations, selectedCat]);
 
   // Hitung stats dari filtered assets
   const stats = useMemo(() => ({
@@ -70,9 +94,7 @@ const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryCli
     inTransit: filteredAssets.filter(a => a.status === 'In Transit').length,
   }), [filteredAssets]);
 
-  const recentAssets = filteredAssets.slice(0, 5);
-
-  // Klik kategori: hanya update filter stats di Dashboard (TIDAK navigasi ke tab Items)
+  // Klik kategori: hanya update filter stats di Dashboard
   const handleCatSelect = (catName: string) => {
     setSelectedCat(catName);
   };
@@ -182,34 +204,77 @@ const DashboardView = ({ assets, categories, loading, onItemClick, onCategoryCli
         )}
       </div>
 
-      {/* Recent Assets */}
+      {/* Aset Terakhir Dipindah (7 Hari Terakhir) */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-300">
-          {selectedCat === 'all' ? 'Aset Terbaru' : `Aset — ${selectedCat}`}
+        <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <i className="fas fa-truck-moving text-blue-400"></i>
+          {selectedCat === 'all' ? 'Terakhir Dipindah (7 Hari)' : `Mutasi — ${selectedCat} (7 Hari)`}
         </h2>
-        {onViewAll && !loading && assets.length > 0 && (
+        {onViewAll && !loading && (
           <button
             onClick={() => { onViewAll(); setSelectedCat('all'); }}
-            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors font-medium"
           >
             Lihat Semua <i className="fas fa-arrow-right text-[10px]"></i>
           </button>
         )}
       </div>
+
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
         </div>
-      ) : recentAssets.length === 0 ? (
-        <div className="text-center py-8">
-          <i className="fas fa-server text-3xl text-slate-700 mb-3 block"></i>
-          <p className="text-slate-500 text-sm">
-            {selectedCat === 'all' ? 'Belum ada aset terdaftar' : `Tidak ada aset kategori "${selectedCat}"`}
+      ) : recentMutations.length === 0 ? (
+        <div className="text-center py-8 glass rounded-2xl border border-slate-800">
+          <i className="fas fa-exchange-alt text-3xl text-slate-700 mb-3 block"></i>
+          <p className="text-slate-400 text-sm font-medium">
+            Tidak ada perpindahan aset dalam 7 hari terakhir
+          </p>
+          <p className="text-slate-600 text-xs mt-1">
+            Riwayat mutasi akan muncul di sini secara otomatis.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {recentAssets.map((a) => <ItemCard key={a.id} item={a} onClick={onItemClick} />)}
+        <div className="space-y-2.5">
+          {recentMutations.map((m) => (
+            <div
+              key={m.id}
+              className="item-card rounded-xl p-3.5 hover:bg-slate-800/80 transition-all cursor-pointer border border-slate-800/80 bg-slate-900/60"
+              onClick={() => onItemClick(m.asset_id)}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-400 flex items-center justify-center flex-shrink-0 text-sm font-bold shadow-inner">
+                    <i className="fas fa-exchange-alt"></i>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-white truncate">
+                        {m.asset_brand ? `${m.asset_brand} ` : ''}{m.asset_model_type ?? m.asset_serial_number}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
+                      <span className="text-slate-300 font-medium">{m.from_site_name || 'Site Awal'}</span>
+                      <i className="fas fa-arrow-right text-[10px] text-blue-400"></i>
+                      <span className="text-blue-300 font-medium">{m.to_site_name}</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium inline-block ${
+                    m.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                    m.status === 'Pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                    'bg-red-500/20 text-red-400 border border-red-500/30'
+                  }`}>
+                    {m.status}
+                  </span>
+                  <p className="text-[10px] text-slate-500 mt-1 font-mono">
+                    {formatTime7Days(m.mutation_date)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -242,11 +242,12 @@ function App() {
         {activeTab === 'dashboard' && (
           <DashboardView
             assets={assets}
+            mutations={mutations}
             categories={categories}
             loading={loading}
             onItemClick={handleItemClick}
             onCategoryClick={handleCategoryClick}
-            onViewAll={() => { setSelectedCategory('all'); setSelectedStatus('all'); setActiveTab('items'); }}
+            onViewAll={() => setActiveTab('history')}
             onStatusClick={handleStatusClick}
           />
         )}
