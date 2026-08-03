@@ -129,7 +129,7 @@ function App() {
       if (editItem) {
         // Jika status berubah, catat di log audit
         if (data.status && data.status !== editItem.status) {
-          const { changeAssetStatus } = await import('../services/assetService');
+          const { changeAssetStatus } = await import('./services/assetService');
           await changeAssetStatus(
             editItem.id,
             data.status,
@@ -175,7 +175,7 @@ function App() {
       }
       
       // Refresh state global agar data aset terupdate
-      refreshInventory();
+      refresh();
       showToast(`Berhasil mengubah status ${assetIds.length} aset menjadi ${newStatus}!`);
     } catch (e: any) {
       showToast(e.message, 'error');
