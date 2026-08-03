@@ -10,7 +10,7 @@ interface Props {
 }
 
 const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
-  const [selectedSite, setSelectedSite] = useState<string>('');
+  const [siteInput, setSiteInput] = useState<string>('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedAssets, setScannedAssets] = useState<AssetDetail[]>([]);
   const [lastScanMsg, setLastScanMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -21,11 +21,24 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
   const [bulkNotes, setBulkNotes] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
 
-  // Filter assets by selected site
-  const siteAssets = useMemo(
-    () => assets.filter(a => a.site_alias === selectedSite),
-    [assets, selectedSite]
-  );
+  const activeSiteAlias = siteInput.trim();
+
+  // Filter assets by typed site alias (case-insensitive)
+  const siteAssets = useMemo(() => {
+    if (!activeSiteAlias) return [];
+    const query = activeSiteAlias.toLowerCase();
+    return assets.filter(
+      a => (a.site_alias && a.site_alias.toLowerCase() === query) ||
+           (a.full_location_code && a.full_location_code.toLowerCase() === query)
+    );
+  }, [assets, activeSiteAlias]);
+
+  // Find info about matching site from master sites if available
+  const matchedSiteInfo = useMemo(() => {
+    if (!activeSiteAlias) return null;
+    const query = activeSiteAlias.toLowerCase();
+    return sites.find(s => s.site_alias?.toLowerCase() === query || s.site_code?.toLowerCase() === query);
+  }, [sites, activeSiteAlias]);
 
   const totalAssets = siteAssets.length;
   const foundCount  = scannedAssets.length;
@@ -59,22 +72,6 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
     setLastScanMsg(null);
   };
 
-  // Group sites by region for the dropdown
-  const groupedSites = useMemo(() => {
-    const groups: Record<string, Site[]> = {};
-    sites.forEach(s => {
-      const region = s.region || 'Tanpa Region';
-      if (!groups[region]) groups[region] = [];
-      groups[region].push(s);
-    });
-    // Urutkan region abjad, 'Tanpa Region' di bawah
-    return Object.entries(groups).sort((a, b) => {
-      if (a[0] === 'Tanpa Region') return 1;
-      if (b[0] === 'Tanpa Region') return -1;
-      return a[0].localeCompare(b[0]);
-    });
-  }, [sites]);
-
   return (
     <div className="fade-in space-y-4">
       {/* Header Card */}
@@ -84,35 +81,47 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
           Sesi Stock Opname
         </h2>
 
-        {/* Pilih Site */}
+        {/* Input Manual Site Alias */}
         <div className="mb-4">
           <label className="block text-xs font-medium text-slate-400 mb-1.5">
-            Pilih Lokasi Audit
+            Lokasi Audit (Ketik Site Alias)
           </label>
-          <select
-            className="form-input w-full"
-            value={selectedSite}
-            onChange={(e) => {
-              setSelectedSite(e.target.value);
-              resetSession();
-            }}
-            disabled={scannerOpen}
-          >
-            <option value="">-- Pilih Site --</option>
-            {groupedSites.map(([region, regionSites]) => (
-              <optgroup key={region} label={`📍 Region: ${region}`}>
-                {regionSites.map((s) => (
-                  <option key={s.site_code} value={s.site_alias ?? s.site_code}>
-                    {s.site_name} ({s.site_alias ?? s.site_code})
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <div className="relative">
+            <input
+              type="text"
+              list="opname-site-aliases"
+              className="form-input w-full uppercase"
+              placeholder="Ketik Site Alias (contoh: CGK-01)..."
+              value={siteInput}
+              onChange={(e) => {
+                setSiteInput(e.target.value);
+                resetSession();
+              }}
+              disabled={scannerOpen}
+            />
+            <datalist id="opname-site-aliases">
+              {sites.map((s) => (
+                <option key={s.site_code} value={s.site_alias ?? s.site_code}>
+                  {s.site_name} {s.region ? `(${s.region})` : ''}
+                </option>
+              ))}
+            </datalist>
+          </div>
+          {matchedSiteInfo ? (
+            <p className="text-xs text-emerald-400 mt-1.5 flex items-center gap-1">
+              <i className="fas fa-check-circle"></i>
+              Site terdeteksi: <b>{matchedSiteInfo.site_name}</b> {matchedSiteInfo.region && `[Region: ${matchedSiteInfo.region}]`}
+            </p>
+          ) : activeSiteAlias ? (
+            <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
+              <i className="fas fa-info-circle text-blue-400"></i>
+              Mengaudit aset dengan Site Alias: <b>{activeSiteAlias.toUpperCase()}</b> ({totalAssets} aset ditemukan)
+            </p>
+          ) : null}
         </div>
 
         {/* Stats */}
-        {selectedSite && (
+        {activeSiteAlias && (
           <>
             <div className="grid grid-cols-3 gap-2 text-center mb-4">
               <div className="bg-slate-800 rounded-xl p-3">
@@ -219,7 +228,7 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
       )}
 
       {/* Belum Scan */}
-      {selectedSite && scannedAssets.length > 0 && remaining > 0 && (
+      {activeSiteAlias && scannedAssets.length > 0 && remaining > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
             <i className="fas fa-clock text-amber-400"></i>
