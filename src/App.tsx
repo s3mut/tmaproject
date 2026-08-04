@@ -202,19 +202,65 @@ function App() {
   const isGuest = currentUser?.role === 'guest';
   const showFab = !isGuest && (activeTab === 'dashboard' || activeTab === 'items');
 
-  // ── Auth Loading Screen ─────────────────────────────────────────────────────
+  // ── Auth Loading / Splash Screen ────────────────────────────────────────────
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/40">
-          <i className="fas fa-boxes-stacked text-2xl text-white"></i>
+      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #0a0e1a 100%)' }}>
+        {/* Animated background orbs */}
+        <div style={{ position: 'absolute', top: '10%', left: '15%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)', filter: 'blur(40px)', animation: 'orbFloat 6s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)', filter: 'blur(40px)', animation: 'orbFloat 8s ease-in-out infinite reverse' }} />
+        <div style={{ position: 'absolute', top: '50%', right: '20%', width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,211,238,0.08) 0%, transparent 70%)', filter: 'blur(30px)', animation: 'orbFloat 7s ease-in-out infinite 2s' }} />
+
+        {/* Dot grid pattern */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.06) 1px, transparent 1px)', backgroundSize: '28px 28px', pointerEvents: 'none' }} />
+
+        {/* Main content */}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
+          {/* Logo with animated rings */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Outer spinning ring */}
+            <div style={{ position: 'absolute', width: 108, height: 108, borderRadius: '50%', border: '2px solid transparent', borderTopColor: '#3b82f6', borderRightColor: 'rgba(59,130,246,0.3)', animation: 'spinRing 1.4s linear infinite' }} />
+            {/* Inner spinning ring (reverse) */}
+            <div style={{ position: 'absolute', width: 88, height: 88, borderRadius: '50%', border: '1.5px solid transparent', borderBottomColor: '#8b5cf6', borderLeftColor: 'rgba(139,92,246,0.3)', animation: 'spinRing 1s linear infinite reverse' }} />
+            {/* Logo icon */}
+            <div style={{ width: 72, height: 72, borderRadius: 20, background: 'linear-gradient(135deg, #3b82f6 0%, #6d28d9 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(59,130,246,0.5), 0 0 80px rgba(139,92,246,0.2)', animation: 'logoPulse 2s ease-in-out infinite' }}>
+              <i className="fas fa-boxes-stacked" style={{ fontSize: 28, color: 'white' }}></i>
+            </div>
+          </div>
+
+          {/* App name & tagline */}
+          <div style={{ textAlign: 'center', animation: 'fadeSlideUp 0.6s ease-out 0.2s both' }}>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: 'white', letterSpacing: '-0.5px', marginBottom: 6 }}>
+              Transit<span style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TMA</span>
+            </h1>
+            <p style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>IT Asset Management</p>
+          </div>
+
+          {/* Progress bar */}
+          <div style={{ width: 160, animation: 'fadeSlideUp 0.6s ease-out 0.4s both' }}>
+            <div style={{ height: 3, background: 'rgba(30,41,59,0.8)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', borderRadius: 99, animation: 'progressBar 1.8s ease-in-out infinite' }} />
+            </div>
+            <p style={{ marginTop: 10, fontSize: 11, color: '#475569', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <i className="fas fa-circle-notch fa-spin" style={{ color: '#3b82f6', fontSize: 10 }}></i>
+              Memeriksa sesi...
+            </p>
+          </div>
         </div>
-        <div className="space-y-1 text-center">
-          <p className="text-sm font-semibold text-white">TransitTMA</p>
-          <p className="text-xs text-slate-400 flex items-center gap-1.5">
-            <i className="fas fa-spinner fa-spin text-blue-400"></i> Memeriksa sesi...
-          </p>
+
+        {/* Version tag */}
+        <div style={{ position: 'absolute', bottom: 32, animation: 'fadeSlideUp 0.6s ease-out 0.6s both' }}>
+          <span style={{ fontSize: 10, color: '#1e293b', background: 'rgba(30,41,59,0.6)', border: '1px solid rgba(148,163,184,0.1)', padding: '4px 12px', borderRadius: 99 }}>v1.0 • E1 TMA</span>
         </div>
+
+        {/* Keyframe styles injected */}
+        <style>{`
+          @keyframes spinRing { to { transform: rotate(360deg); } }
+          @keyframes logoPulse { 0%,100% { box-shadow: 0 0 40px rgba(59,130,246,0.5), 0 0 80px rgba(139,92,246,0.2); } 50% { box-shadow: 0 0 60px rgba(59,130,246,0.7), 0 0 100px rgba(139,92,246,0.35); } }
+          @keyframes orbFloat { 0%,100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+          @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes progressBar { 0% { width: 0%; margin-left: 0; } 50% { width: 70%; margin-left: 0; } 75% { width: 30%; margin-left: 70%; } 100% { width: 0%; margin-left: 100%; } }
+        `}</style>
       </div>
     );
   }

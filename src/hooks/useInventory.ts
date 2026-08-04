@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { AssetDetail, MasterAsset, MutationDetail, Site, Category } from '../types/inventory';
 import { getAssets, createAsset, updateAsset, deleteAsset, getCategories } from '../services/assetService';
 import { getMutations, createMutation, approveMutation } from '../services/mutationService';
@@ -12,15 +12,27 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Stats computed dari assets
-  const stats = {
-    total: assets.length,
-    active:  assets.filter((a) => a.status === 'Active').length,
-    backup:  assets.filter((a) => a.status === 'Backup').length,
-    retired: assets.filter((a) => a.status === 'Retired').length,
-    repair:  assets.filter((a) => a.status === 'Repair').length,
-    inTransit: assets.filter((a) => a.status === 'In Transit').length,
-  };
+  // Stats computed dari assets dengan useMemo dan single iteration (tanpa alokasi 5 array baru)
+  const stats = useMemo(() => {
+    let active = 0, backup = 0, retired = 0, repair = 0, inTransit = 0;
+    for (const a of assets) {
+      switch (a.status) {
+        case 'Active': active++; break;
+        case 'Backup': backup++; break;
+        case 'Retired': retired++; break;
+        case 'Repair': repair++; break;
+        case 'In Transit': inTransit++; break;
+      }
+    }
+    return {
+      total: assets.length,
+      active,
+      backup,
+      retired,
+      repair,
+      inTransit,
+    };
+  }, [assets]);
 
   // Fetch semua data dari Supabase
   const fetchAll = useCallback(async () => {
@@ -56,25 +68,48 @@ export function useInventory() {
     fetchAll();
   }, [fetchAll]);
 
-  // Tambah aset
+  // Helpers efisiensi untuk refresh parsial tanpa menarik ulang tabel referensi statis (sites & categories)
+  const fetchOnlyAssets = useCallback(async () => {
+    try {
+      const data = await getAssets();
+      setAssets(data);
+    } catch (err: any) {
+      console.error('Error refreshing assets:', err.message);
+    }
+  }, []);
+
+  const fetchAssetsAndMutations = useCallback(async () => {
+    try {
+      const [assetsRes, mutationsRes] = await Promise.allSettled([
+        getAssets(),
+        getMutations(),
+      ]);
+      if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
+      if (mutationsRes.status === 'fulfilled') setMutations(mutationsRes.value);
+    } catch (err: any) {
+      console.error('Error refreshing assets and mutations:', err.message);
+    }
+  }, []);
+
+  // Tambah aset - hanya refresh daftar aset
   const addAsset = useCallback(async (data: Omit<MasterAsset, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => {
     await createAsset(data);
-    await fetchAll();
-  }, [fetchAll]);
+    await fetchOnlyAssets();
+  }, [fetchOnlyAssets]);
 
-  // Update aset
+  // Update aset - hanya refresh daftar aset
   const editAsset = useCallback(async (id: number, data: Partial<Omit<MasterAsset, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>) => {
     await updateAsset(id, data);
-    await fetchAll();
-  }, [fetchAll]);
+    await fetchOnlyAssets();
+  }, [fetchOnlyAssets]);
 
-  // Hapus aset (Soft Delete)
+  // Hapus aset (Soft Delete) - Optimistic update ke state memory tanpa re-fetch
   const removeAsset = useCallback(async (id: number) => {
     await deleteAsset(id);
-    await fetchAll();
-  }, [fetchAll]);
+    setAssets((prev) => prev.filter((a) => a.id !== id));
+  }, []);
 
-  // Mutasi aset (Maker - Pending Handover)
+  // Mutasi aset (Maker - Pending Handover) - hanya refresh aset & mutasi
   const mutateAsset = useCallback(async (
     assetId: number,
     fromSiteCode: string | null,
@@ -90,14 +125,14 @@ export function useInventory() {
       notes: notes || null,
     });
     // asset.site_alias TIDAK langsung diupdate! Statusnya saja jadi 'In Transit' di dalam createMutation
-    await fetchAll();
-  }, [fetchAll]);
+    await fetchAssetsAndMutations();
+  }, [fetchAssetsAndMutations]);
 
-  // Approve mutasi (Checker - Asset Received)
+  // Approve mutasi (Checker - Asset Received) - hanya refresh aset & mutasi
   const approveAssetMutation = useCallback(async (mutationId: number, assetId: number, toSiteCode: string, receivedBy: number = 0) => {
     await approveMutation(mutationId, assetId, toSiteCode, receivedBy);
-    await fetchAll();
-  }, [fetchAll]);
+    await fetchAssetsAndMutations();
+  }, [fetchAssetsAndMutations]);
 
   return {
     assets,

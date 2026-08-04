@@ -8,19 +8,14 @@ const LoginView = () => {
   const [showPass, setShowPass]     = useState(false);
   const [error, setError]           = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [focused, setFocused]       = useState<'id' | 'pass' | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     const trimmedId = identifier.trim();
-    if (!trimmedId) {
-      setError('Telegram ID atau Username wajib diisi.');
-      return;
-    }
-    if (!password) {
-      setError('Password wajib diisi.');
-      return;
-    }
+    if (!trimmedId) { setError('Telegram ID atau Username wajib diisi.'); return; }
+    if (!password)  { setError('Password wajib diisi.'); return; }
     setSubmitting(true);
     try {
       await loginWithWeb(trimmedId, password);
@@ -32,66 +27,112 @@ const LoginView = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden">
-      {/* Background gradient blobs */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-blue-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-72 h-72 bg-purple-600/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px 16px',
+      position: 'relative',
+      overflow: 'hidden',
+      background: 'linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #080c18 100%)',
+    }}>
+      {/* Animated background orbs */}
+      <div style={{ position: 'absolute', top: '-5%', left: '-10%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'lv-orbFloat 7s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.14) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'lv-orbFloat 9s ease-in-out infinite reverse' }} />
+      <div style={{ position: 'absolute', top: '40%', right: '5%', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,211,238,0.07) 0%, transparent 70%)', filter: 'blur(40px)', animation: 'lv-orbFloat 6s ease-in-out infinite 1.5s' }} />
+      <div style={{ position: 'absolute', bottom: '20%', left: '5%', width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 70%)', filter: 'blur(30px)', animation: 'lv-orbFloat 8s ease-in-out infinite 3s' }} />
 
-      <div className="w-full max-w-sm relative">
+      {/* Dot grid pattern */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.06) 1px, transparent 1px)', backgroundSize: '28px 28px', pointerEvents: 'none' }} />
+
+      {/* Card container */}
+      <div style={{ width: '100%', maxWidth: 380, position: 'relative', animation: 'lv-fadeSlideUp 0.5s ease-out both' }}>
+
         {/* Logo & Branding */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-blue-500/40">
-            <i className="fas fa-boxes-stacked text-3xl text-white"></i>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)', animation: 'lv-glow 2.5s ease-in-out infinite' }} />
+            <div style={{ width: 76, height: 76, borderRadius: 22, background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(59,130,246,0.4), 0 0 0 1px rgba(59,130,246,0.2)', position: 'relative' }}>
+              <i className="fas fa-boxes-stacked" style={{ fontSize: 30, color: 'white' }}></i>
+              <div style={{ position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #0a0f1e', boxShadow: '0 2px 8px rgba(16,185,129,0.5)' }}>
+                <i className="fas fa-bolt" style={{ fontSize: 8, color: 'white' }}></i>
+              </div>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">TransitTMA</h1>
-          <p className="text-sm text-slate-400 mt-1">IT Asset Inventory Management</p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'white', letterSpacing: '-0.5px', margin: '0 0 6px' }}>
+            Transit<span style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TMA</span>
+          </h1>
+          <p style={{ fontSize: 12, color: '#475569', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>IT Asset Inventory Management</p>
         </div>
 
         {/* Login Card */}
-        <div className="glass rounded-3xl p-6 shadow-2xl border border-slate-700/50 space-y-5">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-white">Masuk ke Akun</h2>
-            <p className="text-xs text-slate-400">Gunakan Telegram Username atau ID, dan password yang telah diset dari TMA.</p>
+        <div style={{
+          background: 'rgba(15,23,42,0.75)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(148,163,184,0.1)',
+          borderRadius: 24,
+          padding: '28px 24px',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+        }}>
+          <div style={{ marginBottom: 20 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'white', margin: '0 0 4px' }}>Masuk ke Akun</h2>
+            <p style={{ fontSize: 11, color: '#475569', margin: 0, lineHeight: 1.5 }}>Gunakan Telegram Username atau ID beserta password TMA Anda.</p>
           </div>
 
           {/* Error Banner */}
           {error && (
-            <div className="flex items-start gap-2 p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-red-400 text-xs">
-              <i className="fas fa-exclamation-circle mt-0.5 shrink-0"></i>
-              <span>{error}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, marginBottom: 16, animation: 'lv-fadeSlideUp 0.3s ease-out' }}>
+              <i className="fas fa-circle-exclamation" style={{ color: '#f87171', fontSize: 13, marginTop: 1, flexShrink: 0 }}></i>
+              <span style={{ fontSize: 12, color: '#fca5a5', lineHeight: 1.5 }}>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+          <form onSubmit={handleSubmit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Telegram ID / Username */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-slate-400">
-                Telegram ID <span className="text-blue-400">atau @Username</span>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, letterSpacing: '0.05em' }}>
+                TELEGRAM ID <span style={{ color: '#3b82f6' }}>/ @USERNAME</span>
               </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
-                  <i className="fab fa-telegram text-blue-400"></i>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focused === 'id' ? '#3b82f6' : '#334155', transition: 'color 0.2s', fontSize: 14 }}>
+                  <i className="fab fa-telegram"></i>
                 </div>
                 <input
                   id="login-telegram-id"
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Contoh: @budi atau 12345678"
+                  onFocus={() => setFocused('id')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="@username atau 12345678"
                   required
-                  className="form-input w-full pl-9 pr-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-600 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                  style={{
+                    width: '100%',
+                    paddingLeft: 40,
+                    paddingRight: 16,
+                    paddingTop: 12,
+                    paddingBottom: 12,
+                    background: focused === 'id' ? 'rgba(59,130,246,0.07)' : 'rgba(8,12,24,0.6)',
+                    border: `1px solid ${focused === 'id' ? 'rgba(59,130,246,0.5)' : 'rgba(100,116,139,0.15)'}`,
+                    borderRadius: 12,
+                    color: 'white',
+                    fontSize: 13,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.2s',
+                    boxShadow: focused === 'id' ? '0 0 0 3px rgba(59,130,246,0.1)' : 'none',
+                  }}
                 />
               </div>
-              <p className="text-[10px] text-slate-500 pl-1">
-                Gunakan <span className="text-blue-400 font-medium">@username</span> yang terdaftar di Telegram Anda.
-              </p>
             </div>
 
             {/* Password */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-slate-400">Password</label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, letterSpacing: '0.05em' }}>PASSWORD</label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focused === 'pass' ? '#3b82f6' : '#334155', transition: 'color 0.2s', fontSize: 13 }}>
                   <i className="fas fa-lock"></i>
                 </div>
                 <input
@@ -99,67 +140,119 @@ const LoginView = () => {
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setFocused('pass')}
+                  onBlur={() => setFocused(null)}
                   placeholder="••••••••"
                   required
-                  className="form-input w-full pl-9 pr-10 py-3 rounded-xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-600 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                  style={{
+                    width: '100%',
+                    paddingLeft: 40,
+                    paddingRight: 44,
+                    paddingTop: 12,
+                    paddingBottom: 12,
+                    background: focused === 'pass' ? 'rgba(59,130,246,0.07)' : 'rgba(8,12,24,0.6)',
+                    border: `1px solid ${focused === 'pass' ? 'rgba(59,130,246,0.5)' : 'rgba(100,116,139,0.15)'}`,
+                    borderRadius: 12,
+                    color: 'white',
+                    fontSize: 13,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.2s',
+                    boxShadow: focused === 'pass' ? '0 0 0 3px rgba(59,130,246,0.1)' : 'none',
+                  }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-sm p-1"
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#334155', background: 'none', border: 'none', cursor: 'pointer', padding: 4, fontSize: 13, transition: 'color 0.2s' }}
                 >
                   <i className={`fas ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
               id="login-submit"
               disabled={submitting || isLoading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 disabled:opacity-60 flex items-center justify-center gap-2 transition-all"
+              style={{
+                width: '100%',
+                padding: '13px 16px',
+                borderRadius: 12,
+                background: submitting ? 'rgba(59,130,246,0.4)' : 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                border: 'none',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                boxShadow: submitting ? 'none' : '0 4px 20px rgba(59,130,246,0.35)',
+                transition: 'all 0.2s',
+                marginTop: 4,
+                letterSpacing: '0.02em',
+              }}
             >
-              {submitting ? (
-                <><i className="fas fa-spinner fa-spin"></i> Memverifikasi...</>
-              ) : (
-                <><i className="fas fa-sign-in-alt"></i> Masuk</>
-              )}
+              {submitting
+                ? <><i className="fas fa-spinner fa-spin" style={{ fontSize: 13 }}></i> Memverifikasi...</>
+                : <><i className="fas fa-arrow-right-to-bracket" style={{ fontSize: 13 }}></i> Masuk</>
+              }
             </button>
           </form>
         </div>
 
-        {/* Telegram Auto-Login Info */}
-        <div className="mt-4 glass rounded-2xl px-4 py-3.5 flex items-center gap-3 border border-blue-500/20">
-          <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center shrink-0">
-            <i className="fab fa-telegram text-lg"></i>
+        {/* Info Cards */}
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Telegram auto-login */}
+          <div style={{ background: 'rgba(10,15,30,0.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(59,130,246,0.18)' }}>
+              <i className="fab fa-telegram" style={{ color: '#3b82f6', fontSize: 16 }}></i>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'white', margin: '0 0 2px' }}>Akses via Telegram</p>
+              <p style={{ fontSize: 10, color: '#475569', margin: 0, lineHeight: 1.5 }}>
+                Buka lewat Mini App untuk <span style={{ color: '#60a5fa' }}>login otomatis</span> — tanpa password.
+              </p>
+            </div>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16,185,129,0.6)', flexShrink: 0, animation: 'lv-glow 2s ease-in-out infinite' }}></div>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-white">Akses via Telegram</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Buka aplikasi melalui Telegram Mini App untuk <span className="text-blue-400">login otomatis</span> — tanpa perlu password.
+
+          {/* Security badge */}
+          <div style={{ background: 'rgba(10,15,30,0.5)', border: '1px solid rgba(148,163,184,0.07)', borderRadius: 16, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <i className="fas fa-shield-halved" style={{ color: '#10b981', fontSize: 14, flexShrink: 0 }}></i>
+            <p style={{ fontSize: 10, color: '#334155', margin: 0, lineHeight: 1.5 }}>
+              Koneksi terenkripsi via <span style={{ color: '#475569' }}>Supabase RLS</span> · Data tersimpan aman
             </p>
           </div>
-          <div className="ml-auto w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0"></div>
+
+          {/* How to get access */}
+          <div style={{ background: 'rgba(10,15,30,0.5)', border: '1px solid rgba(148,163,184,0.07)', borderRadius: 16, padding: '12px 16px' }}>
+            <p style={{ fontSize: 10, fontWeight: 600, color: '#64748b', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <i className="fas fa-circle-question" style={{ color: '#f59e0b' }}></i>
+              Belum punya akses?
+            </p>
+            <ol style={{ fontSize: 10, color: '#334155', margin: 0, paddingLeft: 14, lineHeight: 1.9 }}>
+              <li>Buka <span style={{ color: '#64748b' }}>Telegram</span> → cari bot <span style={{ color: '#60a5fa' }}>TransitTMA</span> → Start</li>
+              <li>Di tab <span style={{ color: '#64748b' }}>Profil</span>, klik <span style={{ color: '#60a5fa' }}>Password Akses Web</span></li>
+              <li>Set password, lalu login di sini dengan <span style={{ color: '#64748b' }}>@username</span></li>
+            </ol>
+          </div>
         </div>
 
-        {/* Cara mendapatkan akses */}
-        <div className="mt-3 glass rounded-2xl px-4 py-3.5 border border-slate-700/40">
-          <p className="text-[10px] font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
-            <i className="fas fa-question-circle text-amber-400"></i>
-            Belum punya akses?
-          </p>
-          <ol className="text-[10px] text-slate-500 space-y-1 list-decimal list-inside">
-            <li>Buka <span className="text-slate-400">Telegram</span> → cari bot TransitTMA → Start</li>
-            <li>Di tab <span className="text-slate-400">Profil</span>, klik <span className="text-blue-400">Password Akses Web</span></li>
-            <li>Set password, lalu login di sini dengan <span className="text-slate-400">@username</span></li>
-          </ol>
-        </div>
-
-        <p className="text-center text-[10px] text-slate-600 mt-5">
-          © {new Date().getFullYear()} TransitTMA — IT Asset Management
+        <p style={{ textAlign: 'center', fontSize: 10, color: '#1e293b', marginTop: 20 }}>
+          © {new Date().getFullYear()} TransitTMA — E1 IT Asset Management
         </p>
       </div>
+
+      {/* Keyframes */}
+      <style>{`
+        @keyframes lv-orbFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-18px) scale(1.04); } }
+        @keyframes lv-fadeSlideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes lv-glow { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+      `}</style>
     </div>
   );
 };

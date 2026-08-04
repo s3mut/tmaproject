@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react';
 import type { MutationDetail, AssetDetail, Site } from '../types/inventory';
+import { Button, Input, Select, Textarea, SectionHeader, EmptyState } from '../components/ui';
+import { MutationBadge } from '../components/ui/Badge';
+
 
 interface Props {
   mutations: MutationDetail[];
@@ -84,73 +87,46 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
     }
   };
 
-  const inputCls = 'form-input w-full rounded-lg px-4 py-3 text-sm';
-  const labelCls = 'block text-xs font-medium text-slate-400 mb-1.5';
-
   return (
     <div className="fade-in space-y-4">
       {/* Tombol Catat Mutasi */}
       {!showForm && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-white shadow-lg shadow-blue-500/20"
-          style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}
-        >
-          <i className="fas fa-truck-loading"></i>
+        <Button variant="primary" fullWidth size="lg" icon="fa-truck-loading" onClick={() => setShowForm(true)}>
           Kirim Aset (Mutasi)
-        </button>
+        </Button>
       )}
 
       {/* Form Input Mutasi */}
       {showForm && (
         <div className="glass rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-white">
-              <i className="fas fa-truck-loading mr-2 text-blue-400"></i>
-              Kirim Aset
-            </h3>
-            <button
-              onClick={resetForm}
-              className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-slate-400 text-xs"
-            >
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-
+          <SectionHeader
+            title="Kirim Aset"
+            icon="fa-truck-loading"
+            action={{ label: '', icon: 'fa-times', onClick: resetForm, variant: 'ghost' }}
+            className="mb-4"
+          />
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Step 1: Cari Aset */}
-            <div>
-              <label className={labelCls}>
-                <span className="text-blue-400 mr-1">①</span> Cari Aset <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setSelectedAsset(null);
-                }}
-                className={inputCls}
-                placeholder="Ketik S/N, brand, atau model..."
-              />
-              {searchResults.length > 0 && !selectedAsset && (
-                <div className="mt-1 glass rounded-lg overflow-hidden border border-blue-500/20">
-                  {searchResults.map((a) => (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className="w-full text-left px-4 py-3 hover:bg-blue-500/10 border-b border-slate-700/50"
-                      onClick={() => { setSelectedAsset(a); setSearchQuery(a.serial_number); }}
-                    >
-                      <p className="text-sm font-medium text-white">{a.brand} {a.model_type}</p>
-                      <p className="text-xs text-slate-400 font-mono">{a.serial_number}</p>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Input
+              label="① Cari Aset" required
+              placeholder="Ketik S/N, brand, atau model..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setSelectedAsset(null); }}
+              icon="fa-search"
+            />
+            {searchResults.length > 0 && !selectedAsset && (
+              <div className="mt-1 glass rounded-lg overflow-hidden border border-blue-500/20">
+                {searchResults.map((a) => (
+                  <button key={a.id} type="button"
+                    className="w-full text-left px-4 py-3 hover:bg-blue-500/10 border-b border-slate-700/50"
+                    onClick={() => { setSelectedAsset(a); setSearchQuery(a.serial_number); }}
+                  >
+                    <p className="text-sm font-medium text-white">{a.brand} {a.model_type}</p>
+                    <p className="text-xs text-slate-400 font-mono">{a.serial_number}</p>
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Step 2: Info Aset Terpilih */}
             {selectedAsset && (
               <div className="glass rounded-lg p-3 border border-blue-500/20">
                 <p className="text-xs text-slate-400 mb-1">Lokasi saat ini</p>
@@ -160,46 +136,29 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
               </div>
             )}
 
-            {/* Step 3: Site Tujuan */}
             {selectedAsset && (
-              <div>
-                <label className={labelCls}>
-                  <span className="text-blue-400 mr-1">②</span> Site Tujuan <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={toSiteCode}
-                  onChange={(e) => setToSiteCode(e.target.value)}
-                  className={inputCls}
-                  required
-                >
-                  <option value="">-- Pilih Site Tujuan --</option>
-                  {availableSites.map((s) => (
-                    <option key={s.site_code} value={s.site_code}>
-                      {s.site_code} - {s.site_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select label="② Site Tujuan" required
+                value={toSiteCode} onChange={(e) => setToSiteCode(e.target.value)}>
+                <option value="">-- Pilih Site Tujuan --</option>
+                {availableSites.map(s => (
+                  <option key={s.site_code} value={s.site_code}>
+                    {s.site_code} - {s.site_name}
+                  </option>
+                ))}
+              </Select>
             )}
 
-            {/* Catatan */}
             {selectedAsset && (
-              <div>
-                <label className={labelCls}><span className="text-blue-400 mr-1">③</span> Catatan</label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className={inputCls}
-                />
-              </div>
+              <Textarea label="③ Catatan" rows={2}
+                value={notes} onChange={(e) => setNotes(e.target.value)} />
             )}
 
             <div className="flex gap-3">
-              <button type="button" onClick={resetForm} className="flex-1 py-3 rounded-xl bg-slate-700 text-slate-300 text-sm">Batal</button>
-              <button type="submit" disabled={!selectedAsset || !toSiteCode || submitting} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm">
-                {submitting ? 'Mengirim...' : 'Kirim Sekarang'}
-              </button>
+              <Button type="button" variant="secondary" fullWidth onClick={resetForm}>Batal</Button>
+              <Button type="submit" variant="primary" fullWidth loading={submitting}
+                disabled={!selectedAsset || !toSiteCode}>
+                Kirim Sekarang
+              </Button>
             </div>
           </form>
         </div>
@@ -207,17 +166,11 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
 
       {/* Riwayat Mutasi */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-300">
-            <i className="fas fa-history mr-2 text-slate-500"></i>
-            Daftar Mutasi
-            {!loading && (
-              <span className="ml-2 text-xs font-normal text-slate-500">
-                ({filteredMutations.length}{filteredMutations.length !== mutations.length && `/${mutations.length}`})
-              </span>
-            )}
-          </h3>
-        </div>
+        <SectionHeader
+          title={`Daftar Mutasi${!loading ? ` (${filteredMutations.length}${filteredMutations.length !== mutations.length ? `/${mutations.length}` : ''})` : ''}`}
+          icon="fa-history"
+          iconColor="text-slate-500"
+        />
 
         {/* Filter + Search */}
         {!loading && mutations.length > 0 && (
@@ -258,12 +211,13 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
 
         {loading ? (
           <div className="text-center py-8">
-            <i className="fas fa-spinner fa-spin text-2xl text-blue-400 mb-3 block"></i>
+            <i className="fas fa-spinner fa-spin text-2xl text-blue-400 mb-3 block" />
           </div>
         ) : filteredMutations.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-sm">
-            {mutations.length === 0 ? 'Belum ada mutasi' : 'Tidak ada mutasi sesuai filter'}
-          </div>
+          <EmptyState
+            icon="fa-exchange-alt"
+            title={mutations.length === 0 ? 'Belum ada mutasi' : 'Tidak ada mutasi sesuai filter'}
+          />
         ) : (
           <div className="space-y-3">
             {filteredMutations.map((m) => (
@@ -280,22 +234,13 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
                       <span className="text-white bg-blue-500/20 px-2 py-0.5 rounded">{m.to_site_name ?? m.to_site_code}</span>
                     </div>
                     
-                    {/* Status Badge */}
                     <div className="mt-3 flex items-center gap-2">
-                      <span className={`px-2 py-1 text-[10px] uppercase tracking-wider rounded font-bold ${
-                        m.status === 'Pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 
-                        m.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
-                        'bg-red-500/20 text-red-400 border border-red-500/30'
-                      }`}>
-                        {m.status === 'Pending' ? 'In Transit' : m.status}
-                      </span>
+                      <MutationBadge status={m.status === 'Pending' ? 'Pending' : m.status} />
                       {m.status === 'Pending' && (
-                        <button
-                          onClick={() => onApproveMutation(m.id, m.asset_id, m.to_site_code)}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] px-3 py-1 rounded font-bold shadow-lg shadow-emerald-600/30 transition-colors"
-                        >
+                        <Button size="sm" variant="success"
+                          onClick={() => onApproveMutation(m.id, m.asset_id, m.to_site_code)}>
                           Terima Aset
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>

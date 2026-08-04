@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react';
 import type { AssetDetail, Category, MutationDetail } from '../types/inventory';
+import { SectionHeader, EmptyState } from '../components/ui';
+import { SkeletonCard, SkeletonChip } from '../components/ui/Skeleton';
+import { MutationBadge } from '../components/ui/Badge';
 
 interface Props {
   assets: AssetDetail[];
@@ -86,23 +89,7 @@ const StatCard = ({ label, value, color, icon, gradient, border, onClick }: {
   </div>
 );
 
-const SkeletonCard = () => (
-  <div className="item-card rounded-xl p-4 animate-pulse">
-    <div className="flex gap-3">
-      <div className="w-10 h-10 rounded-lg bg-slate-700"></div>
-      <div className="flex-1 space-y-2">
-        <div className="h-4 bg-slate-700 rounded w-3/4"></div>
-        <div className="h-3 bg-slate-700 rounded w-1/2"></div>
-      </div>
-    </div>
-  </div>
-);
 
-const SkeletonCategory = () => (
-  <div className="flex-shrink-0 animate-pulse">
-    <div className="w-24 h-9 rounded-xl bg-slate-700"></div>
-  </div>
-);
 
 const DashboardView = ({ assets, mutations = [], categories, loading, onItemClick, onCategoryClick: _onCategoryClick, onViewAll, onStatusClick }: Props) => {
   const [selectedGroupKey, setSelectedGroupKey] = useState<string>('all');
@@ -263,22 +250,20 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
       </div>
 
       {/* Categories Group Section */}
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-sm font-semibold text-slate-300">Kategori Aset</h2>
-        {selectedGroupKey !== 'all' && (
-          <button
-            onClick={() => { setSelectedGroupKey('all'); setSelectedSubCatName('all'); }}
-            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors"
-          >
-            <i className="fas fa-undo text-[10px]"></i> Reset Filter
-          </button>
-        )}
-      </div>
+      <SectionHeader
+        title="Kategori Aset"
+        icon="fa-layer-group"
+        action={selectedGroupKey !== 'all' ? {
+          label: 'Reset Filter', icon: 'fa-undo',
+          onClick: () => { setSelectedGroupKey('all'); setSelectedSubCatName('all'); },
+        } : undefined}
+        className="mb-2"
+      />
 
       {/* Main Parent Group Chips */}
       <div className="flex gap-2.5 overflow-x-auto pb-3 mb-2 scrollbar-hide pr-4">
         {loading ? (
-          [1, 2, 3, 4].map((i) => <SkeletonCategory key={i} />)
+          [1, 2, 3, 4].map((i) => <SkeletonChip key={i} />)
         ) : (
           <>
             {/* Chip: Semua */}
@@ -361,39 +346,28 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
       )}
 
       {/* Aset Terakhir Dipindah (7 Hari Terakhir) */}
-      <div className="flex items-center justify-between mb-3 mt-2">
-        <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-          <i className="fas fa-truck-moving text-blue-400"></i>
-          {selectedGroupKey === 'all'
-            ? 'Terakhir Dipindah (7 Hari)'
-            : selectedSubCatName !== 'all'
-            ? `Mutasi — ${selectedSubCatName} (7 Hari)`
-            : `Mutasi — ${activeGroup?.label} (7 Hari)`}
-        </h2>
-        {onViewAll && !loading && (
-          <button
-            onClick={() => { onViewAll(); setSelectedGroupKey('all'); setSelectedSubCatName('all'); }}
-            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors font-medium"
-          >
-            Lihat Semua <i className="fas fa-arrow-right text-[10px]"></i>
-          </button>
-        )}
-      </div>
+      <SectionHeader
+        title={selectedGroupKey === 'all' ? 'Terakhir Dipindah (7 Hari)'
+          : selectedSubCatName !== 'all' ? `Mutasi — ${selectedSubCatName} (7 Hari)`
+          : `Mutasi — ${activeGroup?.label} (7 Hari)`}
+        icon="fa-truck-moving"
+        className="mt-2"
+        action={onViewAll && !loading ? {
+          label: 'Lihat Semua', iconRight: 'fa-arrow-right',
+          onClick: () => { onViewAll(); setSelectedGroupKey('all'); setSelectedSubCatName('all'); },
+        } : undefined}
+      />
 
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
         </div>
       ) : recentMutations.length === 0 ? (
-        <div className="text-center py-8 glass rounded-2xl border border-slate-800">
-          <i className="fas fa-exchange-alt text-3xl text-slate-700 mb-3 block"></i>
-          <p className="text-slate-400 text-sm font-medium">
-            Tidak ada perpindahan aset dalam 7 hari terakhir
-          </p>
-          <p className="text-slate-600 text-xs mt-1">
-            Riwayat mutasi akan muncul di sini secara otomatis.
-          </p>
-        </div>
+        <EmptyState
+          icon="fa-exchange-alt"
+          title="Tidak ada perpindahan aset dalam 7 hari terakhir"
+          description="Riwayat mutasi akan muncul di sini secara otomatis."
+        />
       ) : (
         <div className="space-y-2.5">
           {recentMutations.map((m) => (
@@ -421,13 +395,7 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium inline-block ${
-                    m.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                    m.status === 'Pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                    'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}>
-                    {m.status}
-                  </span>
+                  <MutationBadge status={m.status} />
                   <p className="text-[10px] text-slate-500 mt-1 font-mono">
                     {formatTime7Days(m.mutation_date)}
                   </p>

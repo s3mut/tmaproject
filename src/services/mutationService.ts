@@ -12,12 +12,32 @@ export async function getMutations(): Promise<MutationDetail[]> {
   if (rawErr) throw new Error(rawErr.message);
   if (!rawMutations || rawMutations.length === 0) return [];
 
-  // Fetch related tables secara terpisah agar data tetap tampil (manual join approach)
-  // Ini lebih aman menghindari error relasi dari PostgREST schema cache
+  // Ekstraksi ID unik dari mutasi agar tidak men-download seluruh tabel ke memori browser
+  const assetIds = Array.from(new Set(rawMutations.map((m: any) => m.asset_id).filter(Boolean)));
+  const siteCodes = Array.from(
+    new Set([
+      ...rawMutations.map((m: any) => m.from_site_code),
+      ...rawMutations.map((m: any) => m.to_site_code),
+    ].filter(Boolean))
+  );
+  const userIds = Array.from(
+    new Set([
+      ...rawMutations.map((m: any) => m.moved_by),
+      ...rawMutations.map((m: any) => m.received_by),
+    ].filter(Boolean))
+  );
+
+  // Fetch only necessary rows via .in(), menghemat bandwidth dan RAM secara drastis
   const [assetRes, siteRes, userRes, catRes] = await Promise.all([
-    supabase.from('master_assets').select('id, serial_number, category_id, brand, model_type'),
-    supabase.from('sites').select('site_code, site_name, site_alias'),
-    supabase.from('telegram_users').select('telegram_id, name'),
+    assetIds.length > 0
+      ? supabase.from('master_assets').select('id, serial_number, category_id, brand, model_type').in('id', assetIds)
+      : { data: [] },
+    siteCodes.length > 0
+      ? supabase.from('sites').select('site_code, site_name, site_alias').in('site_code', siteCodes)
+      : { data: [] },
+    userIds.length > 0
+      ? supabase.from('telegram_users').select('telegram_id, name').in('telegram_id', userIds)
+      : { data: [] },
     supabase.from('master_categories').select('id, name'),
   ]);
 
