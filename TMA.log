@@ -507,10 +507,62 @@ Implementasi:
       global dari `useInventory`).
     - Chip kategori ditampilkan dengan efek **active/selected state** (ring/highlight)
       untuk menunjukkan kategori yang sedang aktif.
-    - Tombol **Reset** kecil muncul di header kartu total saat filter sedang aktif.
+- Tombol **Reset** kecil muncul di header kartu total saat filter sedang aktif.
     - Label "Aset Terbaru" berubah menjadi "Aset — [NamaKategori]" saat difilter.
   - `src/App.tsx`: Menghapus prop `stats={stats}` dari `<DashboardView>` (tidak lagi
     diperlukan karena stats dihitung secara internal di komponen).
+
+--------------------------------------------------------------------------------
+STEP 23: PROFESSIONAL BRANDING & TELEGRAM MINI APP CUSTOMIZATION (2026-08-03)
+--------------------------------------------------------------------------------
+Kebutuhan: Tampilan Telegram Bot dan Mini App ditingkatkan agar terlihat lebih profesional, modern, dan bernilai enterprise (premium feeling).
+
+Implementasi:
+  - Pembuatan Logo & Branding: Mengkreasi aset visual logo profesional untuk TransitTMA dan melingkupinya dengan tema gelap berkelas.
+  - `src/App.tsx`: Ditambahkan animasi *splash screen loading* transisi murni terintegrasi logo saat aplikasi pertama kali diakses.
+  - `src/views/LoginView.tsx`: Di-refactor total dengan *glassmorphism*, tipografi modern, dan interaktivitas kolom masukan yang elegan.
+  - Dokumentasi konfigurasi Telegram BotFather untuk memastikan avatar dan nama bot tersematkan dengan standar korporat.
+
+--------------------------------------------------------------------------------
+STEP 24: MEMORY & QUERY OPTIMIZATION & DASHBOARD ENHANCEMENT (2026-08-03 - 2026-08-04)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  1. Efisiensi penggunaan memori dan kueri database pada perangkat seluler/Telegram klien agar aplikasi selalu ringan, responsif, dan bebas hambatan re-render.
+  2. Bagian terbawah menu beranda diganti untuk menampilkan *Aset Terakhir Dipindah (Mutasi)* saja dalam kurun waktu 7 hari terakhir.
+  3. Pengelompokan Kategori Beranda (*Hierarchical Grouping*), misalnya kategori "Monitor" dikelompokkan bersama, saat diklik pecah menjadi sub-kategori spesifik seperti "Monitor Kasir", "Monitor LED", dsb.
+
+Implementasi:
+  - `src/services/mutationService.ts` & `src/hooks/useInventory.ts`: Optimasi kueri pengambilan data dan manajemen memori state inventaris.
+  - `src/views/DashboardView.tsx`:
+    - Pemisahan tampilan utama ke *Parent Category Group* dengan *selectable sub-category chips*.
+    - Pengubahan seksi "Aset Terbaru" menjadi daftar riwayat perpindahan aset dalam jangka waktu 7 hari ("Terakhir Dipindah").
+
+--------------------------------------------------------------------------------
+STEP 25: UI DESIGN SYSTEM & ATOMIC COMPONENT TEMPLATE (2026-08-04)
+--------------------------------------------------------------------------------
+Kebutuhan: Menyetandarkan proyek TMA ini menjadi *system template* yang *reusable* dengan memecah tombol, kotak input, dan modul visual sebagai unit tersendiri (Atoms & Molecules) agar manajemen kode lebih rapi, konsisten, dan performanya meningkat.
+
+Implementasi:
+  - Dibuat folder komponen design system terpadu di `src/components/ui/` berisi 10 modul baru:
+    - Layer Atoms: `Button.tsx`, `Input.tsx`, `Select.tsx`, `Textarea.tsx`, `Badge.tsx` (AssetBadge, MutationBadge, RoleBadge), `Skeleton.tsx`.
+    - Layer Molecules: `ModalShell.tsx`, `SectionHeader.tsx`, `EmptyState.tsx`, serta `index.ts`.
+  - Refactoring Modals (Layer 3):
+    - Seluruh 6 modal utama (`ConfirmModal.tsx`, `ItemFormModal.tsx`, `MutationModal.tsx`, `ItemDetailModal.tsx`, `SetPasswordModal.tsx`, `RequestAccessModal.tsx`) diperbaharui menolak styling inline kotor dan sepenuhnya beralih menggunakan komponen UI Design System.
+  - Refactoring Views (Layer 4):
+    - `DashboardView.tsx` dan `HistoryView.tsx` direfacto menggunakan sistem template baru.
+
+--------------------------------------------------------------------------------
+STEP 26: HIGH-PERFORMANCE SITE AUTO-COMPLETE SEARCH (2026-08-04)
+--------------------------------------------------------------------------------
+Kebutuhan: Pemilihan dan pencarian lokasi site pada menu stock opname, pindah aset, mutasi, dan tambah aset diubah ke model ketik manual / auto-complete agar efisien, ringan, dan siap menampung skala 2.000+ cabang lokasi di masa depan.
+
+Implementasi:
+  - `src/components/ui/SiteSearchInput.tsx`: Komponen baru auto-complete berbekal `<datalist>` dan konversi *uppercase* instan, memverifikasi kesesuaian kode/alias dengan data master secara real-time (hijau bila valid).
+  - Dipasangkan ke 4 modul utama pencarian site:
+    - `src/views/OpnameView.tsx` (Stock Opname)
+    - `src/components/modals/MutationModal.tsx` (Pindah Aset)
+    - `src/views/HistoryView.tsx` (Kirim Aset / Mutasi)
+    - `src/components/modals/ItemFormModal.tsx` (Tambah & Edit Aset)
 
 ================================================================================
                                  END OF LOG

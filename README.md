@@ -12,7 +12,9 @@
 
 ## 🌟 Fitur Utama
 
-- **📊 Dashboard Interaktif**: Ringkasan statistik status aset (Active, Backup, Repair, In Transit, Disposed, Retired) dengan **filter interaktif per kategori**. Seluruh kartu statistik dapat diklik untuk navigasi langsung menuju tab Aset dengan filter status & kategori yang terpasang otomatis.
+- **📊 Dashboard Interaktif & Hierarchical Grouping**: Ringkasan statistik status aset dengan **filter interaktif per kategori** serta **Hierarchical Category Grouping** (pengelompokan kategori sejenis seperti varian Monitor di bawah satu payung induk). Dilengkapi sajian khusus **Terakhir Dipindah (7 Hari Terakhir)** untuk melacak mobilitas aset terkini.
+- **🎨 Atomic UI Design System**: Dibuka dengan antarmuka splash screen & halaman login berlabel profesional serta didukung arsitektur komponen modular (*Atoms & Molecules* di `src/components/ui/`), memberikan keseragamaan desain, kestabilan performa, dan pengelolaan kode yang rapi.
+- **⚡ High-Performance Site Auto-Complete**: Seluruh menu penentuan lokasi (Pindah Aset, Mutasi, Tambah/Edit Aset, dan Stock Opname) ditenagai oleh komponen *auto-complete search* (`SiteSearchInput`) yang mampu mengolah 2.000+ cabang lokasi dengan ringan tanpa kendala rendering/lag dari *dropdown select*.
 - **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** dalam bentuk *collapsible/accordion* yang informatif, dilengkapi indikator *breakdown* status per wilayah dan penghitung hasil filter secara reponsif.
 - **⚡ Paginated Auto-Fetch (Bebas Limit 1.000 Baris)**: Mampu memuat seluruh inventaris perusahaan (6.000+ unit aset) dengan sempurna tanpa terhalang batas default 1.000 baris per request dari PostgREST/Supabase.
 - **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit* saat diterima oleh penerima), dilengkapi filter status dan pencarian real-time di riwayat mutasi.
@@ -58,6 +60,17 @@ TransitTMA/
 │   └── bot_webhook_handler.js      # Telegram Bot Webhook Handler (Node.js)
 ├── src/
 │   ├── components/                 # Reusable UI Components & Modals
+│   │   ├── ui/                     # Atomic Design System Component Library
+│   │   │   ├── Button.tsx          # Tombol Serbaguna (6 wujud, 3 ukuran, loading state)
+│   │   │   ├── Input.tsx           # Standard Input dengan focus ring & error state
+│   │   │   ├── Select.tsx          # Customized Dropdown Select
+│   │   │   ├── Textarea.tsx        # Standard Textarea
+│   │   │   ├── Badge.tsx           # Asset Status, Mutation, & Role Badges
+│   │   │   ├── Skeleton.tsx        # Responsive Loading Animations
+│   │   │   ├── ModalShell.tsx      # Unified Wrapper untuk Modals & Overlay
+│   │   │   ├── SectionHeader.tsx   # Standard Section Titles & Action Buttons
+│   │   │   ├── EmptyState.tsx      # Empty Data Placeholders
+│   │   │   └── SiteSearchInput.tsx # High-Performance Auto-Complete Site Search
 │   │   ├── Header.tsx              # Top Navigation Bar & Tombol Admin
 │   │   ├── BottomNav.tsx           # Bottom Tab Navigation
 │   │   ├── ItemCard.tsx            # Card Component Tampilan Aset

@@ -9,4 +9,5 @@ export { default as Badge, AssetBadge, MutationBadge, RoleBadge } from './Badge'
 export { default as Skeleton, SkeletonCard, SkeletonChip, SkeletonList, SkeletonStat } from './Skeleton';
 export { default as SectionHeader }from './SectionHeader';
 export { default as EmptyState }   from './EmptyState';
-export { default as ModalShell }   from './ModalShell';
+export { default as ModalShell }      from './ModalShell';
+export { default as SiteSearchInput }   from './SiteSearchInput';

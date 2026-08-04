@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { AssetDetail, AssetStatus, Site, Category } from '../../types/inventory';
-import { ModalShell, Button, Input, Select, Textarea } from '../ui';
+import { ModalShell, Button, Input, Select, SiteSearchInput, Textarea } from '../ui';
 
 interface FormData {
   serial_number: string;
@@ -118,15 +118,13 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
         <Input label="Computer Name" placeholder="PC-JKT-001"
           value={form.computer_name} onChange={e => set('computer_name', e.target.value)} />
 
-        <Select label="Site / Lokasi"
-          value={form.site_alias} onChange={e => set('site_alias', e.target.value)}>
-          <option value="">— Pilih Site —</option>
-          {sites.map(s => (
-            <option key={s.site_alias ?? s.site_code} value={s.site_alias ?? ''}>
-              {s.site_alias ?? s.site_code} — {s.site_name}
-            </option>
-          ))}
-        </Select>
+        <SiteSearchInput
+          label="Site / Lokasi (Ketik Alias / Kode)"
+          sites={sites}
+          value={form.site_alias}
+          onChange={val => set('site_alias', val)}
+          placeholder="Ketik Site Alias (contoh: CGK-01)..."
+        />
 
         <Textarea label="Deskripsi" placeholder="Catatan tambahan..."
           value={form.description} onChange={e => set('description', e.target.value)} />

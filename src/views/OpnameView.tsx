@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { AssetDetail, Site, AssetStatus } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 import QRScannerModal from '../components/modals/QRScannerModal';
+import { SiteSearchInput } from '../components/ui';
 
 interface Props {
   assets: AssetDetail[];
@@ -32,13 +33,6 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
            (a.full_location_code && a.full_location_code.toLowerCase() === query)
     );
   }, [assets, activeSiteAlias]);
-
-  // Find info about matching site from master sites if available
-  const matchedSiteInfo = useMemo(() => {
-    if (!activeSiteAlias) return null;
-    const query = activeSiteAlias.toLowerCase();
-    return sites.find(s => s.site_alias?.toLowerCase() === query || s.site_code?.toLowerCase() === query);
-  }, [sites, activeSiteAlias]);
 
   const totalAssets = siteAssets.length;
   const foundCount  = scannedAssets.length;
@@ -83,41 +77,18 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
 
         {/* Input Manual Site Alias */}
         <div className="mb-4">
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">
-            Lokasi Audit (Ketik Site Alias)
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              list="opname-site-aliases"
-              className="form-input w-full uppercase"
-              placeholder="Ketik Site Alias (contoh: CGK-01)..."
-              value={siteInput}
-              onChange={(e) => {
-                setSiteInput(e.target.value);
-                resetSession();
-              }}
-              disabled={scannerOpen}
-            />
-            <datalist id="opname-site-aliases">
-              {sites.map((s) => (
-                <option key={s.site_code} value={s.site_alias ?? s.site_code}>
-                  {s.site_name} {s.region ? `(${s.region})` : ''}
-                </option>
-              ))}
-            </datalist>
-          </div>
-          {matchedSiteInfo ? (
-            <p className="text-xs text-emerald-400 mt-1.5 flex items-center gap-1">
-              <i className="fas fa-check-circle"></i>
-              Site terdeteksi: <b>{matchedSiteInfo.site_name}</b> {matchedSiteInfo.region && `[Region: ${matchedSiteInfo.region}]`}
-            </p>
-          ) : activeSiteAlias ? (
-            <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
-              <i className="fas fa-info-circle text-blue-400"></i>
-              Mengaudit aset dengan Site Alias: <b>{activeSiteAlias.toUpperCase()}</b> ({totalAssets} aset ditemukan)
-            </p>
-          ) : null}
+          <SiteSearchInput
+            label="Lokasi Audit (Ketik Site Alias)"
+            sites={sites}
+            value={siteInput}
+            onChange={(val) => {
+              setSiteInput(val);
+              resetSession();
+            }}
+            placeholder="Ketik Site Alias (contoh: CGK-01)..."
+            disabled={scannerOpen}
+            customInfoText={(val) => `Mengaudit aset dengan Site Alias: ${val} (${totalAssets} aset ditemukan)`}
+          />
         </div>
 
         {/* Stats */}

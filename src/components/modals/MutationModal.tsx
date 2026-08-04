@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { AssetDetail, Site } from '../../types/inventory';
-import { ModalShell, Button, Select, Textarea } from '../ui';
+import { ModalShell, Button, SiteSearchInput, Textarea } from '../ui';
 
 interface Props {
   isOpen:    boolean;
@@ -21,14 +21,18 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
   if (!asset) return null;
 
   const availableSites = sites.filter(s => s.site_alias !== asset.site_alias);
-  const destSite = sites.find(s => s.site_alias === toSiteCode);
+  const destSite = sites.find(s => 
+    s.site_alias?.toLowerCase() === toSiteCode.trim().toLowerCase() || 
+    s.site_code?.toLowerCase() === toSiteCode.trim().toLowerCase()
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!toSiteCode) return;
     setSubmitting(true);
     try {
-      await onSubmit(toSiteCode, notes);
+      const targetCode = destSite ? (destSite.site_alias ?? destSite.site_code) : toSiteCode.trim().toUpperCase();
+      await onSubmit(targetCode, notes);
       setToSiteCode('');
       setNotes('');
     } finally {
@@ -70,18 +74,13 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Select
-          label="Site Tujuan" required
+        <SiteSearchInput
+          label="Site Tujuan (Ketik Alias / Kode)" required
+          sites={availableSites}
           value={toSiteCode}
-          onChange={e => setToSiteCode(e.target.value)}
-        >
-          <option value="">— Pilih Site Tujuan —</option>
-          {availableSites.map(s => (
-            <option key={s.site_alias ?? s.site_code} value={s.site_alias ?? ''}>
-              {s.site_alias ?? s.site_code} — {s.site_name} {s.region ? `(${s.region})` : ''}
-            </option>
-          ))}
-        </Select>
+          onChange={(val) => setToSiteCode(val)}
+          placeholder="Ketik Site Alias (contoh: CGK-01)..."
+        />
 
         <Textarea
           label="Catatan"

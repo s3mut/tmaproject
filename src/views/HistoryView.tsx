@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { MutationDetail, AssetDetail, Site } from '../types/inventory';
-import { Button, Input, Select, Textarea, SectionHeader, EmptyState } from '../components/ui';
+import { Button, Input, SiteSearchInput, Textarea, SectionHeader, EmptyState } from '../components/ui';
 import { MutationBadge } from '../components/ui/Badge';
 
 
@@ -80,7 +80,9 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
     if (!selectedAsset || !toSiteCode) return;
     setSubmitting(true);
     try {
-      await onMutate(selectedAsset.id, selectedAsset.site_alias ?? null, toSiteCode, notes);
+      const dest = sites.find(s => s.site_alias?.toLowerCase() === toSiteCode.trim().toLowerCase() || s.site_code?.toLowerCase() === toSiteCode.trim().toLowerCase());
+      const targetCode = dest ? (dest.site_alias ?? dest.site_code) : toSiteCode.trim().toUpperCase();
+      await onMutate(selectedAsset.id, selectedAsset.site_alias ?? null, targetCode, notes);
       resetForm();
     } finally {
       setSubmitting(false);
@@ -137,15 +139,13 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
             )}
 
             {selectedAsset && (
-              <Select label="② Site Tujuan" required
-                value={toSiteCode} onChange={(e) => setToSiteCode(e.target.value)}>
-                <option value="">-- Pilih Site Tujuan --</option>
-                {availableSites.map(s => (
-                  <option key={s.site_code} value={s.site_code}>
-                    {s.site_code} - {s.site_name}
-                  </option>
-                ))}
-              </Select>
+              <SiteSearchInput
+                label="② Site Tujuan (Ketik Alias / Kode)" required
+                sites={availableSites}
+                value={toSiteCode}
+                onChange={(val) => setToSiteCode(val)}
+                placeholder="Ketik Site Alias (contoh: CGK-01)..."
+              />
             )}
 
             {selectedAsset && (
