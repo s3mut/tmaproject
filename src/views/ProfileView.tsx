@@ -1,18 +1,25 @@
 import { useState } from 'react';
+import type { AssetDetail, MutationDetail, Site, Category } from '../types/inventory';
 import { useAuth } from '../contexts/AuthContext';
 import { getTelegramSDKUser } from '../services/userService';
 import RequestAccessModal from '../components/modals/RequestAccessModal';
 import SetPasswordModal from '../components/modals/SetPasswordModal';
+import BackupModal from '../components/modals/BackupModal';
 
 interface Props {
+  assets?:     AssetDetail[];
+  mutations?:  MutationDetail[];
+  sites?:      Site[];
+  categories?: Category[];
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
   onOpenReport?: () => void;
 }
 
-const ProfileView = ({ onShowToast, onOpenReport }: Props) => {
+const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [], onShowToast, onOpenReport }: Props) => {
   const { currentUser, authMethod, logout, refreshUser } = useAuth();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [setPassModalOpen, setSetPassModalOpen] = useState(false);
+  const [backupModalOpen, setBackupModalOpen]   = useState(false);
 
   const sdkUser = getTelegramSDKUser();
 
@@ -23,10 +30,18 @@ const ProfileView = ({ onShowToast, onOpenReport }: Props) => {
   };
 
   const isGuest   = currentUser?.role === 'guest';
+  const isAdmin   = currentUser?.role === 'admin';
   const isPending = currentUser?.notes?.includes('PENDING_APPROVAL');
   const isTelegramLogin = authMethod === 'telegram';
 
   let menuItems = [
+    // Menu Khusus Admin IT
+    ...(isAdmin ? [{
+      icon: 'fa-database', color: 'text-amber-400', bg: 'bg-amber-500/20',
+      title: 'Backup & Export Data', subtitle: 'Export CSV Master Aset, Mutasi, & Snapshot JSON',
+      onClick: () => setBackupModalOpen(true),
+      badge: 'ADMIN ONLY',
+    }] : []),
     {
       icon: 'fa-file-export', color: 'text-blue-400', bg: 'bg-blue-500/20',
       title: 'Laporan Aset (Retired)', subtitle: 'Export data barang yang dipensiunkan',
@@ -129,7 +144,14 @@ const ProfileView = ({ onShowToast, onOpenReport }: Props) => {
                 <i className={`fas ${item.icon}`}></i>
               </div>
               <div>
-                <p className="text-sm font-medium text-white">{item.title}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-white">{item.title}</p>
+                  {(item as any).badge && (
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-wider rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 uppercase">
+                      {(item as any).badge}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-400">{item.subtitle}</p>
               </div>
             </div>
@@ -184,6 +206,18 @@ const ProfileView = ({ onShowToast, onOpenReport }: Props) => {
           if (onShowToast) onShowToast(msg, 'success');
           else alert(msg);
         }}
+      />
+
+      {/* Admin Backup Modal */}
+      <BackupModal
+        isOpen={backupModalOpen}
+        onClose={() => setBackupModalOpen(false)}
+        assets={assets}
+        mutations={mutations}
+        sites={sites}
+        categories={categories}
+        adminName={currentUser?.name}
+        onShowToast={onShowToast}
       />
     </div>
   );

@@ -17,7 +17,8 @@
 - **⚡ High-Performance Site Auto-Complete**: Seluruh menu penentuan lokasi (Pindah Aset, Mutasi, Tambah/Edit Aset, dan Stock Opname) ditenagai oleh komponen *auto-complete search* (`SiteSearchInput`) yang mampu mengolah 2.000+ cabang lokasi dengan ringan tanpa kendala rendering/lag dari *dropdown select*.
 - **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** dalam bentuk *collapsible/accordion* yang informatif, dilengkapi indikator *breakdown* status per wilayah dan penghitung hasil filter secara reponsif.
 - **⚡ Paginated Auto-Fetch (Bebas Limit 1.000 Baris)**: Mampu memuat seluruh inventaris perusahaan (6.000+ unit aset) dengan sempurna tanpa terhalang batas default 1.000 baris per request dari PostgREST/Supabase.
-- **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit* saat diterima oleh penerima), dilengkapi filter status dan pencarian real-time di riwayat mutasi.
+- **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit*), dilengkapi filter status, pencarian real-time di riwayat mutasi, dan fitur **Pencarian Aset by QR/Barcode Scan** (Zero-Click Logistics) yang otomatis menyeleksi barang seketika setelah disekan.
+- **💾 Admin Disaster Recovery & Backup System**: Panel khusus Role Admin di menu Profil untuk mengunduh salinan cadangan lengkap database (Snapshot JSON) serta mengekspor tabel Master Aset & Riwayat Mutasi ke format Excel CSV (terformat UTF-8 BOM agar langsung kompatibel dan rapi di Microsoft Excel/Spreadsheet).
 - **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi terintegrasi kamera yang memisahkan status barang yang sudah di-scan dengan yang belum diverifikasi, lengkap dengan *progress bar* visual.
 - **📷 QR / Barcode Scanner Nyata**: Scanner kamera langsung di Telegram Mini App menggunakan `html5-qrcode` — mendukung QR Code, Code 128, Code 39, EAN-13, dan format lainnya. Otomatis membuka detail aset saat kode terdeteksi.
 - **📤 Import CSV Massal (Khusus Role Admin)**:
@@ -75,6 +76,7 @@ TransitTMA/
 │   │   ├── BottomNav.tsx           # Bottom Tab Navigation
 │   │   ├── ItemCard.tsx            # Card Component Tampilan Aset
 │   │   └── modals/                 # Interactive Modal Components
+│   │       ├── BackupModal.tsx     # Modal Backup & Export CSV/JSON (Khusus Admin)
 │   │       ├── ConfirmModal.tsx    # Modal Konfirmasi Pengganti window.confirm
 │   │       ├── CSVImportModal.tsx  # Uploader & Validator CSV Khusus Admin
 │   │       ├── ItemFormModal.tsx   # Form Tambah / Edit Aset

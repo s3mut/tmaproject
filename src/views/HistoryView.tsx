@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { MutationDetail, AssetDetail, Site } from '../types/inventory';
 import { Button, Input, SiteSearchInput, Textarea, SectionHeader, EmptyState } from '../components/ui';
 import { MutationBadge } from '../components/ui/Badge';
+import QRScannerModal from '../components/modals/QRScannerModal';
 
 
 interface Props {
@@ -35,6 +36,25 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
   // Filter state for the history list
   const [historyFilter, setHistoryFilter] = useState<'all' | 'Pending' | 'Completed' | 'Rejected'>('all');
   const [historySearch, setHistorySearch] = useState('');
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  const handleScanResult = (scannedText: string) => {
+    const trimmed = scannedText.trim().toLowerCase();
+    const found = assets.find(
+      (a) =>
+        a.serial_number.toLowerCase() === trimmed ||
+        (a.external_id && a.external_id.toLowerCase() === trimmed)
+    );
+    if (found) {
+      setSelectedAsset(found);
+      setSearchQuery(found.serial_number);
+      setScannerOpen(false);
+    } else {
+      setSearchQuery(scannedText.trim());
+      setSelectedAsset(null);
+      setScannerOpen(false);
+    }
+  };
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -110,11 +130,20 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="① Cari Aset" required
-              placeholder="Ketik S/N, brand, atau model..."
+              placeholder="Ketik S/N, brand, atau scan barcode..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setSelectedAsset(null); }}
               icon="fa-search"
-            />
+            >
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                className="text-blue-400 hover:text-blue-300 p-1 transition-colors focus:outline-none flex items-center"
+                title="Scan QR / Barcode Aset"
+              >
+                <i className="fas fa-qrcode text-lg"></i>
+              </button>
+            </Input>
             {searchResults.length > 0 && !selectedAsset && (
               <div className="mt-1 glass rounded-lg overflow-hidden border border-blue-500/20">
                 {searchResults.map((a) => (
@@ -254,6 +283,13 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
           </div>
         )}
       </div>
+
+      {/* QR Scanner Modal untuk Cari Aset */}
+      <QRScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScanResult={handleScanResult}
+      />
     </div>
   );
 };

@@ -564,6 +564,30 @@ Implementasi:
     - `src/views/HistoryView.tsx` (Kirim Aset / Mutasi)
     - `src/components/modals/ItemFormModal.tsx` (Tambah & Edit Aset)
 
+--------------------------------------------------------------------------------
+STEP 27: QR & BARCODE SCANNER INTEGRATION IN ASSET MUTATION (2026-08-04)
+--------------------------------------------------------------------------------
+Kebutuhan: Memilih dan mencari aset pada form Kirim Aset (Mutasi) dilengkapi pencarian by scan (kamera QR / Barcode Scanner) yang identik dengan kotak pencarian utama di header beranda.
+
+Implementasi:
+  - `src/views/HistoryView.tsx`: Menampilkan ikon tombol scan pada slot kanan `<Input label="① Cari Aset">`.
+  - Terintegrasi langsung dengan `<QRScannerModal>` dengan sistem *Zero-Click Logistics*:
+    - Bila kode yang diseken cocok dengan data master aset, sistem otomatis menyeleksi barang tersebut, mengisi serial number ke input box, dan menyiapkannya untuk pemilihan site tujuan.
+    - Bila pencocokan bersifat parsial, teks hasil scan akan diisikan langsung ke kolom pencarian sebagai parameter filter.
+
+--------------------------------------------------------------------------------
+STEP 28: ADMIN DISASTER RECOVERY BACKUP & EXPORT DATA (2026-08-04)
+--------------------------------------------------------------------------------
+Kebutuhan: Menambahkan fasilitas pencadangan (backup) dan ekspor data database inventaris pada menu Profil khusus untuk pengguna ber-role Admin.
+
+Implementasi:
+  - `src/components/modals/BackupModal.tsx`: Modal interaktif berbantukan UI Design System atomik bersertakan ringkasan jumlah data dengan 3 opsi ekspor:
+    1. Full Backup Snapshot (JSON): Arsip menyeluruh mencakup seluruh Master Aset, Log Mutasi, Master Site, Kategori, serta metadata (timestamp, admin pembuat, dan count statistik) untuk keperluan disaster recovery / migrasi.
+    2. Export Master Aset (CSV): Tabel seluruh aset dengan format UTF-8 BOM, rapi dan kompatibel dibuka langsung di Microsoft Excel, serta siap diunggah ulang ke fitur Import CSV Admin.
+    3. Export Riwayat Mutasi (CSV): Rekapitulasi histori pergerakan aset untuk audit trail.
+  - `src/views/ProfileView.tsx`: Opsi menu baru "Backup & Export Data" beremblem badge `ADMIN ONLY`, secara otomatis berstatus restricted dan hanya muncul bila `currentUser?.role === 'admin'`.
+  - `src/App.tsx`: Menyuplai props data inventaris ke `ProfileView`.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
