@@ -1,8 +1,49 @@
 -- ============================================================
 -- TransitTMA — Reporting Views & RPC Functions
--- File: sql/reporting_views_and_rpcs.sql
+-- File: docs/reporting_views_and_rpcs.sql
 -- Jalankan di Supabase SQL Editor (idempotent / aman dijalankan ulang)
 -- ============================================================
+
+-- ============================================================
+-- PRE-MIGRATION: AUTO-FIX SCHEMA (Idempotent Column Rename)
+-- ============================================================
+-- Jika tabel asset_mutations di Supabase masih menggunakan nama kolom versi lama
+-- (from_site / to_site atau from_site_alias / to_site_alias),
+-- ubah menjadi from_site_code / to_site_code agar sesuai dengan aplikasi & schema.sql baru.
+DO $$ 
+BEGIN 
+    -- Cek & rename to_site -> to_site_code
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'asset_mutations' AND column_name = 'to_site'
+    ) THEN 
+        ALTER TABLE asset_mutations RENAME COLUMN to_site TO to_site_code; 
+    END IF;
+
+    -- Cek & rename from_site -> from_site_code
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'asset_mutations' AND column_name = 'from_site'
+    ) THEN 
+        ALTER TABLE asset_mutations RENAME COLUMN from_site TO from_site_code; 
+    END IF;
+
+    -- Cek & rename to_site_alias -> to_site_code (untuk berjaga-jaga jika ada versi alias)
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'asset_mutations' AND column_name = 'to_site_alias'
+    ) THEN 
+        ALTER TABLE asset_mutations RENAME COLUMN to_site_alias TO to_site_code; 
+    END IF;
+
+    -- Cek & rename from_site_alias -> from_site_code
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'asset_mutations' AND column_name = 'from_site_alias'
+    ) THEN 
+        ALTER TABLE asset_mutations RENAME COLUMN from_site_alias TO from_site_code; 
+    END IF;
+END $$;
 
 -- ============================================================
 -- SECTION 1: VIEWS REPORTING

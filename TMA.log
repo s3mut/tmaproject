@@ -650,6 +650,15 @@ Implementasi:
   - `src/views/ProfileView.tsx`: Penambahan 4 menu akses cepat menuju sub-laporan dan indikator emblem/badge angka overdue bermuka animasi.
   - `src/App.tsx`: Penyerahan props data master `sites` ke `ReportView` guna mendukung filter regionalisasi.
 
+--------------------------------------------------------------------------------
+STEP 33: AUTOMATED DATABASE SCHEMA MIGRATION FOR ASSET MUTATIONS (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Memperbaiki kesalahan referensi kolom di Supabase Console (`ERROR 42703: column am.to_site_code does not exist`) saat menjalankan skrip pelaporan pada database yang awalnya diinisiasi dengan nama kolom versi lama (`from_site` / `to_site`).
+
+Implementasi:
+  - `docs/reporting_views_and_rpcs.sql`: Penanaman blok skrip migrasi otomatis `DO $$` yang bersifat *idempotent* pada bagian paling atas sebelum pembentukan View dan Fungsi RPC.
+  - Skrip mendeteksi skema tabel `asset_mutations` via `information_schema.columns`. Apabila ditemukan kolom legacy (`to_site`, `from_site`, atau wujud `_alias`), sistem secara otomatis mengeksekusi `ALTER TABLE RENAME COLUMN` untuk menyelaraskan nama kolom menjadi `from_site_code` dan `to_site_code` agar 100% konsisten dengan spesifikasi TypeScript (`src/services/mutationService.ts`) dan definisi arsitektur terbaru.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
