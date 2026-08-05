@@ -659,6 +659,15 @@ Implementasi:
   - `docs/reporting_views_and_rpcs.sql`: Penanaman blok skrip migrasi otomatis `DO $$` yang bersifat *idempotent* pada bagian paling atas sebelum pembentukan View dan Fungsi RPC.
   - Skrip mendeteksi skema tabel `asset_mutations` via `information_schema.columns`. Apabila ditemukan kolom legacy (`to_site`, `from_site`, atau wujud `_alias`), sistem secara otomatis mengeksekusi `ALTER TABLE RENAME COLUMN` untuk menyelaraskan nama kolom menjadi `from_site_code` dan `to_site_code` agar 100% konsisten dengan spesifikasi TypeScript (`src/services/mutationService.ts`) dan definisi arsitektur terbaru.
 
+--------------------------------------------------------------------------------
+STEP 34: POSTGRESQL ENUM AUTO-EXPANSION & SAFE TEXT CASTING IN REPORTING (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Mencegah error kompilasi kueri di Supabase SQL Editor (`ERROR 22P02: invalid input value for enum asset_status: "Borrowed"`) yang disebabkan oleh ketidakhadiran nilai ENUM terbaru (`Borrowed`, `Retired`, dsb.) pada instans database lama serta potensi ketidakstabilan penawaran nilai di dalam blok transaksi tunggal.
+
+Implementasi:
+  - `docs/reporting_views_and_rpcs.sql`: Penambahan runtutan perintah `ALTER TYPE asset_status ADD VALUE IF NOT EXISTS` untuk seluruh status modern (`Borrowed`, `Retired`, `Disposed`, `In Transit`) pada blok pembawa pre-migration skrip.
+  - Melapisi seluruh komparasi parameter bermuatan ENUM pada View maupun Fungsi RPC (terkait status aset dan status mutasi) dengan konversi ke string tepercaya (`ma.status::TEXT = 'Borrowed'`, `am.status::TEXT = 'Completed'`). Hal ini melumpuhkan ketatnya evaluasi ENUM statis pada parser PostgreSQL, menopang kekebalan skrip dari kecelakaan syntax eval saat pembentukan View & RPC.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

@@ -5,7 +5,16 @@
 -- ============================================================
 
 -- ============================================================
--- PRE-MIGRATION: AUTO-FIX SCHEMA (Idempotent Column Rename)
+-- PRE-MIGRATION 1: AUTO-FIX ENUM VALUES (Idempotent)
+-- ============================================================
+-- Pastikan seluruh nilai status yang dibutuhkan aplikasi sudah ada dalam ENUM asset_status
+ALTER TYPE asset_status ADD VALUE IF NOT EXISTS 'Borrowed';
+ALTER TYPE asset_status ADD VALUE IF NOT EXISTS 'Retired';
+ALTER TYPE asset_status ADD VALUE IF NOT EXISTS 'Disposed';
+ALTER TYPE asset_status ADD VALUE IF NOT EXISTS 'In Transit';
+
+-- ============================================================
+-- PRE-MIGRATION 2: AUTO-FIX SCHEMA (Idempotent Column Rename)
 -- ============================================================
 -- Jika tabel asset_mutations di Supabase masih menggunakan nama kolom versi lama
 -- (from_site / to_site atau from_site_alias / to_site_alias),
@@ -109,16 +118,16 @@ CREATE OR REPLACE VIEW view_asset_utilization AS
 SELECT
   mc.name                                           AS category_name,
   mc.icon                                           AS category_icon,
-  COUNT(ma.id)                                      AS total_assets,
-  COUNT(ma.id) FILTER (WHERE ma.status = 'Active')  AS active_count,
-  COUNT(ma.id) FILTER (WHERE ma.status = 'Backup')  AS backup_count,
-  COUNT(ma.id) FILTER (WHERE ma.status = 'Borrowed') AS borrowed_count,
-  COUNT(ma.id) FILTER (WHERE ma.status = 'Repair')  AS repair_count,
-  COUNT(ma.id) FILTER (WHERE ma.status = 'Retired') AS retired_count,
+  COUNT(ma.id)                                             AS total_assets,
+  COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Active')   AS active_count,
+  COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Backup')   AS backup_count,
+  COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Borrowed') AS borrowed_count,
+  COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Repair')   AS repair_count,
+  COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Retired')  AS retired_count,
   ROUND(
-    COUNT(ma.id) FILTER (WHERE ma.status IN ('Active','Borrowed'))::NUMERIC
+    COUNT(ma.id) FILTER (WHERE ma.status::TEXT IN ('Active','Borrowed'))::NUMERIC
     / NULLIF(COUNT(ma.id),0) * 100, 1
-  )                                                 AS utilization_rate_pct
+  )                                                        AS utilization_rate_pct
 FROM master_assets ma
 JOIN master_categories mc ON mc.id = ma.category_id
 WHERE ma.deleted_at IS NULL
@@ -267,11 +276,11 @@ BEGIN
   -- Asset counts
   SELECT
     COUNT(*),
-    COUNT(*) FILTER (WHERE ma.status = 'Active'),
-    COUNT(*) FILTER (WHERE ma.status = 'Backup'),
-    COUNT(*) FILTER (WHERE ma.status = 'Borrowed'),
-    COUNT(*) FILTER (WHERE ma.status = 'Repair'),
-    COUNT(*) FILTER (WHERE ma.status = 'Retired')
+    COUNT(*) FILTER (WHERE ma.status::TEXT = 'Active'),
+    COUNT(*) FILTER (WHERE ma.status::TEXT = 'Backup'),
+    COUNT(*) FILTER (WHERE ma.status::TEXT = 'Borrowed'),
+    COUNT(*) FILTER (WHERE ma.status::TEXT = 'Repair'),
+    COUNT(*) FILTER (WHERE ma.status::TEXT = 'Retired')
   INTO v_total_assets, v_active, v_backup, v_borrowed, v_repair, v_retired
   FROM master_assets ma
   LEFT JOIN sites s ON s.site_alias = ma.site_alias
@@ -332,10 +341,10 @@ BEGIN
   SELECT
     TO_CHAR(DATE_TRUNC('month', am.mutation_date), 'Mon YY')::TEXT AS month_label,
     EXTRACT(MONTH FROM am.mutation_date)::INT                       AS month_order,
-    COUNT(*)::BIGINT                                                AS total,
-    COUNT(*) FILTER (WHERE am.status = 'Completed')::BIGINT        AS completed,
-    COUNT(*) FILTER (WHERE am.status = 'Pending')::BIGINT          AS pending,
-    COUNT(*) FILTER (WHERE am.status = 'Rejected')::BIGINT         AS rejected
+    COUNT(*)::BIGINT                                                     AS total,
+    COUNT(*) FILTER (WHERE am.status::TEXT = 'Completed')::BIGINT        AS completed,
+    COUNT(*) FILTER (WHERE am.status::TEXT = 'Pending')::BIGINT          AS pending,
+    COUNT(*) FILTER (WHERE am.status::TEXT = 'Rejected')::BIGINT         AS rejected
   FROM asset_mutations am
   WHERE
     (p_year IS NULL OR EXTRACT(YEAR FROM am.mutation_date) = p_year)
