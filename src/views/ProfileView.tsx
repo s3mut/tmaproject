@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { AssetDetail, MutationDetail, Site, Category } from '../types/inventory';
 import { useAuth } from '../contexts/AuthContext';
 import { getTelegramSDKUser } from '../services/userService';
@@ -6,6 +6,9 @@ import RequestAccessModal from '../components/modals/RequestAccessModal';
 import SetPasswordModal from '../components/modals/SetPasswordModal';
 import BackupModal from '../components/modals/BackupModal';
 import UserManagementModal from '../components/modals/UserManagementModal';
+import OverdueAlertModal from '../components/modals/OverdueAlertModal';
+import { getOverdueLoans } from '../services/reportService';
+import type { OverdueLoan } from '../services/reportService';
 
 interface Props {
   assets?:     AssetDetail[];
@@ -22,6 +25,15 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
   const [setPassModalOpen, setSetPassModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen]   = useState(false);
   const [userMgmtModalOpen, setUserMgmtModalOpen] = useState(false);
+  const [overdueOpen, setOverdueOpen]           = useState(false);
+  const [overdueLoans, setOverdueLoans]         = useState<OverdueLoan[]>([]);
+
+  // Fetch overdue count on mount for badge display (non-blocking)
+  useEffect(() => {
+    if (!isGuest) {
+      getOverdueLoans().then(setOverdueLoans).catch(() => {});
+    }
+  }, []);
 
   const sdkUser = getTelegramSDKUser();
 
@@ -53,8 +65,39 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
       },
     ] : []),
     {
-      icon: 'fa-file-export', color: 'text-blue-400', bg: 'bg-blue-500/20',
-      title: 'Laporan Aset (Retired)', subtitle: 'Export data barang yang dipensiunkan',
+      icon: 'fa-chart-pie', color: 'text-blue-400', bg: 'bg-blue-500/20',
+      title: 'Laporan & Analitik', subtitle: 'KPI, utilization, trend mutasi',
+      onClick: () => onOpenReport ? onOpenReport() : alert('Fitur laporan belum tersedia!'),
+      badge: undefined,
+      badgeDot: undefined,
+      hideGuest: true,
+    },
+    {
+      icon: 'fa-file-alt', color: 'text-emerald-400', bg: 'bg-emerald-500/20',
+      title: 'Laporan Peminjaman', subtitle: 'Generate & export laporan per region/status',
+      onClick: () => onOpenReport ? onOpenReport() : alert('Fitur laporan belum tersedia!'),
+      hideGuest: true,
+    },
+    {
+      icon: 'fa-bell', color: overdueLoans.length > 0 ? 'text-red-400' : 'text-amber-400',
+      bg: overdueLoans.length > 0 ? 'bg-red-500/20' : 'bg-amber-500/20',
+      title: 'Alert Overdue',
+      subtitle: overdueLoans.length > 0
+        ? `⚠️ ${overdueLoans.length} tiket melewati jatuh tempo`
+        : 'Semua pinjaman tepat waktu',
+      onClick: () => setOverdueOpen(true),
+      badgeDot: overdueLoans.length > 0 ? String(overdueLoans.length) : undefined,
+      hideGuest: true,
+    },
+    {
+      icon: 'fa-history', color: 'text-indigo-400', bg: 'bg-indigo-500/20',
+      title: 'Audit Trail', subtitle: 'Lacak pergerakan aset by serial number',
+      onClick: () => onOpenReport ? onOpenReport() : alert('Fitur laporan belum tersedia!'),
+      hideGuest: true,
+    },
+    {
+      icon: 'fa-file-export', color: 'text-slate-400', bg: 'bg-slate-600/30',
+      title: 'Laporan Aset Retired', subtitle: 'Export data barang yang dipensiunkan',
       onClick: () => onOpenReport ? onOpenReport() : alert('Fitur laporan belum tersedia!'),
       hideGuest: true,
     },
@@ -150,8 +193,13 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
             onClick={item.onClick}
           >
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${item.bg} flex items-center justify-center ${item.color}`}>
+              <div className={`w-10 h-10 rounded-lg ${item.bg} flex items-center justify-center ${item.color} relative`}>
                 <i className={`fas ${item.icon}`}></i>
+                {(item as any).badgeDot && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
+                    {(item as any).badgeDot}
+                  </span>
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -237,6 +285,19 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         sites={sites}
         onShowToast={onShowToast}
         onRefresh={refreshUser}
+      />
+
+      {/* Overdue Alert Modal */}
+      <OverdueAlertModal
+        isOpen={overdueOpen}
+        overdueLoans={overdueLoans}
+        onClose={() => setOverdueOpen(false)}
+        onRefresh={async () => {
+          const data = await getOverdueLoans();
+          setOverdueLoans(data);
+          return data;
+        }}
+        onShowToast={onShowToast}
       />
     </div>
   );

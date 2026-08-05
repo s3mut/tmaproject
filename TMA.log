@@ -634,6 +634,22 @@ Implementasi:
   - `src/views/ProfileView.tsx`: Penambahan tombol menu "Manajemen Akun & Region IT" pada dasbor Admin.
   - `src/views/LoansView.tsx` & `src/App.tsx`: Penambahan spanduk otoritas wilayah, penguncian visual (`🔒 Wilayah [Region]`) bagi staf IT yang mencoba mengeksekusi di luar teritori kerjanya, tombol persetujuan eskalasi untuk Admin, serta tombol "⚡ Force Cancel" (God Mode).
 
+--------------------------------------------------------------------------------
+STEP 32: ENTERPRISE DOCUMENTATION & REPORTING SYSTEM WITH RECHARTS (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Menyediakan dasbor pelaporan enterprise berbekal grafik analitik interaktif, KPI monitoring ringkasan sistem, peringatan keterlambatan (overdue loans), riwayat audit trail per aset, serta fitur ekspor CSV dan notifikasi Telegram Bot.
+
+Implementasi:
+  - `docs/reporting_views_and_rpcs.sql`: Definisi 5 PostgreSQL Views dan 4 RPC Functions di Supabase untuk kalkulasi utilisasi dan pelaporan secara langsung di level database.
+  - `src/services/reportService.ts`: Layer API untuk penarikan analitik dari pandangan database (views), generator ekspor data ke format CSV, dan integrasi trigger notifikasi keterlambatan via Telegram Bot.
+  - `src/hooks/useReport.ts`: Custom hook untuk pengolahan state pelaporan, sinkronisasi data KPI, dan pemutakhiran alert keterlambatan secara dinamis.
+  - `src/components/modals/OverdueAlertModal.tsx`: Modal monitoring daftar peminjaman terlambat berbekal aksi ekspor ke CSV serta pemicu pengiriman peringatan Telegram Bot.
+  - `src/components/modals/AuditTrailModal.tsx`: Modal rekam jejak linimasa (audit trail timeline) secara mendalam untuk memonitor siklus hidup dan riwayat mutasi per unit aset.
+  - `src/components/modals/LoanReportModal.tsx`: Generator laporan transaksi peminjaman lengkap berbasis filter rentang waktu dan status.
+  - `src/views/ReportView.tsx`: Penggantian menyeluruh halaman pelaporan menjadi 4 tab utama (KPI Summary, Loans & SLA, Audit Trail, dan Utilization) berbekal visualisasi data modular dari pustaka Recharts (Area Chart untuk trend mutasi 12 bulan, Pie/Donut Chart untuk distribusi status aset, dan Horizontal Bar Chart untuk ranking utilisasi cabang).
+  - `src/views/ProfileView.tsx`: Penambahan 4 menu akses cepat menuju sub-laporan dan indikator emblem/badge angka overdue bermuka animasi.
+  - `src/App.tsx`: Penyerahan props data master `sites` ke `ReportView` guna mendukung filter regionalisasi.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

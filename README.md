@@ -28,6 +28,10 @@
   - **📄 Generator Dokumen BAST & Shipping Label**: Template Berita Acara Serah Terima berdesain korporasi resmi bersumber spesifikasi lengkap dan slot tanda tangan digital yang siap cetak langsung (*Print-Ready* / Save PDF).
   - **🌐 Enterprise RBAC & Regional Auto-Routing (Intra vs. Cross-Region)**: Pembatasan wewenang teknisi IT cabang berdasarkan wilayah (`assigned_region`). Penguncian visual otomatis (`🔒 Wilayah [Region]`) bagi teknisi di luar wilayah kerjanya. Jika stok di region toko kosong, pengajuan otomatis dieksplorasikan ke Alur B (Cross-Region Escalation) dengan status **`Waiting Admin Approval`** agar diotorisasi Admin Global untuk alokasi dari Gudang Pusat / HQ.
   - **🛡️ Audit Trail Alasan Terstruktur & God Mode Override**: Kewajiban memilih kategori alasan terstruktur dan keterangan saat pembatalan maupun penolakan. Admin Global juga diberdayakan dengan tombol otoritas tertinggi **⚡ Force Cancel** untuk penarikan paksa aset yang mereset status fisik secara otomatis kembali ke *Backup*.
+- **📈 Enterprise Documentation & Reporting (Recharts & SQL Analytics)**: Dasbor pelaporan eksekutif berbekal visualisasi grafik modern yang ditenagai oleh **Recharts** dan komputasi langsung dari PostgreSQL Views/RPC:
+  - **KPI Summary**: Area Chart untuk trend mutasi 12 bulan terakhir dan Donut/Pie Chart proporsi distribusi status aset fisik.
+  - **Loans & SLA Monitoring**: Pelacakan tingkat keterlambatan (*Overdue Alerts*) dengan aksi ekspor CSV dan pemicu notifikasi peringatan ke Telegram Bot.
+  - **Audit Trail & Utilization**: Linimasa rekam jejak siklus hidup tiap unit aset serta Horizontal Bar Chart untuk ranking utilisasi peminjaman tertinggi per cabang.
 - **💾 Admin Disaster Recovery & Backup System**: Panel khusus Role Admin di menu Profil untuk mengunduh salinan cadangan lengkap database (Snapshot JSON) serta mengekspor tabel Master Aset & Riwayat Mutasi ke format Excel CSV (terformat UTF-8 BOM agar langsung kompatibel dan rapi di Microsoft Excel/Spreadsheet).
 - **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi terintegrasi kamera yang memisahkan status barang yang sudah di-scan dengan yang belum diverifikasi, lengkap dengan *progress bar* visual.
 - **📷 QR / Barcode Scanner Nyata**: Scanner kamera langsung di Telegram Mini App menggunakan `html5-qrcode` — mendukung QR Code, Code 128, Code 39, EAN-13, dan format lainnya. Otomatis membuka detail aset saat kode terdeteksi.
@@ -66,6 +70,7 @@ TransitTMA/
 │   ├── seed_categories.sql         # Data Seed Master Kategori (ID 44-80)
 │   ├── auto_category_trigger.sql   # Trigger Validation Strict Kategori
 │   ├── import_assets_from_csv.sql  # Script Staging & Migrasi CSV
+│   ├── reporting_views_and_rpcs.sql # Skema SQL 5 Views & 4 RPC untuk Analitik & Pelaporan
 │   ├── web_auth_rpc.sql            # SQL Migration: Web Auth (web_password + RPC)
 │   ├── diagnostic_web_auth.sql     # SQL Diagnostik & Pengujian Web Login
 │   └── bot_webhook_handler.js      # Telegram Bot Webhook Handler (Node.js)
@@ -89,23 +94,29 @@ TransitTMA/
 │   │   ├── BottomNav.tsx           # Bottom Tab Navigation
 │   │   ├── ItemCard.tsx            # Card Component Tampilan Aset
 │   │   └── modals/                 # Interactive Modal Components
+│   │       ├── AuditTrailModal.tsx # Linimasa Rekam Jejak Audit per Unit Aset
 │   │       ├── BackupModal.tsx     # Modal Backup & Export CSV/JSON (Khusus Admin)
 │   │       ├── BASTDocumentModal.tsx # Generator Dokumen BAST & Shipping Label PDF
+│   │       ├── CancelRejectModal.tsx # Form Alasan Wajib Terakreditasi (Cancel/Reject/Force)
 │   │       ├── ConfirmModal.tsx    # Modal Konfirmasi Pengganti window.confirm
 │   │       ├── CSVImportModal.tsx  # Uploader & Validator CSV Khusus Admin
 │   │       ├── DispatchLoanModal.tsx # Alokasi & Scan Barcode Peminjaman IT
 │   │       ├── ItemFormModal.tsx   # Form Tambah / Edit Aset
 │   │       ├── ItemDetailModal.tsx # Detail Aset & Aksis
+│   │       ├── LoanReportModal.tsx # Generator Laporanan Transaksi Peminjaman
 │   │       ├── MutationModal.tsx   # Form Mutasi / Perpindahan Aset
+│   │       ├── OverdueAlertModal.tsx # Daftar Keterlambatan, Export CSV & Telegram Bot Alert
 │   │       ├── QRScannerModal.tsx  # Scanner QR / Barcode (html5-qrcode)
-│   │       ├── RequestAccessModal.tsx  # Form Request Akses Tim IT (Guest)
-│   │       ├── RequestLoanModal.tsx    # Form Pengajuan Peminjaman Toko
-│   │       ├── ReturnCheckModal.tsx    # Verifikasi Kondisi Barang Kembalian IT
-│   │       └── SetPasswordModal.tsx    # Atur Password Akses Web
+│   │       ├── RequestAccessModal.tsx # Form Request Akses Tim IT (Guest)
+│   │       ├── RequestLoanModal.tsx   # Form Pengajuan Peminjaman Toko
+│   │       ├── ReturnCheckModal.tsx   # Verifikasi Kondisi Barang Kembalian IT
+│   │       ├── SetPasswordModal.tsx   # Atur Password Akses Web
+│   │       └── UserManagementModal.tsx # Panel Admin Manajemen Role & Teritori IT
 │   ├── contexts/
 │   │   └── AuthContext.tsx         # AuthProvider & useAuth() Hook (Dual Auth)
 │   ├── hooks/
-│   │   └── useInventory.ts         # Central State Management Hook
+│   │   ├── useInventory.ts         # Central State Management Hook (Inventaris & Loans)
+│   │   └── useReport.ts            # Hook Analitik & State Management Laporan
 │   ├── lib/
 │   │   └── supabase.ts             # Supabase Client Initialization
 │   ├── services/                   # API Integration Layer
@@ -114,6 +125,7 @@ TransitTMA/
 │   │   ├── csvImportService.ts     # Parsing & Chunking Upload CSV
 │   │   ├── loanService.ts          # API Layer Siklus Peminjaman & Overdue
 │   │   ├── mutationService.ts      # Mutation Log & Handover
+│   │   ├── reportService.ts        # Service Pelaporan, Export CSV, & Telegram Notif
 │   │   ├── siteService.ts          # Fetch Sites & Regions
 │   │   └── userService.ts          # Telegram SDK User Sync & Bot Notification
 │   ├── types/
@@ -124,6 +136,7 @@ TransitTMA/
 │       ├── HistoryView.tsx         # Riwayat Mutasi Aset
 │       ├── LoansView.tsx           # Dashboard Monitoring Peminjaman & BAST
 │       ├── LoginView.tsx           # Halaman Login Web (Telegram ID + Password)
+│       ├── ReportView.tsx          # Dashboard Pelaporan Enterprise & Grafik Recharts
 │       ├── SitesView.tsx           # Daftar Lokasi Site Operasional
 │       ├── OpnameView.tsx          # Audit Fisik Aset
 │       └── ProfileView.tsx         # Profil User & Pengaturan Akses Web
@@ -167,6 +180,7 @@ Eksekusi file SQL yang berada di folder `docs/` secara berurutan di Supabase SQL
 | 2 | `docs/seed_categories.sql` | Mengisi data master kategori (ID 44–80) |
 | 3 | `docs/auto_category_trigger.sql` | Memasang trigger validasi strict kategori |
 | 4 | `docs/setup_web_auth_and_dummy_users.sql` | **Wajib**: Setup lengkap Web Auth (kolom password, semua fungsi RPC) + 3 akun dummy untuk testing |
+| 5 | `docs/reporting_views_and_rpcs.sql` | Mengaktifkan 5 Views & 4 RPC untuk sistem analitik dan pelaporan real-time |
 
 > **⚠️ Catatan**: Script nomor 4 bersifat **idempotent** (aman dijalankan berulang kali) dan sudah mencakup semua kebutuhan setup web login.
 

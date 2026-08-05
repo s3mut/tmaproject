@@ -384,7 +384,7 @@ function App() {
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
         {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} onBulkStatusChange={handleBulkStatusChange} />}
         {activeTab === 'profile' && <ProfileView assets={assets} mutations={mutations} sites={sites} categories={categories} onShowToast={showToast} onOpenReport={() => setActiveTab('report')} />}
-        {activeTab === 'report' && <ReportView onBack={() => setActiveTab('profile')} onShowToast={showToast} />}
+        {activeTab === 'report' && <ReportView onBack={() => setActiveTab('profile')} onShowToast={showToast} sites={sites} categories={categories} />}
       </main>
 
       {showFab && (
