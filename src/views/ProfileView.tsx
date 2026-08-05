@@ -5,6 +5,7 @@ import { getTelegramSDKUser } from '../services/userService';
 import RequestAccessModal from '../components/modals/RequestAccessModal';
 import SetPasswordModal from '../components/modals/SetPasswordModal';
 import BackupModal from '../components/modals/BackupModal';
+import UserManagementModal from '../components/modals/UserManagementModal';
 
 interface Props {
   assets?:     AssetDetail[];
@@ -20,6 +21,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [setPassModalOpen, setSetPassModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen]   = useState(false);
+  const [userMgmtModalOpen, setUserMgmtModalOpen] = useState(false);
 
   const sdkUser = getTelegramSDKUser();
 
@@ -36,12 +38,20 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
 
   let menuItems = [
     // Menu Khusus Admin IT
-    ...(isAdmin ? [{
-      icon: 'fa-database', color: 'text-amber-400', bg: 'bg-amber-500/20',
-      title: 'Backup & Export Data', subtitle: 'Export CSV Master Aset, Mutasi, & Snapshot JSON',
-      onClick: () => setBackupModalOpen(true),
-      badge: 'ADMIN ONLY',
-    }] : []),
+    ...(isAdmin ? [
+      {
+        icon: 'fa-database', color: 'text-amber-400', bg: 'bg-amber-500/20',
+        title: 'Backup & Export Data', subtitle: 'Export CSV Master Aset, Mutasi, & Snapshot JSON',
+        onClick: () => setBackupModalOpen(true),
+        badge: 'ADMIN ONLY',
+      },
+      {
+        icon: 'fa-users-cog', color: 'text-indigo-400', bg: 'bg-indigo-500/20',
+        title: 'Manajemen Akun & Region IT', subtitle: 'Kelola role pengguna & pembagian wilayah wewenang IT',
+        onClick: () => setUserMgmtModalOpen(true),
+        badge: 'ADMIN ONLY',
+      },
+    ] : []),
     {
       icon: 'fa-file-export', color: 'text-blue-400', bg: 'bg-blue-500/20',
       title: 'Laporan Aset (Retired)', subtitle: 'Export data barang yang dipensiunkan',
@@ -218,6 +228,15 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         categories={categories}
         adminName={currentUser?.name}
         onShowToast={onShowToast}
+      />
+
+      {/* Admin User & Region Management Modal */}
+      <UserManagementModal
+        isOpen={userMgmtModalOpen}
+        onClose={() => setUserMgmtModalOpen(false)}
+        sites={sites}
+        onShowToast={onShowToast}
+        onRefresh={refreshUser}
       />
     </div>
   );

@@ -68,6 +68,7 @@ export async function createLoanRequest(params: {
   requestedById: number;
   requestedByName: string;
   notes?: string;
+  isCrossRegion?: boolean;
 }): Promise<string> {
   const yymm = new Date().toISOString().slice(2, 7).replace('-', '');
   const cleanSite = (params.siteAlias || 'TKO').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
@@ -77,6 +78,7 @@ export async function createLoanRequest(params: {
 
   const requiresApproval = params.durationDays > 14;
   const dueDate = new Date(Date.now() + (params.durationDays * 24 * 60 * 60 * 1000)).toISOString();
+  const initialStatus = params.isCrossRegion ? 'Waiting Admin Approval' : 'Requested';
 
   const { error } = await supabase.from('asset_loans').insert({
     loan_code: loanCode,
@@ -87,7 +89,8 @@ export async function createLoanRequest(params: {
     requires_it_approval: requiresApproval,
     due_date: dueDate,
     shipping_method: params.shippingMethod,
-    status: 'Requested',
+    status: initialStatus,
+    is_cross_region: !!params.isCrossRegion,
     requested_by_id: params.requestedById,
     requested_by_name: params.requestedByName,
     notes: params.notes || null,
@@ -274,15 +277,38 @@ export async function closeLoanTicket(params: {
 }
 
 /**
- * Membatalkan pengajuan pinjam oleh pengaju sendiri (Role Toko / Guest / Creator)
+ * Persetujuan tiket (Approve) oleh IT Region atau Admin Global (Khusus Cross-Region / Durasi > 14 hari)
  */
-export async function cancelLoanRequest(loanId: number, reason?: string): Promise<void> {
+export async function approveLoanRequest(loanId: number, approverId: number, approverName: string): Promise<void> {
+  const { error } = await supabase
+    .from('asset_loans')
+    .update({
+      status: 'Approved',
+      approved_by_id: approverId,
+      approved_by_name: approverName,
+      approved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', loanId);
+
+  if (error) throw new Error(`Gagal menyetujui pengajuan: ${error.message}`);
+}
+
+/**
+ * Membatalkan pengajuan pinjam oleh pengaju sendiri (Role Toko / Guest / Creator / User)
+ */
+export async function cancelLoanRequest(loanId: number, reason?: string, role = 'guest', userId?: number): Promise<void> {
+  const nowStr = new Date().toISOString();
   const { error } = await supabase
     .from('asset_loans')
     .update({
       status: 'Cancelled',
-      notes: reason || 'Dibatalkan oleh pengaju sendiri.',
-      updated_at: new Date().toISOString(),
+      notes: reason || 'Dibatalkan mandiri oleh pengaju.',
+      cancellation_reason: reason || 'Dibatalkan mandiri oleh pengaju.',
+      cancelled_by_role: role,
+      cancelled_by_id: userId || null,
+      cancelled_at: nowStr,
+      updated_at: nowStr,
     })
     .eq('id', loanId);
 
@@ -290,17 +316,67 @@ export async function cancelLoanRequest(loanId: number, reason?: string): Promis
 }
 
 /**
- * Menolak pengajuan pinjam oleh Tim IT Support / Admin
+ * Menolak pengajuan pinjam oleh Tim IT Support / Admin dengan alasan terstruktur
  */
-export async function rejectLoanRequest(loanId: number, rejectedBy: string, reason?: string): Promise<void> {
+export async function rejectLoanRequest(loanId: number, rejectedBy: string, reason?: string, role = 'user', userId?: number): Promise<void> {
+  const nowStr = new Date().toISOString();
   const { error } = await supabase
     .from('asset_loans')
     .update({
       status: 'Rejected',
       notes: `Ditolak oleh Tim IT (${rejectedBy}): ${reason || 'Tidak memenuhi kualifikasi / stok kosong.'}`,
-      updated_at: new Date().toISOString(),
+      cancellation_reason: reason || 'Ditolak oleh Tim IT Support.',
+      cancelled_by_role: role,
+      cancelled_by_id: userId || null,
+      cancelled_at: nowStr,
+      updated_at: nowStr,
     })
     .eq('id', loanId);
 
   if (error) throw new Error(`Gagal menolak pengajuan: ${error.message}`);
+}
+
+/**
+ * Admin "God Mode": Force Cancel tiket di tahapan apa saja dengan pemulihan status fisik aset
+ */
+export async function forceCancelLoan(
+  loanId: number,
+  adminId: number,
+  adminName: string,
+  reason: string,
+  currentAssetId?: number | null
+): Promise<void> {
+  const nowStr = new Date().toISOString();
+
+  // 1. Jika sudah sempat ada aset fisik yang dipindahkan/dipinjam, kembalikan statusnya jadi 'Backup'
+  if (currentAssetId) {
+    const { error: assetErr } = await supabase
+      .from('master_assets')
+      .update({
+        status: 'Backup',
+        updated_at: nowStr,
+      })
+      .eq('id', currentAssetId);
+
+    if (assetErr) {
+      console.warn('Gagal mereset status aset di Master Asset saat Force Cancel:', assetErr);
+    }
+  }
+
+  // 2. Update tiket ke Cancelled dengan audit trail God Mode
+  const { error: loanErr } = await supabase
+    .from('asset_loans')
+    .update({
+      status: 'Cancelled',
+      notes: `⚡ FORCE CANCELLED BY GLOBAL ADMIN (${adminName}): ${reason}`,
+      cancellation_reason: `⚡ GOD MODE OVERRIDE: ${reason}`,
+      cancelled_by_role: 'admin',
+      cancelled_by_id: adminId,
+      cancelled_at: nowStr,
+      force_cancelled_at: nowStr,
+      updated_at: nowStr,
+    })
+    .eq('id', loanId);
+
+  if (loanErr) throw new Error(`Gagal melakukan Force Cancel (God Mode): ${loanErr.message}`);
 }

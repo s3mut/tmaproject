@@ -617,6 +617,23 @@ Implementasi:
   - `src/components/modals/DispatchLoanModal.tsx`: Penyortiran rekomendasi kandidat unit dengan prioritas ⭐ Satu Region di posisi teratas, dan penambahan tombol "👁️ Detail" untuk menampilkan modal spesifikasi lengkap aset fisik (S/N, Merek, Model, Aktiva, External ID, Deskripsi) sebelum penugasan.
   - `src/views/LoansView.tsx` & `src/App.tsx`: Penambahan tombol tindakan "⚪ Batal" untuk creator/admin pada tiket `Requested`, tombol "🚫 Tolak" untuk Role IT (User/Admin), serta integrasi Modal Dialog Rejection yang mewajibkan input alasan penolakan.
 
+--------------------------------------------------------------------------------
+STEP 31: ENTERPRISE RBAC, USER REGION MANAGEMENT & CROSS-REGION WORKFLOW (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Menerapkan Role-Based Access Control (RBAC) tingkat enterprise dengan pembagian wewenang berdasarkan regional (Intra-Region) dan antar-regional (Cross-Region), panel manajemen akun & wilayah wewenang untuk Admin, serta audit trail dengan alasan terstruktur dan God Mode Force Cancel.
+
+Implementasi:
+  - `sql/upgrade_rbac_regional_workflow.sql`: Pembuatan skrip migrasi SQL untuk penambahan atribut `assigned_region` pada tabel `telegram_users`, kolom audit/state pada `asset_loans` (`is_cross_region`, `cancellation_reason`, `rejection_reason`, `cancelled_by`, `rejected_by`), pemutakhiran RPC `verify_web_login_v2`, serta RPC `force_cancel_loan_ticket`.
+  - `src/types/inventory.ts`: Penambahan status `Waiting Admin Approval` & `Approved` pada `LoanStatus`, field `role` & `assigned_region` pada `TelegramUser`, dan parameter audit di `AssetLoan`.
+  - `src/services/authService.ts` & `src/contexts/AuthContext.tsx`: Persistensi dan penarikan wewenang wilayah pengguna dari sesi Web maupun Telegram WebApp SDK ke state global antarmuka.
+  - `src/services/userService.ts`: Implementasi `getAllUsers` dan `updateUserRoleAndRegion` untuk pembaruan hak akses dan teritori cabang staf IT.
+  - `src/services/loanService.ts` & `src/hooks/useInventory.ts`: Implementasi fungsi `approveLoanRequest` (eskalasi Cross-Region) dan `forceCancelLoanTicket` (Admin God Mode override).
+  - `src/components/modals/UserManagementModal.tsx`: Komponen modal khusus Admin untuk mengelola hak akses (`guest`, `user`, `admin`) dan pemetaan wilayah wewenang IT (`assigned_region`) dari tabel master `sites`.
+  - `src/components/modals/CancelRejectModal.tsx`: Modal terintegrasi dengan kategori alasan wajib terstruktur untuk rekam jejak audit saat pembatalan, penolakan, maupun Force Cancel.
+  - `src/components/modals/RequestLoanModal.tsx`: Pembaruan logika pengajuan agar secara otomatis beralih ke status `Waiting Admin Approval` (Eskalasi Cross-Region / Alur B) jika stok di gudang region toko kosong.
+  - `src/views/ProfileView.tsx`: Penambahan tombol menu "Manajemen Akun & Region IT" pada dasbor Admin.
+  - `src/views/LoansView.tsx` & `src/App.tsx`: Penambahan spanduk otoritas wilayah, penguncian visual (`🔒 Wilayah [Region]`) bagi staf IT yang mencoba mengeksekusi di luar teritori kerjanya, tombol persetujuan eskalasi untuk Admin, serta tombol "⚡ Force Cancel" (God Mode).
+
 ================================================================================
                                  END OF LOG
 ================================================================================

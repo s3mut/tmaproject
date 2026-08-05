@@ -67,6 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             is_active: true,
             notes: null,
             created_at: new Date().toISOString(),
+            assigned_region: session.assignedRegion ?? null,
           });
           setAuthMethod('web');
           return;

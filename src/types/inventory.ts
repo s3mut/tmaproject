@@ -7,7 +7,7 @@ export type AssetStatus = 'Active' | 'Backup' | 'Repair' | 'Disposed' | 'In Tran
 export type UserRole = 'admin' | 'user' | 'guest';
 export type MutationStatus = 'Pending' | 'Completed' | 'Rejected';
 export type OpnameStatus = 'Ditemukan' | 'Hilang' | 'Nyasar';
-export type LoanStatus = 'Requested' | 'In-Transit' | 'Borrowed' | 'Return In-Transit' | 'Closed' | 'Rejected' | 'Cancelled';
+export type LoanStatus = 'Requested' | 'Waiting Admin Approval' | 'Approved' | 'In-Transit' | 'Borrowed' | 'Return In-Transit' | 'Closed' | 'Rejected' | 'Cancelled';
 
 // ----- TABLE: sites -----
 export interface Site {
@@ -34,10 +34,11 @@ export interface TelegramUser {
   telegram_id: number;     // BIGINT PK
   name: string;
   username: string | null;
-  role: UserRole;
   is_active: boolean;
   notes: string | null;
   created_at: string;
+  role?: UserRole | string;
+  assigned_region?: string | null;
 }
 
 // ----- TABLE: master_assets -----
@@ -157,6 +158,17 @@ export interface AssetLoan {
   returned_at: string | null;
   closed_at: string | null;
   notes: string | null;
+  // RBAC & State Machine Workflow
+  is_cross_region?: boolean;
+  target_source_region?: string | null;
+  approved_by_id?: number | null;
+  approved_by_name?: string | null;
+  approved_at?: string | null;
+  cancelled_by_id?: number | null;
+  cancelled_by_role?: string | null;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
+  force_cancelled_at?: string | null;
   // Joined / Rich fields
   asset_serial_number?: string;
   asset_brand?: string | null;
@@ -166,11 +178,13 @@ export interface AssetLoan {
 }
 
 export const loanStatusConfig: Record<LoanStatus, { label: string; bg: string; text: string; icon: string }> = {
-  Requested:          { label: 'Request Baru',     bg: 'bg-amber-500/20 border border-amber-500/40',  text: 'text-amber-300',   icon: 'fa-clock' },
-  'In-Transit':       { label: 'Dalam Pengiriman', bg: 'bg-blue-500/20 border border-blue-500/40',    text: 'text-blue-300',    icon: 'fa-truck' },
-  Borrowed:           { label: 'Aktif Dipinjam',   bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-box-open' },
-  'Return In-Transit':{ label: 'Proses Kembali',   bg: 'bg-purple-500/20 border border-purple-500/40',  text: 'text-purple-300',  icon: 'fa-reply' },
-  Closed:             { label: 'Selesai (Closed)', bg: 'bg-slate-700/50 border border-slate-600/50',  text: 'text-slate-400',   icon: 'fa-check-double' },
-  Rejected:           { label: 'Ditolak',          bg: 'bg-red-500/20 border border-red-500/40',      text: 'text-red-400',     icon: 'fa-times-circle' },
-  Cancelled:          { label: 'Dibatalkan',       bg: 'bg-slate-700/30 border border-slate-600/40',  text: 'text-slate-400',   icon: 'fa-ban' },
+  Requested:              { label: 'Request Baru',        bg: 'bg-amber-500/20 border border-amber-500/40',   text: 'text-amber-300',   icon: 'fa-clock' },
+  'Waiting Admin Approval': { label: 'Eskalasi Cross-Region', bg: 'bg-indigo-500/20 border border-indigo-500/40', text: 'text-indigo-300',  icon: 'fa-user-shield' },
+  Approved:               { label: 'Siap Alokasi',        bg: 'bg-teal-500/20 border border-teal-500/40',     text: 'text-teal-300',    icon: 'fa-check-circle' },
+  'In-Transit':           { label: 'Dalam Pengiriman',    bg: 'bg-blue-500/20 border border-blue-500/40',     text: 'text-blue-300',    icon: 'fa-truck' },
+  Borrowed:               { label: 'Aktif Dipinjam',      bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-box-open' },
+  'Return In-Transit':    { label: 'Proses Kembali',      bg: 'bg-purple-500/20 border border-purple-500/40',   text: 'text-purple-300',  icon: 'fa-reply' },
+  Closed:                 { label: 'Selesai (Closed)',    bg: 'bg-slate-700/50 border border-slate-600/50',   text: 'text-slate-400',   icon: 'fa-check-double' },
+  Rejected:               { label: 'Ditolak',             bg: 'bg-red-500/20 border border-red-500/40',       text: 'text-red-400',     icon: 'fa-times-circle' },
+  Cancelled:              { label: 'Dibatalkan',          bg: 'bg-slate-700/30 border border-slate-600/40',   text: 'text-slate-400',   icon: 'fa-ban' },
 };

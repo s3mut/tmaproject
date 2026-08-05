@@ -48,6 +48,7 @@ export async function verifyWebLogin(
     is_active: row.is_active,
     notes: row.notes,
     created_at: row.created_at,
+    assigned_region: row.assigned_region ?? null,
   };
 }
 
@@ -95,6 +96,7 @@ export interface WebSession {
   username: string | null;
   role: string;
   loggedAt: number;
+  assignedRegion?: string | null;
 }
 
 export function saveWebSession(user: TelegramUser): void {
@@ -102,8 +104,9 @@ export function saveWebSession(user: TelegramUser): void {
     telegramId: user.telegram_id,
     name: user.name,
     username: user.username ?? null,
-    role: user.role,
+    role: (user.role || 'guest') as string,
     loggedAt: Date.now(),
+    assignedRegion: user.assigned_region ?? null,
   };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }

@@ -3,7 +3,7 @@ import type { AssetDetail, MasterAsset, MutationDetail, Site, Category, AssetLoa
 import { getAssets, createAsset, updateAsset, deleteAsset, getCategories } from '../services/assetService';
 import { getMutations, createMutation, approveMutation } from '../services/mutationService';
 import { getSites } from '../services/siteService';
-import { getLoans, createLoanRequest, dispatchLoanUnit, receiveLoanUnit, initiateReturnLoan, closeLoanTicket, cancelLoanRequest, rejectLoanRequest } from '../services/loanService';
+import { getLoans, createLoanRequest, dispatchLoanUnit, receiveLoanUnit, initiateReturnLoan, closeLoanTicket, cancelLoanRequest, rejectLoanRequest, approveLoanRequest, forceCancelLoan } from '../services/loanService';
 
 export function useInventory() {
   const [assets, setAssets] = useState<AssetDetail[]>([]);
@@ -168,13 +168,23 @@ export function useInventory() {
     await fetchAll();
   }, [fetchAll]);
 
-  const cancelAssetLoan = useCallback(async (loanId: number, reason?: string) => {
-    await cancelLoanRequest(loanId, reason);
+  const cancelAssetLoan = useCallback(async (loanId: number, reason?: string, role?: string, userId?: number) => {
+    await cancelLoanRequest(loanId, reason, role, userId);
     await fetchAll();
   }, [fetchAll]);
 
-  const rejectAssetLoan = useCallback(async (loanId: number, rejectedBy: string, reason?: string) => {
-    await rejectLoanRequest(loanId, rejectedBy, reason);
+  const rejectAssetLoan = useCallback(async (loanId: number, rejectedBy: string, reason?: string, role?: string, userId?: number) => {
+    await rejectLoanRequest(loanId, rejectedBy, reason, role, userId);
+    await fetchAll();
+  }, [fetchAll]);
+
+  const approveAssetLoan = useCallback(async (loanId: number, approverId: number, approverName: string) => {
+    await approveLoanRequest(loanId, approverId, approverName);
+    await fetchAll();
+  }, [fetchAll]);
+
+  const forceCancelAssetLoan = useCallback(async (loanId: number, adminId: number, adminName: string, reason: string, currentAssetId?: number | null) => {
+    await forceCancelLoan(loanId, adminId, adminName, reason, currentAssetId);
     await fetchAll();
   }, [fetchAll]);
 
@@ -199,6 +209,8 @@ export function useInventory() {
     closeAssetLoanTicket,
     cancelAssetLoan,
     rejectAssetLoan,
+    approveAssetLoan,
+    forceCancelAssetLoan,
     refresh: fetchAll,
   };
 }

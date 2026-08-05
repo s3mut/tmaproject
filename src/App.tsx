@@ -32,7 +32,7 @@ function App() {
     assets, mutations, sites, categories, loans,
     loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation,
     requestAssetLoan, dispatchAssetLoan, receiveAssetLoan, initiateAssetLoanReturn, closeAssetLoanTicket,
-    cancelAssetLoan, rejectAssetLoan,
+    cancelAssetLoan, rejectAssetLoan, approveAssetLoan, forceCancelAssetLoan,
     refresh
   } = useInventory();
 
@@ -340,6 +340,7 @@ function App() {
             categories={categories}
             loading={loading}
             userRole={currentUser?.role}
+            assignedRegion={currentUser?.assigned_region || null}
             currentUserId={currentUser?.telegram_id || 0}
             currentUserName={currentUser?.name || 'User'}
             onRefresh={refresh}
@@ -361,13 +362,21 @@ function App() {
               await closeAssetLoanTicket(params);
               showToast('✅ Tiket pinjam ditutup. Status aset fisik telah diperbarui!');
             }}
-            onCancelLoan={async (loanId) => {
-              await cancelAssetLoan(loanId, 'Dibatalkan oleh user / pengaju');
+            onApproveLoan={async (loanId) => {
+              await approveAssetLoan(loanId, currentUser?.telegram_id || 0, currentUser?.name || 'Admin');
+              showToast('✨ Pengajuan dikonfirmasi siap untuk diproses alokasi!');
+            }}
+            onCancelLoan={async (loanId, reason) => {
+              await cancelAssetLoan(loanId, reason || 'Dibatalkan mandiri oleh pengaju', currentUser?.role || 'guest', currentUser?.telegram_id || 0);
               showToast('⚪ Pengajuan peminjaman dibatalkan.');
             }}
             onRejectLoan={async (loanId, reason) => {
-              await rejectAssetLoan(loanId, currentUser?.name || 'Admin', reason);
+              await rejectAssetLoan(loanId, currentUser?.name || 'Admin', reason, currentUser?.role || 'user', currentUser?.telegram_id || 0);
               showToast('🚫 Pengajuan peminjaman ditolak.');
+            }}
+            onForceCancelLoan={async (loanId, reason, currentAssetId) => {
+              await forceCancelAssetLoan(loanId, currentUser?.telegram_id || 0, currentUser?.name || 'God Mode Admin', reason, currentAssetId);
+              showToast('⚡ Tiket berhasil dibatal-paksakan (God Mode Override)!');
             }}
             onShowToast={showToast}
           />

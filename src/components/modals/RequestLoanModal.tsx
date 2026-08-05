@@ -16,6 +16,7 @@ interface Props {
     purpose: string;
     durationDays: number;
     shippingMethod: string;
+    isCrossRegion?: boolean;
   }) => Promise<void>;
 }
 
@@ -81,6 +82,7 @@ const RequestLoanModal: React.FC<Props> = ({
         purpose,
         durationDays,
         shippingMethod,
+        isCrossRegion: availableBackups.length === 0,
       });
       // Reset form
       setPurpose('');
@@ -159,13 +161,13 @@ const RequestLoanModal: React.FC<Props> = ({
                   </p>
                 </div>
               ) : (
-                <div className="bg-amber-950/40 border border-amber-500/30 rounded-lg p-2.5 text-amber-300 space-y-1">
-                  <p className="font-bold flex items-center gap-1.5 text-xs">
-                    <i className="fas fa-exclamation-circle text-amber-400 text-sm" />
-                    Stok backup kategori ini di Region {storeRegion || 'Toko'} saat ini kosong.
+                <div className="bg-indigo-950/50 border border-indigo-500/40 rounded-lg p-3 text-indigo-200 space-y-1.5">
+                  <p className="font-extrabold flex items-center gap-1.5 text-xs text-indigo-300">
+                    <i className="fas fa-random text-indigo-400 text-sm animate-pulse" />
+                    Alur B (Eskalasi Cross-Region): Stok di Region {storeRegion || 'Toko'} Kosong
                   </p>
-                  <p className="text-[11px] text-amber-300/80 pl-5">
-                    🚚 Jangan khawatir! Pengajuan Anda akan tetap diteruskan untuk dialokasikan dari <b>Gudang Pusat (HQ)</b> atau <b>Region Lain</b> oleh Tim IT Support.
+                  <p className="text-[11px] text-indigo-200/90 leading-relaxed pl-5">
+                    🚚 Pengajuan Anda secara otomatis disalurkan dengan status <b>Eskalasi Cross-Region (Waiting Admin Approval)</b> agar Admin Global dapat mengizinkan alokasi dari <b>Gudang Pusat (HQ)</b> atau wilayah lain.
                   </p>
                 </div>
               )}

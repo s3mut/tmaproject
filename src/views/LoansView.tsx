@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import type { AssetLoan, AssetDetail, Site, Category } from '../types/inventory';
 import { loanStatusConfig } from '../types/inventory';
-import { Button, Input, EmptyState, ModalShell, Textarea } from '../components/ui';
+import { Button, Input, EmptyState } from '../components/ui';
 import RequestLoanModal from '../components/modals/RequestLoanModal';
 import DispatchLoanModal from '../components/modals/DispatchLoanModal';
 import ReturnCheckModal from '../components/modals/ReturnCheckModal';
 import BASTDocumentModal from '../components/modals/BASTDocumentModal';
+import CancelRejectModal, { type ActionType } from '../components/modals/CancelRejectModal';
 
 interface Props {
   loans: AssetLoan[];
@@ -14,6 +15,7 @@ interface Props {
   categories: Category[];
   loading: boolean;
   userRole?: string;
+  assignedRegion?: string | null;
   currentUserId?: number;
   currentUserName?: string;
   onRefresh: () => void;
@@ -22,8 +24,10 @@ interface Props {
   onReceiveLoan: (params: { loanId: number; assetId: number; siteAlias: string; receivedByName: string }) => Promise<void>;
   onInitiateReturn: (loanId: number, assetId: number) => Promise<void>;
   onCloseTicket: (params: any) => Promise<void>;
-  onCancelLoan?: (loanId: number) => Promise<void>;
+  onApproveLoan?: (loanId: number) => Promise<void>;
+  onCancelLoan?: (loanId: number, reason?: string) => Promise<void>;
   onRejectLoan?: (loanId: number, reason?: string) => Promise<void>;
+  onForceCancelLoan?: (loanId: number, reason: string, currentAssetId?: number | null) => Promise<void>;
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
 }
 
@@ -34,6 +38,7 @@ const LoansView: React.FC<Props> = ({
   categories,
   loading,
   userRole = 'guest',
+  assignedRegion = null,
   currentUserId,
   currentUserName = 'User',
   onRefresh,
@@ -42,8 +47,10 @@ const LoansView: React.FC<Props> = ({
   onReceiveLoan,
   onInitiateReturn,
   onCloseTicket,
+  onApproveLoan,
   onCancelLoan,
   onRejectLoan,
+  onForceCancelLoan,
   onShowToast,
 }) => {
   const [activeFilter, setActiveFilter] = useState<string>('All');
@@ -54,9 +61,18 @@ const LoansView: React.FC<Props> = ({
   const [dispatchLoan, setDispatchLoan] = useState<AssetLoan | null>(null);
   const [returnLoan, setReturnLoan] = useState<AssetLoan | null>(null);
   const [bastLoan, setBastLoan] = useState<{ loan: AssetLoan; mode: 'peminjaman' | 'pengembalian' } | null>(null);
-  const [rejectLoanTarget, setRejectLoanTarget] = useState<AssetLoan | null>(null);
-  const [rejectReason, setRejectReason] = useState<string>('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+
+  // Unified Cancel/Reject/ForceCancel Modal state
+  const [crModalOpen, setCrModalOpen] = useState(false);
+  const [crAction, setCrAction] = useState<ActionType>('cancel');
+  const [crTargetLoan, setCrTargetLoan] = useState<AssetLoan | null>(null);
+
+  const openCancelRejectModal = (loan: AssetLoan, action: ActionType) => {
+    setCrTargetLoan(loan);
+    setCrAction(action);
+    setCrModalOpen(true);
+  };
 
   const isItOfficer = userRole === 'admin' || userRole === 'user';
 
@@ -133,7 +149,9 @@ const LoansView: React.FC<Props> = ({
 
   const tabs = [
     { key: 'All', label: 'Semua', icon: 'fa-layer-group' },
-    { key: 'Requested', label: 'Request', icon: 'fa-clock' },
+    { key: 'Requested', label: 'Request Baru', icon: 'fa-clock' },
+    { key: 'Waiting Admin Approval', label: 'Eskalasi Cross-Region', icon: 'fa-user-shield' },
+    { key: 'Approved', label: 'Siap Alokasi', icon: 'fa-check-circle' },
     { key: 'In-Transit', label: 'Pengiriman', icon: 'fa-truck' },
     { key: 'Borrowed', label: 'Dipinjam', icon: 'fa-box-open' },
     { key: 'Overdue', label: 'Overdue 🔴', icon: 'fa-exclamation-circle' },
@@ -164,6 +182,33 @@ const LoansView: React.FC<Props> = ({
           Ajukan Pinjam Unit
         </Button>
       </div>
+
+      {/* Banner RBAC Wilayah Wewenang */}
+      {isItOfficer && (
+        <div className={`rounded-2xl p-3.5 border flex items-center justify-between gap-3 text-xs ${
+          userRole === 'admin' 
+            ? 'bg-gradient-to-r from-amber-500/15 to-indigo-500/15 border-amber-500/40 text-amber-200' 
+            : 'bg-indigo-500/15 border-indigo-500/40 text-indigo-200'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base font-bold shrink-0 ${
+              userRole === 'admin' ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-500/20 text-indigo-400'
+            }`}>
+              <i className={userRole === 'admin' ? "fas fa-crown" : "fas fa-user-shield"} />
+            </div>
+            <div>
+              <p className="font-extrabold text-white">
+                {userRole === 'admin' ? '👑 Otoritas Admin Global (God Mode Active)' : `📍 Wilayah Wewenang Anda: Region ${assignedRegion || 'Semua (Global)'}`}
+              </p>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                {userRole === 'admin'
+                  ? 'Anda berwenang memvalidasi eskalasi Cross-Region dan melakukan Force Cancel pada seluruh tiket.'
+                  : `Anda hanya dapat mengalokasikan dan menyetujui tiket peminjaman toko dalam batas wilayah Region ${assignedRegion || 'Anda'}.`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filter Tabs & Search Bar */}
       <div className="space-y-3">
@@ -215,6 +260,8 @@ const LoansView: React.FC<Props> = ({
             const badge = loanStatusConfig[loan.status] || { label: loan.status, bg: 'bg-slate-800', text: 'text-slate-300', icon: 'fa-info' };
             const overdue = isOverdue(loan);
             const daysDiff = getDaysDiff(loan.due_date);
+            const isIntraRegion = !assignedRegion || (loan.site_region && assignedRegion.trim().toLowerCase() === loan.site_region.trim().toLowerCase());
+            const canProcessIntraRegion = userRole === 'admin' || (userRole === 'user' && isIntraRegion);
 
             return (
               <div
@@ -327,50 +374,75 @@ const LoansView: React.FC<Props> = ({
                     )}
 
                     {/* Tombol Batal untuk Creator atau Admin */}
-                    {loan.status === 'Requested' && (loan.requested_by_id === currentUserId || userRole === 'admin') && (
+                    {(loan.status === 'Requested' || loan.status === 'Waiting Admin Approval') && (loan.requested_by_id === currentUserId || userRole === 'admin') && (
                       <Button
                         size="sm"
                         variant="secondary"
                         icon="fa-times"
-                        loading={actionLoading === loan.id}
-                        onClick={async () => {
-                          if (onCancelLoan) {
-                            try {
-                              setActionLoading(loan.id);
-                              await onCancelLoan(loan.id);
-                              onRefresh();
-                            } finally {
-                              setActionLoading(null);
-                            }
-                          }
-                        }}
+                        onClick={() => openCancelRejectModal(loan, 'cancel')}
                       >
                         Batal
                       </Button>
                     )}
 
                     {/* Tombol Tolak untuk Tim IT / Admin */}
-                    {loan.status === 'Requested' && isItOfficer && (
+                    {(loan.status === 'Requested' || loan.status === 'Waiting Admin Approval' || loan.status === 'Approved') && isItOfficer && (
                       <Button
                         size="sm"
                         variant="danger"
                         icon="fa-ban"
-                        onClick={() => { setRejectLoanTarget(loan); setRejectReason(''); }}
+                        disabled={!canProcessIntraRegion && loan.status !== 'Waiting Admin Approval'}
+                        onClick={() => openCancelRejectModal(loan, 'reject')}
                       >
-                        Tolak
+                        {!canProcessIntraRegion ? `🔒 Wilayah ${loan.site_region || 'Lain'}` : 'Tolak'}
                       </Button>
                     )}
 
+                    {/* Eskalasi Cross-Region: Persetujuan Admin Global */}
+                    {loan.status === 'Waiting Admin Approval' && (
+                      userRole === 'admin' ? (
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          icon="fa-crown"
+                          loading={actionLoading === loan.id}
+                          onClick={async () => {
+                            if (onApproveLoan) {
+                              try {
+                                setActionLoading(loan.id);
+                                await onApproveLoan(loan.id);
+                                onRefresh();
+                              } finally {
+                                setActionLoading(null);
+                              }
+                            }
+                          }}
+                        >
+                          Setujui Eskalasi
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="secondary" disabled icon="fa-lock">
+                          Menunggu Admin Global
+                        </Button>
+                      )
+                    )}
+
                     {/* FASE 2: IT Alokasi & Dispatch */}
-                    {loan.status === 'Requested' && isItOfficer && (
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        icon="fa-truck-loading"
-                        onClick={() => setDispatchLoan(loan)}
-                      >
-                        Alokasi & Kirim
-                      </Button>
+                    {(loan.status === 'Requested' || loan.status === 'Approved') && isItOfficer && (
+                      canProcessIntraRegion ? (
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          icon="fa-truck-loading"
+                          onClick={() => setDispatchLoan(loan)}
+                        >
+                          Alokasi & Kirim
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="secondary" disabled icon="fa-lock">
+                          Wilayah {loan.site_region || 'Lain'}
+                        </Button>
+                      )
                     )}
 
                     {/* FASE 3: Toko Terima Unit */}
@@ -408,6 +480,18 @@ const LoansView: React.FC<Props> = ({
                         onClick={() => setReturnLoan(loan)}
                       >
                         Verifikasi & Tutup Tiket
+                      </Button>
+                    )}
+
+                    {/* Admin God Mode: Force Cancel */}
+                    {userRole === 'admin' && !['Closed', 'Cancelled', 'Rejected'].includes(loan.status) && (
+                      <Button
+                        size="sm"
+                        variant="warning"
+                        icon="fa-bolt"
+                        onClick={() => openCancelRejectModal(loan, 'force_cancel')}
+                      >
+                        ⚡ Force Cancel
                       </Button>
                     )}
                   </div>
@@ -465,55 +549,24 @@ const LoansView: React.FC<Props> = ({
         mode={bastLoan?.mode || 'peminjaman'}
       />
 
-      {/* Modal 5: Tolak Pengajuan (Reject) oleh IT/Admin */}
-      <ModalShell
-        isOpen={!!rejectLoanTarget}
-        onClose={() => setRejectLoanTarget(null)}
-        title="Tolak Pengajuan Peminjaman"
-        titleIcon="fa-ban"
-        titleIconBg="bg-red-500/20 text-red-400"
-        maxWidth="sm:max-w-md"
-      >
-        {rejectLoanTarget && (
-          <div className="space-y-4 text-xs">
-            <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-              <p className="text-slate-300 font-bold">Tiket: <span className="text-amber-300 font-mono">{rejectLoanTarget.loan_code}</span></p>
-              <p className="text-slate-400 mt-1">Toko: <b>{rejectLoanTarget.site_alias}</b> ({rejectLoanTarget.category_name})</p>
-              <p className="text-slate-400 mt-0.5">Alasan Pinjam: <span className="text-slate-200 italic">"{rejectLoanTarget.purpose}"</span></p>
-            </div>
-            <div>
-              <Textarea
-                label="Alasan Penolakan (Wajib Diisi)"
-                required
-                rows={3}
-                placeholder="Contoh: Stok unit backup di seluruh gudang region sedang kosong / tidak memenuhi syarat teknikal."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-700/60">
-              <Button size="sm" variant="secondary" onClick={() => setRejectLoanTarget(null)}>
-                Batal
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                icon="fa-times-circle"
-                disabled={!rejectReason.trim()}
-                onClick={async () => {
-                  if (onRejectLoan) {
-                    await onRejectLoan(rejectLoanTarget.id, rejectReason.trim());
-                    setRejectLoanTarget(null);
-                    onRefresh();
-                  }
-                }}
-              >
-                Konfirmasi Tolak
-              </Button>
-            </div>
-          </div>
-        )}
-      </ModalShell>
+      {/* Modal 5: Unified Cancel, Reject, and Force Cancel with Structured Reasons */}
+      <CancelRejectModal
+        isOpen={crModalOpen}
+        onClose={() => setCrModalOpen(false)}
+        actionType={crAction}
+        loanCode={crTargetLoan?.loan_code}
+        onConfirm={async (reason) => {
+          if (!crTargetLoan) return;
+          if (crAction === 'cancel' && onCancelLoan) {
+            await onCancelLoan(crTargetLoan.id, reason);
+          } else if (crAction === 'reject' && onRejectLoan) {
+            await onRejectLoan(crTargetLoan.id, reason);
+          } else if (crAction === 'force_cancel' && onForceCancelLoan) {
+            await onForceCancelLoan(crTargetLoan.id, reason, crTargetLoan.asset_id);
+          }
+          onRefresh();
+        }}
+      />
     </div>
   );
 };

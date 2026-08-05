@@ -26,6 +26,8 @@
   - **Fase Monitoring Dinamis**: Peringatan awal **🟡 H-3 Jatuh Tempo** dan eskalasi visual **🔴 OVERDUE** (berkendip & bergaris merah bercahaya) secara real-time apabila barang terlambat dikembalikan.
   - **Fase Pengembalian & Verifikasi (Return)**: Toko mengklik *Kembalikan Unit*, lalu Tim IT memverifikasi kondisi fisik saat barang tiba (Pilihan: `✅ Bagus` reset jadi Backup, `🛠️ Rusak` ubah jadi Repair, atau `❌ Hilang` ubah jadi Disposed/Klaim).
   - **📄 Generator Dokumen BAST & Shipping Label**: Template Berita Acara Serah Terima berdesain korporasi resmi bersumber spesifikasi lengkap dan slot tanda tangan digital yang siap cetak langsung (*Print-Ready* / Save PDF).
+  - **🌐 Enterprise RBAC & Regional Auto-Routing (Intra vs. Cross-Region)**: Pembatasan wewenang teknisi IT cabang berdasarkan wilayah (`assigned_region`). Penguncian visual otomatis (`🔒 Wilayah [Region]`) bagi teknisi di luar wilayah kerjanya. Jika stok di region toko kosong, pengajuan otomatis dieksplorasikan ke Alur B (Cross-Region Escalation) dengan status **`Waiting Admin Approval`** agar diotorisasi Admin Global untuk alokasi dari Gudang Pusat / HQ.
+  - **🛡️ Audit Trail Alasan Terstruktur & God Mode Override**: Kewajiban memilih kategori alasan terstruktur dan keterangan saat pembatalan maupun penolakan. Admin Global juga diberdayakan dengan tombol otoritas tertinggi **⚡ Force Cancel** untuk penarikan paksa aset yang mereset status fisik secara otomatis kembali ke *Backup*.
 - **💾 Admin Disaster Recovery & Backup System**: Panel khusus Role Admin di menu Profil untuk mengunduh salinan cadangan lengkap database (Snapshot JSON) serta mengekspor tabel Master Aset & Riwayat Mutasi ke format Excel CSV (terformat UTF-8 BOM agar langsung kompatibel dan rapi di Microsoft Excel/Spreadsheet).
 - **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi terintegrasi kamera yang memisahkan status barang yang sudah di-scan dengan yang belum diverifikasi, lengkap dengan *progress bar* visual.
 - **📷 QR / Barcode Scanner Nyata**: Scanner kamera langsung di Telegram Mini App menggunakan `html5-qrcode` — mendukung QR Code, Code 128, Code 39, EAN-13, dan format lainnya. Otomatis membuka detail aset saat kode terdeteksi.
@@ -47,7 +49,7 @@
 - **🛡️ Keamanan & Integritas Data**:
   - Soft Delete (`deleted_at`) untuk mencegah kehilangan riwayat aset.
   - PostgreSQL Trigger (`handle_asset_category_strict_sync`) untuk sinkronisasi dan penolakan otomatis data tidak terdaftar.
-  - Role-Based Access Control (RBAC) membatasi akses fitur sensitif untuk role `admin`.
+  - **Enterprise Role-Based Access Control (RBAC) & User Region Management**: Panel manajemen akun khusus Admin (`UserManagementModal`) di halaman Profil untuk penetapan role (`guest`, `user`, `admin`) dan pemetaan wilayah wewenang IT (`assigned_region`) yang tersinkronisasi langsung dengan master `sites`.
   - Password web disimpan sebagai **bcrypt hash** di database — hash tidak pernah dikirim ke client.
 
 ---
@@ -68,7 +70,8 @@ TransitTMA/
 │   ├── diagnostic_web_auth.sql     # SQL Diagnostik & Pengujian Web Login
 │   └── bot_webhook_handler.js      # Telegram Bot Webhook Handler (Node.js)
 ├── sql/
-│   └── create_asset_loans.sql      # Skema Database & Migrasi Sistem Peminjaman
+│   ├── create_asset_loans.sql              # Skema Database & Migrasi Sistem Peminjaman
+│   └── upgrade_rbac_regional_workflow.sql  # Migrasi Enterprise RBAC, User Region & Cross-Region RPC
 ├── src/
 │   ├── components/                 # Reusable UI Components & Modals
 │   │   ├── ui/                     # Atomic Design System Component Library

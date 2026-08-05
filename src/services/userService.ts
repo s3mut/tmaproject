@@ -178,3 +178,41 @@ export async function updateUserRole(telegramId: number, newRole: UserRole): Pro
     throw new Error(`Gagal mengubah role user: ${error.message}`);
   }
 }
+
+/**
+ * Ambil daftar seluruh user (Untuk keperluan panel Admin)
+ */
+export async function getAllUsers(): Promise<TelegramUser[]> {
+  const { data, error } = await supabase
+    .from('telegram_users')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Gagal mengambil daftar user:', error);
+    return [];
+  }
+  return data as TelegramUser[];
+}
+
+/**
+ * Update role dan wilayah wewenang (assigned_region) pengguna oleh Admin
+ */
+export async function updateUserRoleAndRegion(
+  telegramId: number,
+  newRole: UserRole,
+  assignedRegion: string | null
+): Promise<void> {
+  const { error } = await supabase
+    .from('telegram_users')
+    .update({
+      role: newRole,
+      assigned_region: newRole === 'user' ? assignedRegion : null,
+      notes: `Updated role to ${newRole}${newRole === 'user' ? ` (Region: ${assignedRegion || 'All'})` : ''}`,
+    })
+    .eq('telegram_id', telegramId);
+
+  if (error) {
+    throw new Error(`Gagal memperbarui role & wewenang user: ${error.message}`);
+  }
+}
