@@ -79,6 +79,13 @@ function App() {
     if (error) showToast(`Error: ${error}`, 'error');
   }, [error, showToast]);
 
+  // Jika user berstatus guest, otomatis arahkan tab default ke 'loans' (Pinjam)
+  useEffect(() => {
+    if (currentUser?.role === 'guest') {
+      setActiveTab('loans');
+    }
+  }, [currentUser?.role]);
+
   // Tab
   const handleTabChange = (tab: TabName) => {
     setActiveTab(tab);

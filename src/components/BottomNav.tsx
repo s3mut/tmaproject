@@ -19,7 +19,7 @@ interface Props {
 
 const BottomNav = ({ activeTab, onTabChange, isGuest }: Props) => {
   const visibleNavItems = navItems.filter(item => {
-    if (isGuest && (item.tab === 'history' || item.tab === 'opname')) {
+    if (isGuest && item.tab !== 'loans' && item.tab !== 'profile') {
       return false;
     }
     return true;

@@ -677,6 +677,16 @@ Implementasi:
   - `docs/reporting_views_and_rpcs.sql`: Penambahan blok `PRE-MIGRATION 3` berupa perintah `ALTER TABLE asset_loans ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();` agar skema cache langsung memverifikasi ketersediaan kolom tersebut sebelum perakitan View/RPC pelaporan.
   - `sql/create_asset_loans.sql` & `sql/upgrade_rbac_regional_workflow.sql`: Pemutakhiran spesifik pada definisi tabel serta blok migrasi pendahulu untuk menorehkan ketersediaan kolom `updated_at`, menghentikan potensi gagal cache Supabase bagi lingkungan baru mahupun lawas.
 
+--------------------------------------------------------------------------------
+STEP 36: GUEST ROLE MENU ISOLATION & DATA SECURITY ENHANCEMENT (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Membatasi jangkauan navigasi bagi pengguna bertipe `guest` (peminjam / toko) agar ketika berhasil login hanya diizinkan mengakses menu peminjanan (Pinjam) dan menyembunyikan informasi teknis mengenai database Supabase/PostgreSQL pada menu Profil.
+
+Implementasi:
+  - `src/components/BottomNav.tsx`: Revisi filter navigasi bawah (`visibleNavItems`). Saat prop `isGuest` bernilai positif, seluruh menu navigasi ditutup kecuali tab `'loans'` (Pinjam) dan `'profile'` (Profil).
+  - `src/App.tsx`: Penambahan automatic tab routing via `useEffect` yang akan meredireksi pengguna berciri `guest` langsung menuju tab `'loans'` sesaat seusai otentikasi (mencegah eksposur halaman Dashboard/Beranda).
+  - `src/views/ProfileView.tsx`: Pemasangan pembungkus kondisi `{!isGuest && ...}` pada kartu informasi *Database Status Badge (Supabase PostgreSQL)*, menghindarkan kebocoran metadata arsitektur teknikal kepada pengguna beropsi guest.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

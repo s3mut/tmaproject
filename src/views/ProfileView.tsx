@@ -228,19 +228,21 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         </button>
       )}
 
-      {/* Database Status Badge */}
-      <div className="glass rounded-xl p-3 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-          <i className="fas fa-database"></i>
+      {/* Database Status Badge (Dihilangkan untuk Guest) */}
+      {!isGuest && (
+        <div className="glass rounded-xl p-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <i className="fas fa-database"></i>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-white">Database Supabase (PostgreSQL)</p>
+            <p className="text-xs text-slate-500">
+              {isTelegramLogin ? 'Auto-Synced via Telegram SDK' : 'Login via Browser (Web Session)'}
+            </p>
+          </div>
+          <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
         </div>
-        <div>
-          <p className="text-xs font-medium text-white">Database Supabase (PostgreSQL)</p>
-          <p className="text-xs text-slate-500">
-            {isTelegramLogin ? 'Auto-Synced via Telegram SDK' : 'Login via Browser (Web Session)'}
-          </p>
-        </div>
-        <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-      </div>
+      )}
 
       {/* Request Access Modal */}
       {currentUser && (
