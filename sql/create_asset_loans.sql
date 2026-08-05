@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.asset_loans (
   dispatched_by_name TEXT NULL,               -- Tim IT yang menyerahkan / mengalokasi
   received_by_name TEXT NULL,                 -- User Toko yang menyeken / menerima unit
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   dispatched_at TIMESTAMPTZ NULL,
   received_at TIMESTAMPTZ NULL,
   returned_at TIMESTAMPTZ NULL,

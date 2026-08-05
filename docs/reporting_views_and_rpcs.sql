@@ -55,6 +55,12 @@ BEGIN
 END $$;
 
 -- ============================================================
+-- PRE-MIGRATION 3: AUTO-FIX MISSING COLUMNS IN ASSET LOANS
+-- ============================================================
+-- Pastikan kolom updated_at tersedia pada tabel asset_loans agar fungsi update status (reject, approve, cancel) tidak gagal
+ALTER TABLE asset_loans ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- ============================================================
 -- SECTION 1: VIEWS REPORTING
 -- ============================================================
 

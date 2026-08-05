@@ -61,6 +61,7 @@ GRANT EXECUTE ON FUNCTION public.verify_web_login_v2(TEXT, TEXT) TO authenticate
 
 -- ── 3. Penambahan Kolom Audit Trail & Alur State Machine pada asset_loans ──
 ALTER TABLE public.asset_loans
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS is_cross_region BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS target_source_region VARCHAR(100) DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS approved_by_id BIGINT DEFAULT NULL,

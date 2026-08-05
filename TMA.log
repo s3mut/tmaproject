@@ -668,6 +668,15 @@ Implementasi:
   - `docs/reporting_views_and_rpcs.sql`: Penambahan runtutan perintah `ALTER TYPE asset_status ADD VALUE IF NOT EXISTS` untuk seluruh status modern (`Borrowed`, `Retired`, `Disposed`, `In Transit`) pada blok pembawa pre-migration skrip.
   - Melapisi seluruh komparasi parameter bermuatan ENUM pada View maupun Fungsi RPC (terkait status aset dan status mutasi) dengan konversi ke string tepercaya (`ma.status::TEXT = 'Borrowed'`, `am.status::TEXT = 'Completed'`). Hal ini melumpuhkan ketatnya evaluasi ENUM statis pada parser PostgreSQL, menopang kekebalan skrip dari kecelakaan syntax eval saat pembentukan View & RPC.
 
+--------------------------------------------------------------------------------
+STEP 35: AUTO-FIX MISSING UPDATED_AT COLUMN IN ASSET LOANS TABLE (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Memperbaiki kesalahan runtime aplikasi saat eksekusi aksi pembatalan atau penolakan pengajuan peminjaman di antarmuka (`Error: Could not find the 'updated_at' column of 'asset_loans' in the schema cache`).
+
+Implementasi:
+  - `docs/reporting_views_and_rpcs.sql`: Penambahan blok `PRE-MIGRATION 3` berupa perintah `ALTER TABLE asset_loans ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();` agar skema cache langsung memverifikasi ketersediaan kolom tersebut sebelum perakitan View/RPC pelaporan.
+  - `sql/create_asset_loans.sql` & `sql/upgrade_rbac_regional_workflow.sql`: Pemutakhiran spesifik pada definisi tabel serta blok migrasi pendahulu untuk menorehkan ketersediaan kolom `updated_at`, menghentikan potensi gagal cache Supabase bagi lingkungan baru mahupun lawas.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
