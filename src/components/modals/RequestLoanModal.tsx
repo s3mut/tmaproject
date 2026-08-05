@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { Site, Category } from '../../types/inventory';
+import React, { useState, useMemo } from 'react';
+import type { Site, Category, AssetDetail } from '../../types/inventory';
 import { ModalShell, Button, Input, Select, Textarea, SiteSearchInput } from '../ui';
 
 interface Props {
@@ -7,6 +7,7 @@ interface Props {
   onClose: () => void;
   sites: Site[];
   categories: Category[];
+  assets?: AssetDetail[];
   currentUserId?: number;
   currentUserName?: string;
   onSubmit: (params: {
@@ -23,6 +24,7 @@ const RequestLoanModal: React.FC<Props> = ({
   onClose,
   sites,
   categories,
+  assets = [],
   currentUserId,
   currentUserName,
   onSubmit,
@@ -37,6 +39,18 @@ const RequestLoanModal: React.FC<Props> = ({
 
   const selectedSite = sites.find(s => (s.site_alias || '').toLowerCase() === siteAlias.trim().toLowerCase());
   const isOverLimit = durationDays > 14;
+
+  // Background check regional backup stock dari tabel master assets & sites.region
+  const storeRegion = selectedSite?.region || null;
+  const availableBackups = useMemo(() => {
+    if (!assets || !storeRegion) return [];
+    return assets.filter(a => {
+      const isReady = a.status === 'Backup' || a.status === 'Active';
+      const matchCategory = !categoryName || a.category_name === categoryName;
+      const assetRegion = a.site_region || sites.find(s => s.site_alias === a.site_alias || s.site_name === a.site_name || s.site_code === a.full_location_code)?.region;
+      return isReady && matchCategory && assetRegion === storeRegion;
+    });
+  }, [assets, storeRegion, categoryName, sites]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +131,47 @@ const RequestLoanModal: React.FC<Props> = ({
             ))}
           </Select>
         </div>
+
+        {/* Regional Allocation Preview */}
+        {selectedSite && (
+          <div className="bg-slate-800/80 border border-blue-500/40 rounded-xl p-3.5 space-y-2 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
+              <span className="font-bold text-blue-300 flex items-center gap-1.5">
+                <i className="fas fa-map-marker-alt text-blue-400" />
+                Region Toko: <b className="text-white uppercase">{storeRegion || 'Umum'}</b>
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-blue-900/50 text-blue-200 text-[10px] font-bold border border-blue-500/30">
+                Auto-Filter Region
+              </span>
+            </div>
+            <div>
+              <p className="text-slate-300 mb-1.5 font-medium">
+                📦 Preview Alokasi Unit Backup (Kategori: <b className="text-white">{categoryName}</b>):
+              </p>
+              {availableBackups.length > 0 ? (
+                <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-lg p-2.5 text-emerald-300 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5 text-xs">
+                    <i className="fas fa-check-circle text-emerald-400 text-sm" />
+                    Tersedia {availableBackups.length} Unit Backup Ready di Region {storeRegion}!
+                  </p>
+                  <p className="text-[11px] text-emerald-300/80 pl-5">
+                    📍 Unit akan dialokasikan dari hub terdekat: <b className="text-white">{Array.from(new Set(availableBackups.map(a => a.site_name || a.site_alias || 'Gudang IT Region'))).join(', ')}</b>
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-amber-950/40 border border-amber-500/30 rounded-lg p-2.5 text-amber-300 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5 text-xs">
+                    <i className="fas fa-exclamation-circle text-amber-400 text-sm" />
+                    Stok backup kategori ini di Region {storeRegion || 'Toko'} saat ini kosong.
+                  </p>
+                  <p className="text-[11px] text-amber-300/80 pl-5">
+                    🚚 Jangan khawatir! Pengajuan Anda akan tetap diteruskan untuk dialokasikan dari <b>Gudang Pusat (HQ)</b> atau <b>Region Lain</b> oleh Tim IT Support.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Step 3: Tujuan & Alasan Pinjam */}
         <div>

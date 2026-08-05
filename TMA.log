@@ -604,6 +604,19 @@ Implementasi:
   - `src/components/BottomNav.tsx` & `src/components/Header.tsx`: Penambahan tab menu "Pinjam" (ikon `fa-hand-holding-box`).
   - `src/hooks/useInventory.ts` & `src/App.tsx`: Integrasi state dan routing modul peminjaman.
 
+--------------------------------------------------------------------------------
+STEP 30: REGIONAL BACKUP PREVIEW, CREATOR CANCELLATION & IT REJECT MODAL (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Meningkatkan fitur peminjaman dengan pencarian stok unit backup berdasarkan kesamaan region toko di background, preview alokasi stok region saat request, fasilitas pembatalan pengajuan oleh pemohon, penolakan berserta alasan oleh Tim IT, dan modal inspeksi detail spesifikasi unit sebelum assign.
+
+Implementasi:
+  - `src/types/inventory.ts`: Penambahan status `Cancelled` pada enum `LoanStatus` dan konfigurasi antarmuka `loanStatusConfig`, serta penambahan opsi `site_region` pada tipe `AssetDetail`.
+  - `src/services/loanService.ts`: Implementasi fungsi `cancelLoanRequest` dan `rejectLoanRequest` (beserta pencatatan alasan penolakan/pembatalan ke log notes).
+  - `src/hooks/useInventory.ts`: Mengekspos metode global `cancelAssetLoan` dan `rejectAssetLoan`.
+  - `src/components/modals/RequestLoanModal.tsx`: Background auto-filter stok region dari tabel master aset dan `sites.region`. Memunculkan kartu interaktif Preview Alokasi Unit Backup Regional yang mengindikasikan jumlah stok tersedia beserta lokasi gudang cabangnya sebelum user submit.
+  - `src/components/modals/DispatchLoanModal.tsx`: Penyortiran rekomendasi kandidat unit dengan prioritas ⭐ Satu Region di posisi teratas, dan penambahan tombol "👁️ Detail" untuk menampilkan modal spesifikasi lengkap aset fisik (S/N, Merek, Model, Aktiva, External ID, Deskripsi) sebelum penugasan.
+  - `src/views/LoansView.tsx` & `src/App.tsx`: Penambahan tombol tindakan "⚪ Batal" untuk creator/admin pada tiket `Requested`, tombol "🚫 Tolak" untuk Role IT (User/Admin), serta integrasi Modal Dialog Rejection yang mewajibkan input alasan penolakan.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

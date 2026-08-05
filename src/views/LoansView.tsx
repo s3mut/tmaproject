@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { AssetLoan, AssetDetail, Site, Category } from '../types/inventory';
 import { loanStatusConfig } from '../types/inventory';
-import { Button, Input, EmptyState } from '../components/ui';
+import { Button, Input, EmptyState, ModalShell, Textarea } from '../components/ui';
 import RequestLoanModal from '../components/modals/RequestLoanModal';
 import DispatchLoanModal from '../components/modals/DispatchLoanModal';
 import ReturnCheckModal from '../components/modals/ReturnCheckModal';
@@ -22,6 +22,8 @@ interface Props {
   onReceiveLoan: (params: { loanId: number; assetId: number; siteAlias: string; receivedByName: string }) => Promise<void>;
   onInitiateReturn: (loanId: number, assetId: number) => Promise<void>;
   onCloseTicket: (params: any) => Promise<void>;
+  onCancelLoan?: (loanId: number) => Promise<void>;
+  onRejectLoan?: (loanId: number, reason?: string) => Promise<void>;
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
 }
 
@@ -40,6 +42,8 @@ const LoansView: React.FC<Props> = ({
   onReceiveLoan,
   onInitiateReturn,
   onCloseTicket,
+  onCancelLoan,
+  onRejectLoan,
   onShowToast,
 }) => {
   const [activeFilter, setActiveFilter] = useState<string>('All');
@@ -50,6 +54,8 @@ const LoansView: React.FC<Props> = ({
   const [dispatchLoan, setDispatchLoan] = useState<AssetLoan | null>(null);
   const [returnLoan, setReturnLoan] = useState<AssetLoan | null>(null);
   const [bastLoan, setBastLoan] = useState<{ loan: AssetLoan; mode: 'peminjaman' | 'pengembalian' } | null>(null);
+  const [rejectLoanTarget, setRejectLoanTarget] = useState<AssetLoan | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   const isItOfficer = userRole === 'admin' || userRole === 'user';
@@ -320,6 +326,41 @@ const LoansView: React.FC<Props> = ({
                       </Button>
                     )}
 
+                    {/* Tombol Batal untuk Creator atau Admin */}
+                    {loan.status === 'Requested' && (loan.requested_by_id === currentUserId || userRole === 'admin') && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon="fa-times"
+                        loading={actionLoading === loan.id}
+                        onClick={async () => {
+                          if (onCancelLoan) {
+                            try {
+                              setActionLoading(loan.id);
+                              await onCancelLoan(loan.id);
+                              onRefresh();
+                            } finally {
+                              setActionLoading(null);
+                            }
+                          }
+                        }}
+                      >
+                        Batal
+                      </Button>
+                    )}
+
+                    {/* Tombol Tolak untuk Tim IT / Admin */}
+                    {loan.status === 'Requested' && isItOfficer && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        icon="fa-ban"
+                        onClick={() => { setRejectLoanTarget(loan); setRejectReason(''); }}
+                      >
+                        Tolak
+                      </Button>
+                    )}
+
                     {/* FASE 2: IT Alokasi & Dispatch */}
                     {loan.status === 'Requested' && isItOfficer && (
                       <Button
@@ -383,6 +424,7 @@ const LoansView: React.FC<Props> = ({
         onClose={() => setRequestModalOpen(false)}
         sites={sites}
         categories={categories}
+        assets={assets}
         currentUserId={currentUserId}
         currentUserName={currentUserName}
         onSubmit={async (params) => {
@@ -397,6 +439,7 @@ const LoansView: React.FC<Props> = ({
         onClose={() => setDispatchLoan(null)}
         loan={dispatchLoan}
         assets={assets}
+        sites={sites}
         onDispatch={async (params) => {
           await onDispatchLoan({ ...params, durationDays: dispatchLoan?.duration_days || 14, dispatchedByName: currentUserName });
           onRefresh();
@@ -421,6 +464,56 @@ const LoansView: React.FC<Props> = ({
         loan={bastLoan?.loan || null}
         mode={bastLoan?.mode || 'peminjaman'}
       />
+
+      {/* Modal 5: Tolak Pengajuan (Reject) oleh IT/Admin */}
+      <ModalShell
+        isOpen={!!rejectLoanTarget}
+        onClose={() => setRejectLoanTarget(null)}
+        title="Tolak Pengajuan Peminjaman"
+        titleIcon="fa-ban"
+        titleIconBg="bg-red-500/20 text-red-400"
+        maxWidth="sm:max-w-md"
+      >
+        {rejectLoanTarget && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
+              <p className="text-slate-300 font-bold">Tiket: <span className="text-amber-300 font-mono">{rejectLoanTarget.loan_code}</span></p>
+              <p className="text-slate-400 mt-1">Toko: <b>{rejectLoanTarget.site_alias}</b> ({rejectLoanTarget.category_name})</p>
+              <p className="text-slate-400 mt-0.5">Alasan Pinjam: <span className="text-slate-200 italic">"{rejectLoanTarget.purpose}"</span></p>
+            </div>
+            <div>
+              <Textarea
+                label="Alasan Penolakan (Wajib Diisi)"
+                required
+                rows={3}
+                placeholder="Contoh: Stok unit backup di seluruh gudang region sedang kosong / tidak memenuhi syarat teknikal."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-700/60">
+              <Button size="sm" variant="secondary" onClick={() => setRejectLoanTarget(null)}>
+                Batal
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                icon="fa-times-circle"
+                disabled={!rejectReason.trim()}
+                onClick={async () => {
+                  if (onRejectLoan) {
+                    await onRejectLoan(rejectLoanTarget.id, rejectReason.trim());
+                    setRejectLoanTarget(null);
+                    onRefresh();
+                  }
+                }}
+              >
+                Konfirmasi Tolak
+              </Button>
+            </div>
+          </div>
+        )}
+      </ModalShell>
     </div>
   );
 };

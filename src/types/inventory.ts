@@ -7,7 +7,7 @@ export type AssetStatus = 'Active' | 'Backup' | 'Repair' | 'Disposed' | 'In Tran
 export type UserRole = 'admin' | 'user' | 'guest';
 export type MutationStatus = 'Pending' | 'Completed' | 'Rejected';
 export type OpnameStatus = 'Ditemukan' | 'Hilang' | 'Nyasar';
-export type LoanStatus = 'Requested' | 'In-Transit' | 'Borrowed' | 'Return In-Transit' | 'Closed' | 'Rejected';
+export type LoanStatus = 'Requested' | 'In-Transit' | 'Borrowed' | 'Return In-Transit' | 'Closed' | 'Rejected' | 'Cancelled';
 
 // ----- TABLE: sites -----
 export interface Site {
@@ -101,6 +101,7 @@ export interface AssetDetail extends MasterAsset {
   full_location_code: string | null;
   site_name: string | null;
   site_address: string | null;
+  site_region?: string | null;
 }
 
 // ----- Mutation with joins (untuk tampilan history) -----
@@ -171,4 +172,5 @@ export const loanStatusConfig: Record<LoanStatus, { label: string; bg: string; t
   'Return In-Transit':{ label: 'Proses Kembali',   bg: 'bg-purple-500/20 border border-purple-500/40',  text: 'text-purple-300',  icon: 'fa-reply' },
   Closed:             { label: 'Selesai (Closed)', bg: 'bg-slate-700/50 border border-slate-600/50',  text: 'text-slate-400',   icon: 'fa-check-double' },
   Rejected:           { label: 'Ditolak',          bg: 'bg-red-500/20 border border-red-500/40',      text: 'text-red-400',     icon: 'fa-times-circle' },
+  Cancelled:          { label: 'Dibatalkan',       bg: 'bg-slate-700/30 border border-slate-600/40',  text: 'text-slate-400',   icon: 'fa-ban' },
 };

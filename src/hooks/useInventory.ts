@@ -3,7 +3,7 @@ import type { AssetDetail, MasterAsset, MutationDetail, Site, Category, AssetLoa
 import { getAssets, createAsset, updateAsset, deleteAsset, getCategories } from '../services/assetService';
 import { getMutations, createMutation, approveMutation } from '../services/mutationService';
 import { getSites } from '../services/siteService';
-import { getLoans, createLoanRequest, dispatchLoanUnit, receiveLoanUnit, initiateReturnLoan, closeLoanTicket } from '../services/loanService';
+import { getLoans, createLoanRequest, dispatchLoanUnit, receiveLoanUnit, initiateReturnLoan, closeLoanTicket, cancelLoanRequest, rejectLoanRequest } from '../services/loanService';
 
 export function useInventory() {
   const [assets, setAssets] = useState<AssetDetail[]>([]);
@@ -168,6 +168,16 @@ export function useInventory() {
     await fetchAll();
   }, [fetchAll]);
 
+  const cancelAssetLoan = useCallback(async (loanId: number, reason?: string) => {
+    await cancelLoanRequest(loanId, reason);
+    await fetchAll();
+  }, [fetchAll]);
+
+  const rejectAssetLoan = useCallback(async (loanId: number, rejectedBy: string, reason?: string) => {
+    await rejectLoanRequest(loanId, rejectedBy, reason);
+    await fetchAll();
+  }, [fetchAll]);
+
   return {
     assets,
     mutations,
@@ -187,6 +197,8 @@ export function useInventory() {
     receiveAssetLoan,
     initiateAssetLoanReturn,
     closeAssetLoanTicket,
+    cancelAssetLoan,
+    rejectAssetLoan,
     refresh: fetchAll,
   };
 }

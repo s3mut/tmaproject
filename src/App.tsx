@@ -32,6 +32,7 @@ function App() {
     assets, mutations, sites, categories, loans,
     loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation,
     requestAssetLoan, dispatchAssetLoan, receiveAssetLoan, initiateAssetLoanReturn, closeAssetLoanTicket,
+    cancelAssetLoan, rejectAssetLoan,
     refresh
   } = useInventory();
 
@@ -359,6 +360,14 @@ function App() {
             onCloseTicket={async (params) => {
               await closeAssetLoanTicket(params);
               showToast('✅ Tiket pinjam ditutup. Status aset fisik telah diperbarui!');
+            }}
+            onCancelLoan={async (loanId) => {
+              await cancelAssetLoan(loanId, 'Dibatalkan oleh user / pengaju');
+              showToast('⚪ Pengajuan peminjaman dibatalkan.');
+            }}
+            onRejectLoan={async (loanId, reason) => {
+              await rejectAssetLoan(loanId, currentUser?.name || 'Admin', reason);
+              showToast('🚫 Pengajuan peminjaman ditolak.');
             }}
             onShowToast={showToast}
           />

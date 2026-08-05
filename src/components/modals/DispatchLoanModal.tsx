@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { AssetLoan, AssetDetail } from '../../types/inventory';
+import type { AssetLoan, AssetDetail, Site } from '../../types/inventory';
 import { ModalShell, Button, Input } from '../ui';
 import QRScannerModal from './QRScannerModal';
 
@@ -8,6 +8,7 @@ interface Props {
   onClose: () => void;
   loan: AssetLoan | null;
   assets: AssetDetail[];
+  sites?: Site[];
   onDispatch: (params: {
     loanId: number;
     assetId: number;
@@ -21,6 +22,7 @@ const DispatchLoanModal: React.FC<Props> = ({
   onClose,
   loan,
   assets,
+  sites = [],
   onDispatch,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,18 +31,21 @@ const DispatchLoanModal: React.FC<Props> = ({
   const [scannerOpen, setScannerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [detailAsset, setDetailAsset] = useState<AssetDetail | null>(null);
 
-  // Filter aset siap pakai (Backup / Active) yang cocok atau mirip dengan kategori request
+  const getAssetRegion = (a: AssetDetail) => a.site_region || sites.find(s => s.site_alias === a.site_alias || s.site_name === a.site_name)?.region || null;
+
+  // Filter & sortir aset siap pakai (Backup / Active), prioritaskan yang berada di Region yang sama dengan toko peminjam
   const availableAssets = useMemo(() => {
     if (!loan) return [];
     const term = searchQuery.toLowerCase().trim();
-    return assets.filter(a => {
-      // Prioritaskan status siap dipinjam
+    const targetRegion = loan.site_region;
+
+    const filtered = assets.filter(a => {
       const isReady = a.status === 'Backup' || a.status === 'Active';
       if (!isReady) return false;
 
       if (!term) {
-        // Jika belum ngetik, sarankan yang sesuai kategori
         return a.category_name.toLowerCase().includes(loan.category_name.toLowerCase());
       }
       return (
@@ -49,8 +54,15 @@ const DispatchLoanModal: React.FC<Props> = ({
         (a.model_type || '').toLowerCase().includes(term) ||
         (a.computer_name || '').toLowerCase().includes(term)
       );
-    }).slice(0, 10);
-  }, [assets, loan, searchQuery]);
+    });
+
+    // Sort: aset yang region-nya sama dengan region toko ditempatkan di atas
+    return filtered.sort((x, y) => {
+      const xSame = getAssetRegion(x) === targetRegion ? 1 : 0;
+      const ySame = getAssetRegion(y) === targetRegion ? 1 : 0;
+      return ySame - xSame;
+    }).slice(0, 15);
+  }, [assets, loan, searchQuery, sites]);
 
   if (!loan) return null;
 
@@ -157,49 +169,92 @@ const DispatchLoanModal: React.FC<Props> = ({
 
               {/* Suggestions */}
               {availableAssets.length > 0 && !selectedAsset && (
-                <div className="mt-1 glass rounded-lg overflow-hidden border border-blue-500/30 max-h-48 overflow-y-auto divide-y divide-slate-700/50">
-                  <div className="bg-slate-900/90 px-3 py-1.5 text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-                    Rekomendasi Aset Siap Pakai ({loan.category_name})
+                <div className="mt-1 glass rounded-lg overflow-hidden border border-blue-500/30 max-h-64 overflow-y-auto divide-y divide-slate-700/50">
+                  <div className="bg-slate-900/90 px-3 py-1.5 text-[10px] text-slate-300 uppercase tracking-wider font-bold flex justify-between">
+                    <span>Rekomendasi Aset Siap Pakai ({loan.category_name})</span>
+                    <span className="text-blue-400">Diprioritaskan Region {loan.site_region || 'Terkait'}</span>
                   </div>
-                  {availableAssets.map((a) => (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className="w-full text-left px-3.5 py-2.5 hover:bg-blue-500/15 flex items-center justify-between transition-colors"
-                      onClick={() => { setSelectedAsset(a); setSearchQuery(a.serial_number); setErrorMsg(''); }}
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-white">{a.brand || 'No Brand'} {a.model_type || ''}</p>
-                        <p className="text-xs text-slate-400 font-mono">S/N: {a.serial_number}</p>
+                  {availableAssets.map((a) => {
+                    const aRegion = getAssetRegion(a);
+                    const isSameRegion = loan.site_region && aRegion === loan.site_region;
+                    return (
+                      <div
+                        key={a.id}
+                        className="px-3.5 py-2 hover:bg-blue-500/15 flex items-center justify-between transition-colors text-xs"
+                      >
+                        <div
+                          className="flex-1 cursor-pointer"
+                          onClick={() => { setSelectedAsset(a); setSearchQuery(a.serial_number); setErrorMsg(''); }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white text-sm">{a.brand || 'No Brand'} {a.model_type || ''}</span>
+                            {isSameRegion ? (
+                              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded border border-emerald-500/30">
+                                ⭐ Satu Region ({aRegion})
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                                📍 {aRegion || a.site_name || 'HQ'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-amber-300 font-mono mt-0.5">S/N: {a.serial_number}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setDetailAsset(a); }}
+                            className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-[11px] border border-slate-600 flex items-center gap-1 shadow-sm"
+                            title="Lihat Spesifikasi Detail Unit"
+                          >
+                            <i className="fas fa-eye text-blue-400" /> Detail
+                          </button>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                            Pilih Unit ➔
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        {a.status}
-                      </span>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
               {/* Selected Asset Confirmation Card */}
               {selectedAsset && (
-                <div className="mt-2 bg-emerald-500/15 border border-emerald-500/40 rounded-xl p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg shrink-0">
+                <div className="mt-2 bg-emerald-500/15 border border-emerald-500/40 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg shrink-0 mt-0.5">
                       <i className="fas fa-check-circle" />
                     </div>
                     <div>
-                      <p className="text-xs text-emerald-300 font-semibold">Unit Fisik Terikat (Ready to Ship):</p>
-                      <p className="text-sm font-bold text-white">{selectedAsset.brand} {selectedAsset.model_type}</p>
-                      <p className="text-xs text-slate-300 font-mono">S/N: {selectedAsset.serial_number}</p>
+                      <p className="text-xs text-emerald-300 font-semibold flex items-center gap-1.5">
+                        <span>Unit Fisik Terpilih (Ready to Ship):</span>
+                        {loan.site_region && getAssetRegion(selectedAsset) === loan.site_region && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                            ⭐ Sesuai Region ({getAssetRegion(selectedAsset)})
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm font-bold text-white mt-0.5">{selectedAsset.brand} {selectedAsset.model_type}</p>
+                      <p className="text-xs text-amber-300 font-mono">S/N: {selectedAsset.serial_number}</p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedAsset(null); setSearchQuery(''); }}
-                    className="text-slate-400 hover:text-red-400 p-2 text-xs font-medium underline"
-                  >
-                    Ganti
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setDetailAsset(selectedAsset)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-600/60 flex items-center gap-1.5"
+                    >
+                      <i className="fas fa-search-plus text-blue-400" /> Lihat Detail
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedAsset(null); setSearchQuery(''); }}
+                      className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-semibold border border-red-500/30"
+                    >
+                      Ganti Unit
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -240,6 +295,76 @@ const DispatchLoanModal: React.FC<Props> = ({
         onClose={() => setScannerOpen(false)}
         onScanResult={handleScanResult}
       />
+
+      {/* Modal Detail Spesifikasi Aset Sebelum Assign */}
+      <ModalShell
+        isOpen={!!detailAsset}
+        onClose={() => setDetailAsset(null)}
+        title="Spesifikasi Lengkap Unit Backup"
+        titleIcon="fa-microchip"
+        titleIconBg="bg-amber-500/20 text-amber-300"
+        maxWidth="sm:max-w-md"
+      >
+        {detailAsset && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/80">
+              <h3 className="text-sm font-bold text-white mb-1">{detailAsset.brand || 'No Brand'} — {detailAsset.model_type || 'Generic'}</h3>
+              <p className="text-amber-300 font-mono font-bold text-sm">S/N: {detailAsset.serial_number}</p>
+              <span className="inline-block mt-2 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                Status: {detailAsset.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+              <div>
+                <span className="text-slate-400 block mb-0.5"><i className="fas fa-sitemap mr-1" />Kategori:</span>
+                <b className="text-slate-200">{detailAsset.category_name}</b>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5"><i className="fas fa-map-marked-alt mr-1" />Lokasi / Region:</span>
+                <b className="text-blue-300">{detailAsset.site_alias || 'HQ'} ({getAssetRegion(detailAsset) || 'Pusat'})</b>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5"><i className="fas fa-desktop mr-1" />Computer Name:</span>
+                <b className="text-slate-200">{detailAsset.computer_name || '—'}</b>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5"><i className="fas fa-barcode mr-1" />Aktiva / External ID:</span>
+                <b className="text-slate-200 font-mono">{detailAsset.aktiva || '—'} / {detailAsset.external_id || '—'}</b>
+              </div>
+            </div>
+
+            {detailAsset.description && (
+              <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                <span className="text-slate-400 block mb-1 font-medium"><i className="fas fa-info-circle text-blue-400 mr-1" />Deskripsi / Keterangan Fisik:</span>
+                <p className="text-slate-300 italic">"{detailAsset.description}"</p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-700/60">
+              <button
+                type="button"
+                onClick={() => setDetailAsset(null)}
+                className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold transition-all"
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAsset(detailAsset);
+                  setSearchQuery(detailAsset.serial_number);
+                  setErrorMsg('');
+                  setDetailAsset(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-all flex items-center gap-1.5"
+              >
+                <i className="fas fa-check" /> Pilih Unit Ini untuk Assign
+              </button>
+            </div>
+          </div>
+        )}
+      </ModalShell>
     </>
   );
 };

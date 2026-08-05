@@ -272,3 +272,35 @@ export async function closeLoanTicket(params: {
 
   if (assetErr) throw new Error(`Gagal mereset status master aset: ${assetErr.message}`);
 }
+
+/**
+ * Membatalkan pengajuan pinjam oleh pengaju sendiri (Role Toko / Guest / Creator)
+ */
+export async function cancelLoanRequest(loanId: number, reason?: string): Promise<void> {
+  const { error } = await supabase
+    .from('asset_loans')
+    .update({
+      status: 'Cancelled',
+      notes: reason || 'Dibatalkan oleh pengaju sendiri.',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', loanId);
+
+  if (error) throw new Error(`Gagal membatalkan pengajuan: ${error.message}`);
+}
+
+/**
+ * Menolak pengajuan pinjam oleh Tim IT Support / Admin
+ */
+export async function rejectLoanRequest(loanId: number, rejectedBy: string, reason?: string): Promise<void> {
+  const { error } = await supabase
+    .from('asset_loans')
+    .update({
+      status: 'Rejected',
+      notes: `Ditolak oleh Tim IT (${rejectedBy}): ${reason || 'Tidak memenuhi kualifikasi / stok kosong.'}`,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', loanId);
+
+  if (error) throw new Error(`Gagal menolak pengajuan: ${error.message}`);
+}
