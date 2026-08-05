@@ -588,6 +588,22 @@ Implementasi:
   - `src/views/ProfileView.tsx`: Opsi menu baru "Backup & Export Data" beremblem badge `ADMIN ONLY`, secara otomatis berstatus restricted dan hanya muncul bila `currentUser?.role === 'admin'`.
   - `src/App.tsx`: Menyuplai props data inventaris ke `ProfileView`.
 
+--------------------------------------------------------------------------------
+STEP 29: ENTERPRISE ASSET LOAN MANAGEMENT & BAST DOCUMENT SYSTEM (2026-08-05)
+--------------------------------------------------------------------------------
+Kebutuhan: Menambahkan menu dan alur kerja manajemen peminjaman alat sementara (unit backup POS, Monitor, dll) ke Toko yang bermasalah dengan siklus 5 Fase (Request -> Dispatch -> Receive -> Monitoring -> Return), berbekal nomor unik anti-duplikasi, integrasi Barcode Scanner, dan pencetakan Berita Acara Serah Terima (BAST).
+
+Implementasi:
+  - `sql/create_asset_loans.sql`: Skema database baru untuk tabel `asset_loans` lengkap dengan indeks dan open RLS policy.
+  - `src/services/loanService.ts`: Service API layer pengelola siklus peminjaman, kalkulasi durasi, dan penomeran otomatis `LOAN-[SITE]-[YYMM]-[4_DIGIT_SEQ]`.
+  - `src/components/modals/RequestLoanModal.tsx`: Form pengajuan baru oleh Toko berbekal `SiteSearchInput` dan peringatan otomatis jika durasi melebihi standar 14 hari (memerlukan IT Approval).
+  - `src/components/modals/DispatchLoanModal.tsx`: Form alokasi oleh Tim IT dengan tombol pemindai Barcode (`QRScannerModal`) untuk mengikat serial number fisik unit Ready serta pengisian nomor resi ekspedisi.
+  - `src/components/modals/ReturnCheckModal.tsx`: Form verifikasi balikan unit oleh IT dengan opsi kondisi: Bagus (Active/Backup), Rusak (Repair), atau Hilang (Disposed/Klaim) yang otomatis merubah status master aset.
+  - `src/components/modals/BASTDocumentModal.tsx`: Generator dokumen resmi Berita Acara Serah Terima (BAST Peminjaman & Pengembalian) berstandar layout korporasi dan fitur *Print-Ready* / Save PDF.
+  - `src/views/LoansView.tsx`: Halaman pusat monitoring peminjaman berbekal tab filter status dan indikator kalkulasi tanggal dinamis (🔴 OVERDUE merah berkedip saat terlambat pengembalian & 🟡 H-3 peringatan awal).
+  - `src/components/BottomNav.tsx` & `src/components/Header.tsx`: Penambahan tab menu "Pinjam" (ikon `fa-hand-holding-box`).
+  - `src/hooks/useInventory.ts` & `src/App.tsx`: Integrasi state dan routing modul peminjaman.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

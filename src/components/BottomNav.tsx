@@ -1,13 +1,14 @@
-export type TabName = 'dashboard' | 'items' | 'history' | 'sites' | 'opname' | 'profile' | 'report';
+export type TabName = 'dashboard' | 'items' | 'history' | 'loans' | 'sites' | 'opname' | 'profile' | 'report';
 
 interface NavItem { tab: TabName; icon: string; label: string; }
 
 const navItems: NavItem[] = [
-  { tab: 'dashboard', icon: 'fa-home',       label: 'Beranda' },
-  { tab: 'items',     icon: 'fa-server',     label: 'Aset' },
-  { tab: 'history',   icon: 'fa-exchange-alt', label: 'Mutasi' },
-  { tab: 'opname',    icon: 'fa-qrcode',     label: 'Opname' },
-  { tab: 'profile',   icon: 'fa-user',       label: 'Profil' },
+  { tab: 'dashboard', icon: 'fa-home',           label: 'Beranda' },
+  { tab: 'items',     icon: 'fa-server',         label: 'Aset' },
+  { tab: 'history',   icon: 'fa-exchange-alt',   label: 'Mutasi' },
+  { tab: 'loans',     icon: 'fa-hand-holding-box', label: 'Pinjam' },
+  { tab: 'opname',    icon: 'fa-qrcode',         label: 'Opname' },
+  { tab: 'profile',   icon: 'fa-user',           label: 'Profil' },
 ];
 
 interface Props {

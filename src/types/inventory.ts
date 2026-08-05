@@ -3,10 +3,11 @@
 // ============================================================
 
 // ----- ENUMs -----
-export type AssetStatus = 'Active' | 'Backup' | 'Repair' | 'Disposed' | 'In Transit' | 'Retired';
+export type AssetStatus = 'Active' | 'Backup' | 'Repair' | 'Disposed' | 'In Transit' | 'Retired' | 'Borrowed';
 export type UserRole = 'admin' | 'user' | 'guest';
 export type MutationStatus = 'Pending' | 'Completed' | 'Rejected';
 export type OpnameStatus = 'Ditemukan' | 'Hilang' | 'Nyasar';
+export type LoanStatus = 'Requested' | 'In-Transit' | 'Borrowed' | 'Return In-Transit' | 'Closed' | 'Rejected';
 
 // ----- TABLE: sites -----
 export interface Site {
@@ -125,4 +126,49 @@ export const assetStatusConfig: Record<AssetStatus, { label: string; className: 
   Disposed:     { label: 'Disposed',     className: 'text-red-600 bg-red-100', icon: 'fa-trash-alt' },
   'In Transit': { label: 'In Transit',   className: 'text-blue-600 bg-blue-100', icon: 'fa-truck' },
   Retired:      { label: 'Retired',      className: 'text-slate-500 bg-slate-200', icon: 'fa-power-off' },
+  Borrowed:     { label: 'Borrowed',     className: 'text-purple-300 bg-purple-500/20 border border-purple-500/30', icon: 'fa-hand-holding-box' },
+};
+
+// ============================================================
+// ASSET LOANS (Peminjaman & Unit Backup)
+// ============================================================
+export interface AssetLoan {
+  id: number;
+  loan_code: string;
+  site_alias: string;
+  category_name: string;
+  purpose: string;
+  duration_days: number;
+  requires_it_approval: boolean;
+  due_date: string;
+  shipping_method: 'Pick-up' | 'Delivery' | string;
+  tracking_number: string | null;
+  asset_id: number | null;
+  status: LoanStatus;
+  condition_on_return: 'Bagus' | 'Rusak' | 'Hilang' | string | null;
+  requested_by_id: number;
+  requested_by_name: string;
+  dispatched_by_name: string | null;
+  received_by_name: string | null;
+  created_at: string;
+  dispatched_at: string | null;
+  received_at: string | null;
+  returned_at: string | null;
+  closed_at: string | null;
+  notes: string | null;
+  // Joined / Rich fields
+  asset_serial_number?: string;
+  asset_brand?: string | null;
+  asset_model_type?: string | null;
+  site_name?: string;
+  site_region?: string | null;
+}
+
+export const loanStatusConfig: Record<LoanStatus, { label: string; bg: string; text: string; icon: string }> = {
+  Requested:          { label: 'Request Baru',     bg: 'bg-amber-500/20 border border-amber-500/40',  text: 'text-amber-300',   icon: 'fa-clock' },
+  'In-Transit':       { label: 'Dalam Pengiriman', bg: 'bg-blue-500/20 border border-blue-500/40',    text: 'text-blue-300',    icon: 'fa-truck' },
+  Borrowed:           { label: 'Aktif Dipinjam',   bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-box-open' },
+  'Return In-Transit':{ label: 'Proses Kembali',   bg: 'bg-purple-500/20 border border-purple-500/40',  text: 'text-purple-300',  icon: 'fa-reply' },
+  Closed:             { label: 'Selesai (Closed)', bg: 'bg-slate-700/50 border border-slate-600/50',  text: 'text-slate-400',   icon: 'fa-check-double' },
+  Rejected:           { label: 'Ditolak',          bg: 'bg-red-500/20 border border-red-500/40',      text: 'text-red-400',     icon: 'fa-times-circle' },
 };

@@ -17,6 +17,7 @@ import ConfirmModal from './components/modals/ConfirmModal';
 import DashboardView from './views/DashboardView';
 import ItemsView from './views/ItemsView';
 import HistoryView from './views/HistoryView';
+import LoansView from './views/LoansView';
 import SitesView from './views/SitesView';
 import OpnameView from './views/OpnameView';
 import ProfileView from './views/ProfileView';
@@ -28,8 +29,10 @@ declare global { interface Window { Telegram?: any; } }
 function App() {
   const { currentUser, authMethod, isLoading: authLoading } = useAuth();
   const { 
-    assets, mutations, sites, categories,
-    loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation, refresh
+    assets, mutations, sites, categories, loans,
+    loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation,
+    requestAssetLoan, dispatchAssetLoan, receiveAssetLoan, initiateAssetLoanReturn, closeAssetLoanTicket,
+    refresh
   } = useInventory();
 
   const [activeTab, setActiveTab]           = useState<TabName>('dashboard');
@@ -326,6 +329,38 @@ function App() {
                 showToast(e.message, 'error');
               }
             }}
+          />
+        )}
+        {activeTab === 'loans' && (
+          <LoansView
+            loans={loans}
+            assets={assets}
+            sites={sites}
+            categories={categories}
+            loading={loading}
+            userRole={currentUser?.role}
+            currentUserId={currentUser?.telegram_id || 0}
+            currentUserName={currentUser?.name || 'User'}
+            onRefresh={refresh}
+            onRequestLoan={async (params) => {
+              await requestAssetLoan({ ...params, requestedById: currentUser?.telegram_id || 0, requestedByName: currentUser?.name || 'Toko' });
+              showToast('✨ Pengajuan pinjaman berhasil dibuat!');
+            }}
+            onDispatchLoan={async (params) => {
+              await dispatchAssetLoan(params);
+              showToast('🚀 Unit berhasil dipindai & dikirim ke toko!');
+            }}
+            onReceiveLoan={async (params) => {
+              await receiveAssetLoan(params);
+            }}
+            onInitiateReturn={async (loanId, assetId) => {
+              await initiateAssetLoanReturn(loanId, assetId);
+            }}
+            onCloseTicket={async (params) => {
+              await closeAssetLoanTicket(params);
+              showToast('✅ Tiket pinjam ditutup. Status aset fisik telah diperbarui!');
+            }}
+            onShowToast={showToast}
           />
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}

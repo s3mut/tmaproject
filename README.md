@@ -18,6 +18,13 @@
 - **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** dalam bentuk *collapsible/accordion* yang informatif, dilengkapi indikator *breakdown* status per wilayah dan penghitung hasil filter secara reponsif.
 - **⚡ Paginated Auto-Fetch (Bebas Limit 1.000 Baris)**: Mampu memuat seluruh inventaris perusahaan (6.000+ unit aset) dengan sempurna tanpa terhalang batas default 1.000 baris per request dari PostgREST/Supabase.
 - **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit*), dilengkapi filter status, pencarian real-time di riwayat mutasi, dan fitur **Pencarian Aset by QR/Barcode Scan** (Zero-Click Logistics) yang otomatis menyeleksi barang seketika setelah disekan.
+- **🤝 Manajemen Peminjaman Aset & Alur RMA (5-Phase Loan Management)**: Sistem sirkulasi pinjam unit backup sementara untuk Toko dengan siklus kendali profesional:
+  - **Fase Pengajuan (Request)**: Penomoran unik otomatis anti-duplikasi (`LOAN-[SITE]-[YYMM]-[4_DIGIT_SEQ]`), pemilihan Alias Toko via *auto-complete*, dan sistem alert bila estimasi melebihi durasi standar 14 hari (*Waiting IT Approval*).
+  - **Fase Alokasi (Dispatch)**: Tim IT menyeken barcode/QR pada fisik unit *Ready/Backup* untuk mengikat S/N barang ke tiket pinjam serta menginput nomor resi ekspedisi/kurir.
+  - **Fase Penerimaan (Receiving)**: Konfirmasi penerimaan saat barang sampai di toko dalam 1-klik yang memindahkan status unit fisik menjadi *Borrowed* di site Toko.
+  - **Fase Monitoring Dinamis**: Peringatan awal **🟡 H-3 Jatuh Tempo** dan eskalasi visual **🔴 OVERDUE** (berkendip & bergaris merah bercahaya) secara real-time apabila barang terlambat dikembalikan.
+  - **Fase Pengembalian & Verifikasi (Return)**: Toko mengklik *Kembalikan Unit*, lalu Tim IT memverifikasi kondisi fisik saat barang tiba (Pilihan: `✅ Bagus` reset jadi Backup, `🛠️ Rusak` ubah jadi Repair, atau `❌ Hilang` ubah jadi Disposed/Klaim).
+  - **📄 Generator Dokumen BAST & Shipping Label**: Template Berita Acara Serah Terima berdesain korporasi resmi bersumber spesifikasi lengkap dan slot tanda tangan digital yang siap cetak langsung (*Print-Ready* / Save PDF).
 - **💾 Admin Disaster Recovery & Backup System**: Panel khusus Role Admin di menu Profil untuk mengunduh salinan cadangan lengkap database (Snapshot JSON) serta mengekspor tabel Master Aset & Riwayat Mutasi ke format Excel CSV (terformat UTF-8 BOM agar langsung kompatibel dan rapi di Microsoft Excel/Spreadsheet).
 - **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi terintegrasi kamera yang memisahkan status barang yang sudah di-scan dengan yang belum diverifikasi, lengkap dengan *progress bar* visual.
 - **📷 QR / Barcode Scanner Nyata**: Scanner kamera langsung di Telegram Mini App menggunakan `html5-qrcode` — mendukung QR Code, Code 128, Code 39, EAN-13, dan format lainnya. Otomatis membuka detail aset saat kode terdeteksi.
@@ -59,6 +66,8 @@ TransitTMA/
 │   ├── web_auth_rpc.sql            # SQL Migration: Web Auth (web_password + RPC)
 │   ├── diagnostic_web_auth.sql     # SQL Diagnostik & Pengujian Web Login
 │   └── bot_webhook_handler.js      # Telegram Bot Webhook Handler (Node.js)
+├── sql/
+│   └── create_asset_loans.sql      # Skema Database & Migrasi Sistem Peminjaman
 ├── src/
 │   ├── components/                 # Reusable UI Components & Modals
 │   │   ├── ui/                     # Atomic Design System Component Library
@@ -77,13 +86,17 @@ TransitTMA/
 │   │   ├── ItemCard.tsx            # Card Component Tampilan Aset
 │   │   └── modals/                 # Interactive Modal Components
 │   │       ├── BackupModal.tsx     # Modal Backup & Export CSV/JSON (Khusus Admin)
+│   │       ├── BASTDocumentModal.tsx # Generator Dokumen BAST & Shipping Label PDF
 │   │       ├── ConfirmModal.tsx    # Modal Konfirmasi Pengganti window.confirm
 │   │       ├── CSVImportModal.tsx  # Uploader & Validator CSV Khusus Admin
+│   │       ├── DispatchLoanModal.tsx # Alokasi & Scan Barcode Peminjaman IT
 │   │       ├── ItemFormModal.tsx   # Form Tambah / Edit Aset
 │   │       ├── ItemDetailModal.tsx # Detail Aset & Aksis
 │   │       ├── MutationModal.tsx   # Form Mutasi / Perpindahan Aset
 │   │       ├── QRScannerModal.tsx  # Scanner QR / Barcode (html5-qrcode)
 │   │       ├── RequestAccessModal.tsx  # Form Request Akses Tim IT (Guest)
+│   │       ├── RequestLoanModal.tsx    # Form Pengajuan Peminjaman Toko
+│   │       ├── ReturnCheckModal.tsx    # Verifikasi Kondisi Barang Kembalian IT
 │   │       └── SetPasswordModal.tsx    # Atur Password Akses Web
 │   ├── contexts/
 │   │   └── AuthContext.tsx         # AuthProvider & useAuth() Hook (Dual Auth)
@@ -94,9 +107,10 @@ TransitTMA/
 │   ├── services/                   # API Integration Layer
 │   │   ├── assetService.ts         # Asset CRUD & View Integration
 │   │   ├── authService.ts          # Auth Service: Web Login, Session, Password
+│   │   ├── csvImportService.ts     # Parsing & Chunking Upload CSV
+│   │   ├── loanService.ts          # API Layer Siklus Peminjaman & Overdue
 │   │   ├── mutationService.ts      # Mutation Log & Handover
 │   │   ├── siteService.ts          # Fetch Sites & Regions
-│   │   ├── csvImportService.ts     # Parsing & Chunking Upload CSV
 │   │   └── userService.ts          # Telegram SDK User Sync & Bot Notification
 │   ├── types/
 │   │   └── inventory.ts            # TypeScript Definitions & Enums
@@ -104,6 +118,7 @@ TransitTMA/
 │       ├── DashboardView.tsx       # Ringkasan Stats & Grid Kategori
 │       ├── ItemsView.tsx           # Daftar Aset Grouped by Region
 │       ├── HistoryView.tsx         # Riwayat Mutasi Aset
+│       ├── LoansView.tsx           # Dashboard Monitoring Peminjaman & BAST
 │       ├── LoginView.tsx           # Halaman Login Web (Telegram ID + Password)
 │       ├── SitesView.tsx           # Daftar Lokasi Site Operasional
 │       ├── OpnameView.tsx          # Audit Fisik Aset

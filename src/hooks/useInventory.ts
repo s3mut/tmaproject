@@ -1,20 +1,22 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import type { AssetDetail, MasterAsset, MutationDetail, Site, Category } from '../types/inventory';
+import type { AssetDetail, MasterAsset, MutationDetail, Site, Category, AssetLoan } from '../types/inventory';
 import { getAssets, createAsset, updateAsset, deleteAsset, getCategories } from '../services/assetService';
 import { getMutations, createMutation, approveMutation } from '../services/mutationService';
 import { getSites } from '../services/siteService';
+import { getLoans, createLoanRequest, dispatchLoanUnit, receiveLoanUnit, initiateReturnLoan, closeLoanTicket } from '../services/loanService';
 
 export function useInventory() {
   const [assets, setAssets] = useState<AssetDetail[]>([]);
   const [mutations, setMutations] = useState<MutationDetail[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loans, setLoans] = useState<AssetLoan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Stats computed dari assets dengan useMemo dan single iteration (tanpa alokasi 5 array baru)
+  // Stats computed dari assets dengan useMemo dan single iteration
   const stats = useMemo(() => {
-    let active = 0, backup = 0, retired = 0, repair = 0, inTransit = 0;
+    let active = 0, backup = 0, retired = 0, repair = 0, inTransit = 0, borrowed = 0;
     for (const a of assets) {
       switch (a.status) {
         case 'Active': active++; break;
@@ -22,6 +24,7 @@ export function useInventory() {
         case 'Retired': retired++; break;
         case 'Repair': repair++; break;
         case 'In Transit': inTransit++; break;
+        case 'Borrowed': borrowed++; break;
       }
     }
     return {
@@ -31,6 +34,7 @@ export function useInventory() {
       retired,
       repair,
       inTransit,
+      borrowed,
     };
   }, [assets]);
 
@@ -44,6 +48,7 @@ export function useInventory() {
         getMutations(),
         getSites(),
         getCategories(),
+        getLoans(),
       ]);
 
       if (results[0].status === 'fulfilled') setAssets(results[0].value);
@@ -57,6 +62,9 @@ export function useInventory() {
 
       if (results[3].status === 'fulfilled') setCategories(results[3].value);
       else { console.error('Error fetching categories:', results[3].reason); setError(prev => prev ? prev + ' | Error Kategori' : 'Error fetch Kategori'); }
+
+      if (results[4].status === 'fulfilled') setLoans(results[4].value);
+      else { console.error('Error fetching loans:', results[4].reason); }
     } catch (err: any) {
       setError(err.message ?? 'Terjadi kesalahan koneksi.');
     } finally {
@@ -134,11 +142,38 @@ export function useInventory() {
     await fetchAssetsAndMutations();
   }, [fetchAssetsAndMutations]);
 
+  // Actions untuk Asset Loans (Peminjaman & Unit Backup)
+  const requestAssetLoan = useCallback(async (params: any) => {
+    await createLoanRequest(params);
+    await fetchAll();
+  }, [fetchAll]);
+
+  const dispatchAssetLoan = useCallback(async (params: any) => {
+    await dispatchLoanUnit(params);
+    await fetchAll();
+  }, [fetchAll]);
+
+  const receiveAssetLoan = useCallback(async (params: any) => {
+    await receiveLoanUnit(params);
+    await fetchAll();
+  }, [fetchAll]);
+
+  const initiateAssetLoanReturn = useCallback(async (loanId: number, assetId: number) => {
+    await initiateReturnLoan(loanId, assetId);
+    await fetchAll();
+  }, [fetchAll]);
+
+  const closeAssetLoanTicket = useCallback(async (params: any) => {
+    await closeLoanTicket(params);
+    await fetchAll();
+  }, [fetchAll]);
+
   return {
     assets,
     mutations,
     sites,
     categories,
+    loans,
     stats,
     loading,
     error,
@@ -147,6 +182,12 @@ export function useInventory() {
     removeAsset,
     mutateAsset,
     approveAssetMutation,
+    requestAssetLoan,
+    dispatchAssetLoan,
+    receiveAssetLoan,
+    initiateAssetLoanReturn,
+    closeAssetLoanTicket,
     refresh: fetchAll,
   };
 }
+
