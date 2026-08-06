@@ -140,13 +140,10 @@ const UserManagementModal: React.FC<Props> = ({
           icon="fa-search"
         />
 
-        {/* Tabel Daftar Pengguna */}
+        {/* Daftar Pengguna */}
         <div className="bg-slate-900/80 rounded-2xl border border-slate-700/60 overflow-hidden max-h-[60vh] overflow-y-auto divide-y divide-slate-800">
-          <div className="bg-slate-800/80 px-4 py-3 text-[11px] font-extrabold text-slate-300 uppercase tracking-wider grid grid-cols-12 gap-3 items-center">
-            <div className="col-span-4">Identitas Pengguna</div>
-            <div className="col-span-3">Role Akses</div>
-            <div className="col-span-3">Wilayah Wewenang (Region)</div>
-            <div className="col-span-2 text-right">Aksi</div>
+          <div className="bg-slate-800/80 px-4 py-2.5 text-[11px] font-extrabold text-slate-300 uppercase tracking-wider">
+            Daftar Pengguna & Hak Akses
           </div>
 
           {loading ? (
@@ -166,60 +163,72 @@ const UserManagementModal: React.FC<Props> = ({
               const isModified = currentEdit.role !== u.role || currentEdit.assigned_region !== (u.assigned_region || null);
 
               return (
-                <div key={u.telegram_id} className="px-4 py-3 hover:bg-slate-800/40 transition-colors grid grid-cols-12 gap-3 items-center text-xs">
-                  {/* Kolom 1: Identitas */}
-                  <div className="col-span-4">
-                    <p className="font-bold text-white truncate text-sm">{u.name}</p>
-                    <p className="text-[11px] text-blue-400 font-mono mt-0.5">
-                      {u.username ? `@${u.username}` : `ID: ${u.telegram_id}`}
-                    </p>
+                <div key={u.telegram_id} className="px-4 py-3 hover:bg-slate-800/40 transition-colors space-y-2.5">
+                  {/* Baris Atas: Identitas + Badge Role */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-white truncate text-sm">{u.name}</p>
+                      <p className="text-[11px] text-blue-400 font-mono mt-0.5">
+                        {u.username ? `@${u.username}` : `ID: ${u.telegram_id}`}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      currentEdit.role === 'admin' ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' :
+                      currentEdit.role === 'user'  ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' :
+                                                     'bg-slate-500/15 text-slate-400 border-slate-500/30'
+                    }`}>
+                      {currentEdit.role === 'admin' ? '👑 ADMIN' : currentEdit.role === 'user' ? '💼 USER' : '🔒 GUEST'}
+                    </span>
                   </div>
 
-                  {/* Kolom 2: Role Selector */}
-                  <div className="col-span-3">
-                    <Select
-                      value={currentEdit.role}
-                      onChange={(e) => handleRoleChange(u.telegram_id, e.target.value as UserRole)}
-                      className="text-xs py-1.5"
-                    >
-                      <option value="guest" className="bg-slate-900 text-white">🔒 Guest (Toko/Staff)</option>
-                      <option value="user" className="bg-slate-900 text-white">💼 User (IT Support Region)</option>
-                      <option value="admin" className="bg-slate-900 text-white">👑 Admin (Global IT)</option>
-                    </Select>
-                  </div>
-
-                  {/* Kolom 3: Region Selector (Khusus Role User) */}
-                  <div className="col-span-3">
-                    {currentEdit.role === 'user' ? (
+                  {/* Baris Tengah: Selector Role + Region */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[10px] text-slate-500 mb-1 uppercase tracking-wider">Role Akses</p>
                       <Select
-                        value={currentEdit.assigned_region || 'GLOBAL_ALL'}
-                        onChange={(e) => handleRegionChange(u.telegram_id, e.target.value)}
-                        className="text-xs py-1.5 font-semibold text-amber-300 border-amber-500/40"
+                        value={currentEdit.role}
+                        onChange={(e) => handleRoleChange(u.telegram_id, e.target.value as UserRole)}
+                        className="text-xs py-1.5"
                       >
-                        <option value="GLOBAL_ALL" className="bg-slate-900 text-white">🌐 [Semua Wilayah / Global]</option>
-                        {availableRegions.map(reg => (
-                          <option key={reg} value={reg} className="bg-slate-900 text-white">📍 Region: {reg}</option>
-                        ))}
+                        <option value="guest" className="bg-slate-900 text-white">🔒 Guest</option>
+                        <option value="user" className="bg-slate-900 text-white">💼 User IT</option>
+                        <option value="admin" className="bg-slate-900 text-white">👑 Admin</option>
                       </Select>
-                    ) : (
-                      <span className="text-[11px] text-slate-500 italic flex items-center gap-1">
-                        <i className="fas fa-info-circle text-slate-600" />
-                        {currentEdit.role === 'admin' ? 'Akses Seluruh Wilayah (God Mode)' : 'Mengikuti Wilayah Toko'}
-                      </span>
-                    )}
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 mb-1 uppercase tracking-wider">Region</p>
+                      {currentEdit.role === 'user' ? (
+                        <Select
+                          value={currentEdit.assigned_region || 'GLOBAL_ALL'}
+                          onChange={(e) => handleRegionChange(u.telegram_id, e.target.value)}
+                          className="text-xs py-1.5 text-amber-300 border-amber-500/40"
+                        >
+                          <option value="GLOBAL_ALL" className="bg-slate-900 text-white">🌐 Semua Wilayah</option>
+                          {availableRegions.map(reg => (
+                            <option key={reg} value={reg} className="bg-slate-900 text-white">📍 {reg}</option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <div className="h-8 flex items-center">
+                          <span className="text-[11px] text-slate-500 italic">
+                            {currentEdit.role === 'admin' ? '🌐 God Mode (Semua)' : '🏪 Mengikuti Toko'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Kolom 4: Action Button */}
-                  <div className="col-span-2 flex justify-end">
+                  {/* Baris Bawah: Tombol Simpan */}
+                  <div className="flex justify-end">
                     <Button
                       size="sm"
                       variant={isModified ? 'primary' : 'secondary'}
-                      icon={savingId === u.telegram_id ? undefined : "fa-save"}
+                      icon={savingId === u.telegram_id ? undefined : (isModified ? 'fa-save' : 'fa-check')}
                       loading={savingId === u.telegram_id}
                       disabled={!isModified || savingId === u.telegram_id}
                       onClick={() => handleSaveUser(u)}
                     >
-                      {isModified ? 'Simpan' : 'Tersimpan'}
+                      {isModified ? 'Simpan Perubahan' : 'Tersimpan'}
                     </Button>
                   </div>
                 </div>
