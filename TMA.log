@@ -687,6 +687,24 @@ Implementasi:
   - `src/App.tsx`: Penambahan automatic tab routing via `useEffect` yang akan meredireksi pengguna berciri `guest` langsung menuju tab `'loans'` sesaat seusai otentikasi (mencegah eksposur halaman Dashboard/Beranda).
   - `src/views/ProfileView.tsx`: Pemasangan pembungkus kondisi `{!isGuest && ...}` pada kartu informasi *Database Status Badge (Supabase PostgreSQL)*, menghindarkan kebocoran metadata arsitektur teknikal kepada pengguna beropsi guest.
 
+--------------------------------------------------------------------------------
+STEP 37: MOBILE UI FIX - USER MANAGEMENT MODAL OVERLAPPING (2026-08-06)
+--------------------------------------------------------------------------------
+Kebutuhan: Mengatasi keluhan antarmuka tumpang tindih (overlapping) pada kolom-kolom tabel di `UserManagementModal` saat dibuka melalui ponsel/perangkat kecil.
+
+Implementasi:
+  - `src/components/modals/UserManagementModal.tsx`: Merombak layout yang sebelumnya berbasis tabel (`grid-cols-12`) menjadi desain list vertical (kartu) per-user. Masing-masing kolom peran, wilayah, dan action button sekarang diletakkan di baris tersendiri (stacked) di layar ponsel untuk menghilangkan overlap secara permanen.
+
+--------------------------------------------------------------------------------
+STEP 38: ADMIN PENDING REQUEST NOTIFICATION & HIGHLIGHT (2026-08-06)
+--------------------------------------------------------------------------------
+Kebutuhan: Mengatasi keluhan bahwa Admin tidak mendapatkan notifikasi visual saat ada Guest yang mengajukan "Request Akses Tim IT", sehingga pengajuan sering terlewatkan.
+
+Implementasi:
+  - `src/services/userService.ts`: Menambahkan fungsi agregator `getPendingUsersCount()` untuk menghitung secara spesifik user yang mengandung `PENDING_APPROVAL` pada kolom `notes`.
+  - `src/views/ProfileView.tsx`: Menarik state `pendingReqCount` saat aplikasi dijalankan oleh seorang Admin. Menu item "Manajemen Akun & Region IT" kini dipasangi badge indikator angka (`REQ`) dan *red-dot badge* berkedip jika ada permintaan yang mengantri.
+  - `src/components/modals/UserManagementModal.tsx`: Memodifikasi filter penyortiran daftar user agar user dengan `PENDING_APPROVAL` secara otomatis dinaikkan ke urutan teratas (Top Sort). Tiap baris request ditandai dengan highlight background Amber (Kuning) beserta teks catatan asli request dari Guest agar Admin bisa langsung mengeksekusi dengan jelas.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
