@@ -1,11 +1,17 @@
 import { useState, useMemo } from 'react';
-import type { AssetDetail, Category, MutationDetail } from '../types/inventory';
+import type { AssetDetail, Category, MutationDetail, Site } from '../types/inventory';
 import { SectionHeader, EmptyState } from '../components/ui';
 import { SkeletonCard, SkeletonChip } from '../components/ui/Skeleton';
 import { MutationBadge } from '../components/ui/Badge';
+import ItemsView from './ItemsView';
 
 interface Props {
   assets: AssetDetail[];
+  sites: Site[];
+  searchValue?: string;
+  initialCategory?: string;
+  initialStatus?: string;
+  onClearFilters?: () => void;
   mutations?: MutationDetail[];
   categories: Category[];
   loading: boolean;
@@ -91,7 +97,10 @@ const StatCard = ({ label, value, color, icon, gradient, border, onClick }: {
 
 
 
-const DashboardView = ({ assets, mutations = [], categories, loading, onItemClick, onCategoryClick: _onCategoryClick, onViewAll, onStatusClick }: Props) => {
+const DashboardView = ({ 
+  assets, sites, searchValue = '', initialCategory = 'all', initialStatus = 'all', onClearFilters,
+  mutations = [], categories, loading, onItemClick, onCategoryClick: _onCategoryClick, onViewAll, onStatusClick 
+}: Props) => {
   const [selectedGroupKey, setSelectedGroupKey] = useState<string>('all');
   const [selectedSubCatName, setSelectedSubCatName] = useState<string>('all');
 
@@ -191,10 +200,51 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
     }
   };
 
+  const hasActiveFilter = Boolean(searchValue.trim() || initialCategory !== 'all' || initialStatus !== 'all');
+
   return (
     <div className="fade-in">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      {/* ── ITEMS VIEW COMPONENT (Muncul jika ada filter/pencarian) ── */}
+      <div className={`transition-all duration-300 ${hasActiveFilter ? 'block' : 'hidden'}`}>
+        {hasActiveFilter && (
+          <>
+            <div className="mb-4 flex items-center justify-between bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl shadow-lg">
+              <div>
+                <p className="text-sm font-bold text-blue-400">Pencarian & Filter Aktif</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  {searchValue && `Kata Kunci: "${searchValue}" `}
+                  {initialCategory !== 'all' && `| Kat: ${initialCategory} `}
+                  {initialStatus !== 'all' && `| Stat: ${initialStatus}`}
+                </p>
+              </div>
+              {onClearFilters && (
+                <button
+                  onClick={onClearFilters}
+                  className="px-3 py-1.5 bg-red-500/15 text-red-400 rounded-lg text-xs font-bold hover:bg-red-500/30 transition-colors shrink-0"
+                >
+                  <i className="fas fa-times mr-1"></i> Tutup
+                </button>
+              )}
+            </div>
+            
+            <ItemsView
+              assets={assets}
+              sites={sites}
+              searchValue={searchValue}
+              initialCategory={initialCategory}
+              initialStatus={initialStatus}
+              loading={loading}
+              onItemClick={onItemClick}
+            />
+          </>
+        )}
+      </div>
+
+      {/* ── DASHBOARD WIDGETS (Disembunyikan jika ada filter/pencarian) ── */}
+      <div className={`transition-all duration-500 ${hasActiveFilter ? 'opacity-0 max-h-0 overflow-hidden' : 'opacity-100 max-h-[9999px]'}`}>
+        
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
         {/* Total card — klik untuk lihat semua */}
         <div
           className={`stat-card rounded-xl p-4 col-span-2 flex justify-between items-center ${onStatusClick ? 'cursor-pointer hover:ring-1 hover:ring-white/10 transition-all active:scale-[0.99]' : ''}`}
@@ -405,6 +455,8 @@ const DashboardView = ({ assets, mutations = [], categories, loading, onItemClic
           ))}
         </div>
       )}
+      
+      </div> {/* End of Dashboard Widgets Wrapper */}
     </div>
   );
 };

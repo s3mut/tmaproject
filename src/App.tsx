@@ -15,7 +15,6 @@ import CSVImportModal from './components/modals/CSVImportModal';
 import ConfirmModal from './components/modals/ConfirmModal';
 
 import DashboardView from './views/DashboardView';
-import ItemsView from './views/ItemsView';
 import HistoryView from './views/HistoryView';
 import LoansView from './views/LoansView';
 import SitesView from './views/SitesView';
@@ -92,17 +91,15 @@ function App() {
     setSearchValue('');
   };
 
-  // Category click from dashboard (hanya update tab tanpa status)
+  // Category click from dashboard
   const handleCategoryClick = (cat: string) => {
     setSelectedCategory(cat);
-    setActiveTab('items');
   };
 
-  // Status click from Dashboard stat card → navigasi ke Items dengan status + kategori
+  // Status click from Dashboard stat card
   const handleStatusClick = (status: string, category: string) => {
     setSelectedCategory(category);
     setSelectedStatus(status);
-    setActiveTab('items');
   };
 
   // Item actions
@@ -211,7 +208,7 @@ function App() {
   };
 
   const isGuest = currentUser?.role === 'guest';
-  const showFab = !isGuest && (activeTab === 'dashboard' || activeTab === 'items');
+  const showFab = !isGuest && activeTab === 'dashboard';
 
   // ── Auth Loading / Splash Screen ────────────────────────────────────────────
   if (authLoading) {
@@ -299,6 +296,15 @@ function App() {
         {activeTab === 'dashboard' && (
           <DashboardView
             assets={assets}
+            sites={sites}
+            searchValue={searchValue}
+            initialCategory={selectedCategory}
+            initialStatus={selectedStatus}
+            onClearFilters={() => {
+              setSearchValue('');
+              setSelectedCategory('all');
+              setSelectedStatus('all');
+            }}
             mutations={mutations}
             categories={categories}
             loading={loading}
@@ -306,17 +312,6 @@ function App() {
             onCategoryClick={handleCategoryClick}
             onViewAll={() => setActiveTab('history')}
             onStatusClick={handleStatusClick}
-          />
-        )}
-        {activeTab === 'items' && (
-          <ItemsView
-            assets={assets}
-            sites={sites}
-            searchValue={searchValue}
-            loading={loading}
-            initialCategory={selectedCategory}
-            initialStatus={selectedStatus}
-            onItemClick={handleItemClick}
           />
         )}
         {activeTab === 'history' && (

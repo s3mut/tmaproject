@@ -4,7 +4,6 @@ interface TabConfig { title: string; subtitle: string; }
 
 const tabTitles: Record<TabName, TabConfig> = {
   dashboard: { title: 'Inventory IT',  subtitle: 'Kelola aset teknologi' },
-  items:     { title: 'Daftar Aset',   subtitle: 'Semua aset terdaftar' },
   history:   { title: 'Mutasi Aset',   subtitle: 'Riwayat perpindahan' },
   loans:     { title: 'Pinjam Unit',   subtitle: 'Sirkulasi unit backup & RMA' },
   sites:     { title: 'Daftar Site',   subtitle: 'Lokasi cabang & operasional' },
@@ -24,7 +23,7 @@ interface Props {
 
 const Header = ({ activeTab, searchValue, userRole, onSearchChange, onScanClick, onImportCSVClick }: Props) => {
   const { title, subtitle } = tabTitles[activeTab];
-  const showSearch = activeTab === 'dashboard' || activeTab === 'items';
+  const showSearch = activeTab === 'dashboard';
   const isAdmin = userRole === 'admin';
 
   return (
