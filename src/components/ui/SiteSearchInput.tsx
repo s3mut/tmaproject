@@ -50,7 +50,15 @@ const SiteSearchInput = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.toUpperCase();
-    onChange(val, matchedSite);
+    let currentMatch: Site | null = null;
+    if (val.trim()) {
+      const query = val.trim().toLowerCase();
+      currentMatch = sites.find(s => s.site_alias?.toLowerCase() === query) ||
+                     sites.find(s => s.site_code?.toLowerCase() === query) ||
+                     sites.find(s => s.site_name?.toLowerCase() === query) ||
+                     null;
+    }
+    onChange(val, currentMatch);
   };
 
   return (

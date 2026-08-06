@@ -743,6 +743,7 @@ Implementasi:
   - `src/views/LoansView.tsx`: Mengimplementasikan "Gate Screen" khusus Guest. Saat membuka menu Peminjaman IT, Guest diwajibkan mencari dan mengkonfirmasi alias/kode cabang mereka via komponen `<SiteSearchInput>`.
   - Filter Otomatis: Setelah cabang dipilih, `filteredLoans` secara otomatis memfilter hanya pinjaman (`site_alias`) yang sesuai dengan cabang Guest tersebut. Pilihan ini disimpan persisten di `localStorage` (`tma_guest_site`).
   - `src/components/modals/RequestLoanModal.tsx`: Menambahkan parameter `initialSiteAlias` agar ketika Guest menekan tombol "Ajukan Pinjam Unit", form lokasi cabang langsung terisi otomatis berdasarkan Gate Screen, mencegah pengisian ulang.
+  - BUGFIX (`src/components/ui/SiteSearchInput.tsx`): Memperbaiki bug _stale state_ (keterlambatan pencocokan data) pada input pencarian cabang agar tombol "Lanjutkan" bisa langsung merespons dan aktif saat kode cabang valid diketik.
 
 ================================================================================
                                  END OF LOG
