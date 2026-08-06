@@ -734,6 +734,16 @@ Implementasi:
   - `docs/sync_username_rpc.sql`: Membuat SQL Script berisi fungsi RPC `sync_telegram_username` dengan `SECURITY DEFINER` untuk mem-bypass batasan Row-Level Security (RLS) yang sebelumnya memblokir query UPDATE dari anon client.
   - Dampak: Pengguna kini dapat memperbaiki data `username` mereka di database secara otomatis (tanpa crash RLS) hanya dengan membuka Mini App satu kali, sehingga mereka bisa login via web menggunakan username yang valid.
 
+--------------------------------------------------------------------------------
+STEP 42: FITUR GUEST GATE SCREEN & BRANCH ISOLATION (2026-08-07)
+--------------------------------------------------------------------------------
+Kebutuhan: Akun Guest (staf toko) sebaiknya tidak melihat semua daftar pinjaman perusahaan. Mereka hanya perlu melihat daftar pinjaman yang terjadi di cabang mereka sendiri demi privasi dan kemudahan.
+
+Implementasi:
+  - `src/views/LoansView.tsx`: Mengimplementasikan "Gate Screen" khusus Guest. Saat membuka menu Peminjaman IT, Guest diwajibkan mencari dan mengkonfirmasi alias/kode cabang mereka via komponen `<SiteSearchInput>`.
+  - Filter Otomatis: Setelah cabang dipilih, `filteredLoans` secara otomatis memfilter hanya pinjaman (`site_alias`) yang sesuai dengan cabang Guest tersebut. Pilihan ini disimpan persisten di `localStorage` (`tma_guest_site`).
+  - `src/components/modals/RequestLoanModal.tsx`: Menambahkan parameter `initialSiteAlias` agar ketika Guest menekan tombol "Ajukan Pinjam Unit", form lokasi cabang langsung terisi otomatis berdasarkan Gate Screen, mencegah pengisian ulang.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

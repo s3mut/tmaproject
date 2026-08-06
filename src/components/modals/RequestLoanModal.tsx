@@ -18,6 +18,7 @@ interface Props {
     shippingMethod: string;
     isCrossRegion?: boolean;
   }) => Promise<void>;
+  initialSiteAlias?: string;
 }
 
 const RequestLoanModal: React.FC<Props> = ({
@@ -29,8 +30,9 @@ const RequestLoanModal: React.FC<Props> = ({
   currentUserId,
   currentUserName,
   onSubmit,
+  initialSiteAlias = '',
 }) => {
-  const [siteAlias, setSiteAlias] = useState('');
+  const [siteAlias, setSiteAlias] = useState(initialSiteAlias);
   const [categoryName, setCategoryName] = useState(categories[0]?.name || 'Monitor Kasir');
   const [purpose, setPurpose] = useState('');
   const [durationDays, setDurationDays] = useState(14);

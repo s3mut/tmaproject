@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { AssetLoan, AssetDetail, Site, Category } from '../types/inventory';
 import { loanStatusConfig } from '../types/inventory';
-import { Button, Input, EmptyState } from '../components/ui';
+import { Button, Input, EmptyState, SiteSearchInput } from '../components/ui';
 import RequestLoanModal from '../components/modals/RequestLoanModal';
 import DispatchLoanModal from '../components/modals/DispatchLoanModal';
 import ReturnCheckModal from '../components/modals/ReturnCheckModal';
@@ -56,6 +56,11 @@ const LoansView: React.FC<Props> = ({
   const [activeFilter, setActiveFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Branch Context for Guest
+  const [guestActiveSite, setGuestActiveSite] = useState<string | null>(() => localStorage.getItem('tma_guest_site'));
+  const [tempSiteInput, setTempSiteInput] = useState('');
+  const [tempMatchedSite, setTempMatchedSite] = useState<Site | null>(null);
+
   // Modals state
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [dispatchLoan, setDispatchLoan] = useState<AssetLoan | null>(null);
@@ -95,6 +100,11 @@ const LoansView: React.FC<Props> = ({
 
   const filteredLoans = useMemo(() => {
     let list = loans;
+
+    // 1. GUEST BRANCH FILTER: Restrict to selected branch
+    if (userRole === 'guest' && guestActiveSite) {
+      list = list.filter(l => (l.site_alias || '').toLowerCase() === guestActiveSite.toLowerCase());
+    }
 
     if (activeFilter === 'Overdue') {
       list = list.filter(l => isOverdue(l));
@@ -159,6 +169,44 @@ const LoansView: React.FC<Props> = ({
     { key: 'Closed', label: 'Selesai', icon: 'fa-check-double' },
   ];
 
+  if (userRole === 'guest' && !guestActiveSite) {
+    return (
+      <div className="fade-in space-y-4 pb-12">
+        <div className="glass rounded-2xl p-6 text-center border border-blue-500/30">
+          <div className="w-16 h-16 rounded-full bg-blue-500/20 text-blue-400 mx-auto flex items-center justify-center mb-4 text-3xl shadow-inner">
+            <i className="fas fa-store" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Pilih Cabang Anda</h2>
+          <p className="text-slate-400 text-xs mb-6 max-w-sm mx-auto leading-relaxed">
+            Untuk menjaga privasi data, Anda hanya dapat melihat aktivitas peminjaman dari cabang Anda sendiri. Silakan pilih kode atau alias cabang Anda.
+          </p>
+          <div className="max-w-md mx-auto space-y-5 text-left">
+            <SiteSearchInput
+              sites={sites}
+              value={tempSiteInput}
+              onChange={(val, match) => { setTempSiteInput(val); setTempMatchedSite(match); }}
+              placeholder="Cari kode cabang (misal: CGK-01)..."
+            />
+            <Button 
+              variant="primary" 
+              className="w-full font-bold shadow-blue-500/25 shadow-lg"
+              disabled={!tempMatchedSite}
+              onClick={() => {
+                if (tempMatchedSite) {
+                  const alias = tempMatchedSite.site_alias || tempMatchedSite.site_code;
+                  localStorage.setItem('tma_guest_site', alias);
+                  setGuestActiveSite(alias);
+                }
+              }}
+            >
+              Lanjutkan ke Data Peminjaman
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fade-in space-y-4 pb-12">
       {/* Header & Tombol Ajukan */}
@@ -168,9 +216,26 @@ const LoansView: React.FC<Props> = ({
             <i className="fas fa-hand-holding-box text-blue-400 text-lg" />
             Peminjaman Aset & Unit Backup Toko
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5 mb-2">
             Sirkulasi peminjaman perangkat IT sementara (Maks 14 hari) lengkap dengan BAST & scanner.
           </p>
+          {userRole === 'guest' && guestActiveSite && (
+            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[10px] px-2.5 py-1 rounded-full font-bold mt-1">
+              <i className="fas fa-map-marker-alt" />
+              Cabang: {guestActiveSite.toUpperCase()}
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('tma_guest_site');
+                  setGuestActiveSite(null);
+                  setTempSiteInput('');
+                  setTempMatchedSite(null);
+                }}
+                className="ml-1 text-blue-400 hover:text-white underline decoration-blue-500/50 underline-offset-2"
+              >
+                [Ubah]
+              </button>
+            </div>
+          )}
         </div>
         <Button
           variant="primary"
@@ -515,6 +580,7 @@ const LoansView: React.FC<Props> = ({
           await onRequestLoan(params);
           onRefresh();
         }}
+        initialSiteAlias={userRole === 'guest' && guestActiveSite ? guestActiveSite : ''}
       />
 
       {/* Modal 2: Dispatch Loan by IT */}
