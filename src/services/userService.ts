@@ -216,3 +216,19 @@ export async function updateUserRoleAndRegion(
     throw new Error(`Gagal memperbarui role & wewenang user: ${error.message}`);
   }
 }
+
+/**
+ * Menghitung jumlah pengguna yang sedang mengajukan permintaan akses (PENDING_APPROVAL)
+ */
+export async function getPendingUsersCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from('telegram_users')
+    .select('*', { count: 'exact', head: true })
+    .ilike('notes', '%PENDING_APPROVAL%');
+  
+  if (error) {
+    console.error('Gagal hitung pending users:', error);
+    return 0;
+  }
+  return count || 0;
+}

@@ -64,14 +64,22 @@ const UserManagementModal: React.FC<Props> = ({
   }, [sites]);
 
   const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return users;
-    const q = searchQuery.toLowerCase().trim();
-    return users.filter(u =>
-      (u.name || '').toLowerCase().includes(q) ||
-      (u.username || '').toLowerCase().includes(q) ||
-      String(u.telegram_id).includes(q) ||
-      (u.assigned_region || '').toLowerCase().includes(q)
-    );
+    let result = users;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = users.filter(u =>
+        (u.name || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q) ||
+        String(u.telegram_id).includes(q) ||
+        (u.assigned_region || '').toLowerCase().includes(q)
+      );
+    }
+    // Urutkan: User dengan PENDING_APPROVAL berada paling atas
+    return result.sort((a, b) => {
+      const aPending = a.notes?.includes('PENDING_APPROVAL') ? 1 : 0;
+      const bPending = b.notes?.includes('PENDING_APPROVAL') ? 1 : 0;
+      return bPending - aPending;
+    });
   }, [users, searchQuery]);
 
   const handleRoleChange = (id: number, newRole: UserRole) => {
@@ -161,9 +169,10 @@ const UserManagementModal: React.FC<Props> = ({
             filteredUsers.map((u) => {
               const currentEdit = editState[u.telegram_id] || { role: u.role, assigned_region: u.assigned_region };
               const isModified = currentEdit.role !== u.role || currentEdit.assigned_region !== (u.assigned_region || null);
+              const isPendingReq = u.notes?.includes('PENDING_APPROVAL');
 
               return (
-                <div key={u.telegram_id} className="px-4 py-3 hover:bg-slate-800/40 transition-colors space-y-2.5">
+                <div key={u.telegram_id} className={`px-4 py-3 transition-colors space-y-2.5 ${isPendingReq ? 'bg-amber-500/10 border-l-4 border-amber-500' : 'hover:bg-slate-800/40'}`}>
                   {/* Baris Atas: Identitas + Badge Role */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
@@ -180,6 +189,14 @@ const UserManagementModal: React.FC<Props> = ({
                       {currentEdit.role === 'admin' ? '👑 ADMIN' : currentEdit.role === 'user' ? '💼 USER' : '🔒 GUEST'}
                     </span>
                   </div>
+
+                  {/* Highlight Pesan Request (Bila Ada) */}
+                  {isPendingReq && (
+                    <div className="bg-amber-500/20 text-amber-300 text-[10px] p-2 rounded-lg mt-1 border border-amber-500/30 leading-relaxed font-medium">
+                      <i className="fas fa-exclamation-triangle mr-1.5" />
+                      {u.notes}
+                    </div>
+                  )}
 
                   {/* Baris Tengah: Selector Role + Region */}
                   <div className="grid grid-cols-2 gap-2">

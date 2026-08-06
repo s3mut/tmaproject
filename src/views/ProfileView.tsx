@@ -9,6 +9,7 @@ import UserManagementModal from '../components/modals/UserManagementModal';
 import OverdueAlertModal from '../components/modals/OverdueAlertModal';
 import { getOverdueLoans } from '../services/reportService';
 import type { OverdueLoan } from '../services/reportService';
+import { getPendingUsersCount } from '../services/userService';
 
 interface Props {
   assets?:     AssetDetail[];
@@ -27,13 +28,20 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
   const [userMgmtModalOpen, setUserMgmtModalOpen] = useState(false);
   const [overdueOpen, setOverdueOpen]           = useState(false);
   const [overdueLoans, setOverdueLoans]         = useState<OverdueLoan[]>([]);
+  const [pendingReqCount, setPendingReqCount]   = useState(0);
 
-  // Fetch overdue count on mount for badge display (non-blocking)
+  const isGuest   = currentUser?.role === 'guest';
+  const isAdmin   = currentUser?.role === 'admin';
+
+  // Fetch overdue count & pending requests count on mount for badge display (non-blocking)
   useEffect(() => {
     if (!isGuest) {
       getOverdueLoans().then(setOverdueLoans).catch(() => {});
     }
-  }, []);
+    if (isAdmin) {
+      getPendingUsersCount().then(setPendingReqCount).catch(() => {});
+    }
+  }, [isGuest, isAdmin]);
 
   const sdkUser = getTelegramSDKUser();
 
@@ -43,8 +51,6 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
     guest: 'text-slate-400 bg-slate-500/15 border-slate-500/30',
   };
 
-  const isGuest   = currentUser?.role === 'guest';
-  const isAdmin   = currentUser?.role === 'admin';
   const isPending = currentUser?.notes?.includes('PENDING_APPROVAL');
   const isTelegramLogin = authMethod === 'telegram';
 
@@ -61,7 +67,8 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         icon: 'fa-users-cog', color: 'text-indigo-400', bg: 'bg-indigo-500/20',
         title: 'Manajemen Akun & Region IT', subtitle: 'Kelola role pengguna & pembagian wilayah wewenang IT',
         onClick: () => setUserMgmtModalOpen(true),
-        badge: 'ADMIN ONLY',
+        badge: pendingReqCount > 0 ? `${pendingReqCount} REQ` : 'ADMIN ONLY',
+        badgeDot: pendingReqCount > 0 ? String(pendingReqCount) : undefined,
       },
     ] : []),
     {
@@ -283,10 +290,17 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
       {/* Admin User & Region Management Modal */}
       <UserManagementModal
         isOpen={userMgmtModalOpen}
-        onClose={() => setUserMgmtModalOpen(false)}
+        onClose={() => {
+          setUserMgmtModalOpen(false);
+          // Refresh hitungan saat modal manajemen akun ditutup
+          if (isAdmin) getPendingUsersCount().then(setPendingReqCount).catch(() => {});
+        }}
         sites={sites}
         onShowToast={onShowToast}
-        onRefresh={refreshUser}
+        onRefresh={() => {
+          refreshUser();
+          if (isAdmin) getPendingUsersCount().then(setPendingReqCount).catch(() => {});
+        }}
       />
 
       {/* Overdue Alert Modal */}
