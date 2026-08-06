@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { AssetDetail, AssetStatus, Site } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
+import { Select } from '../components/ui';
 
 // Urutan tampilan status yang diinginkan
 const STATUS_ORDER: AssetStatus[] = ['Active', 'Backup', 'Repair', 'Retired', 'Disposed', 'In Transit'];
@@ -34,11 +35,18 @@ const STATUS_COLOR: Record<string, string> = {
 
 const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCardProps) => {
   const [open, setOpen] = useState(defaultOpen);
+  const [hasRendered, setHasRendered] = useState(defaultOpen);
 
   // Jika defaultOpen berubah (karena filter/search berubah), sync state
   useEffect(() => {
     setOpen(defaultOpen);
+    if (defaultOpen) setHasRendered(true);
   }, [defaultOpen]);
+
+  // Lazy render: Tandai pernah dirender jika dibuka
+  useEffect(() => {
+    if (open) setHasRendered(true);
+  }, [open]);
 
   // Hitung breakdown status untuk badge summary
   const statusSummary = useMemo(() => {
@@ -88,10 +96,10 @@ const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCa
         </div>
       </button>
 
-      {/* Content — animated expand */}
+      {/* Content — animated expand (LAZY RENDERED) */}
       <div className={`transition-all duration-300 overflow-hidden ${open ? 'max-h-[9999px] opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="px-3 pb-3 space-y-2 border-t border-slate-700/50 pt-3">
-          {regionAssets.map((a) => (
+          {hasRendered && regionAssets.map((a) => (
             <ItemCard key={a.id} item={a} onClick={onItemClick} />
           ))}
         </div>
@@ -105,6 +113,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
   const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>(
     (initialStatus && initialStatus !== 'all') ? initialStatus as AssetStatus : 'all'
   );
+  const [activeRegion, setActiveRegion] = useState<string>('all');
 
   // Sync filter saat initialStatus berubah (dari klik stat card Dashboard)
   useEffect(() => {
@@ -114,6 +123,14 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
       setActiveFilter('all');
     }
   }, [initialStatus]);
+
+  // Ekstrak opsi Region unik dari tabel Sites
+  const regionOptions = useMemo(() => {
+    const regSet = new Set(sites.map(s => s.region || 'Tanpa Region'));
+    return Array.from(regSet).sort();
+  }, [sites]);
+  
+  const siteRegionMap = useMemo(() => new Map(sites.map(s => [s.site_alias, s.region || 'Tanpa Region'])), [sites]);
 
   // Build dynamic status filter chips dari data aktual di database
   const statusFilters = useMemo(() => [
@@ -129,6 +146,14 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
     // Filter kategori (dari klik dashboard)
     if (initialCategory && initialCategory !== 'all') {
       result = result.filter((a) => a.category_name === initialCategory);
+    }
+
+    // Filter Region
+    if (activeRegion !== 'all') {
+      result = result.filter((a) => {
+        const r = a.site_alias ? (siteRegionMap.get(a.site_alias) || 'Tanpa Region') : 'Tanpa Region';
+        return r === activeRegion;
+      });
     }
 
     // Filter status — case-insensitive + null dianggap 'Active'
@@ -151,7 +176,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
       );
     }
     return result;
-  }, [assets, activeFilter, searchValue, initialCategory]);
+  }, [assets, activeFilter, activeRegion, searchValue, initialCategory, siteRegionMap]);
 
   // Group by region
   const groupedAssets = useMemo(() => {
@@ -187,17 +212,34 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
 
   return (
     <div className="fade-in">
-      {/* Filter Chips */}
-      <div className="flex gap-2 overflow-x-auto pb-3 mb-2 scrollbar-hide">
-        {statusFilters.map(({ key, label }) => (
-          <button
-            key={key}
-            className={`filter-chip ${activeFilter === key ? 'active' : ''}`}
-            onClick={() => setActiveFilter(key)}
+      {/* Filter Options */}
+      <div className="mb-3 space-y-2.5">
+        {/* Dropdown Filter Region */}
+        <div className="px-1">
+          <Select
+            value={activeRegion}
+            onChange={(e) => setActiveRegion(e.target.value)}
+            className="text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
           >
-            {label}
-          </button>
-        ))}
+            <option value="all">🌍 Semua Wilayah (Global)</option>
+            {regionOptions.map(r => (
+              <option key={r} value={r}>📍 Region: {r}</option>
+            ))}
+          </Select>
+        </div>
+
+        {/* Chips Filter Status */}
+        <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide">
+          {statusFilters.map(({ key, label }) => (
+            <button
+              key={key}
+              className={`filter-chip ${activeFilter === key ? 'active' : ''}`}
+              onClick={() => setActiveFilter(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Counter hasil */}

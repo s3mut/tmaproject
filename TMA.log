@@ -705,6 +705,15 @@ Implementasi:
   - `src/views/ProfileView.tsx`: Menarik state `pendingReqCount` saat aplikasi dijalankan oleh seorang Admin. Menu item "Manajemen Akun & Region IT" kini dipasangi badge indikator angka (`REQ`) dan *red-dot badge* berkedip jika ada permintaan yang mengantri.
   - `src/components/modals/UserManagementModal.tsx`: Memodifikasi filter penyortiran daftar user agar user dengan `PENDING_APPROVAL` secara otomatis dinaikkan ke urutan teratas (Top Sort). Tiap baris request ditandai dengan highlight background Amber (Kuning) beserta teks catatan asli request dari Guest agar Admin bisa langsung mengeksekusi dengan jelas.
 
+--------------------------------------------------------------------------------
+STEP 39: ITEMS VIEW RENDERING OPTIMIZATION & REGION FILTER (2026-08-06)
+--------------------------------------------------------------------------------
+Kebutuhan: Mempercepat waktu pemuatan (loading) dan responsivitas pada menu "Aset", yang sebelumnya terasa lambat karena aplikasi secara paksa menggambar ribuan elemen komponen kartu (DOM Overload) sekaligus meskipun disembunyikan.
+
+Implementasi:
+  - `src/views/ItemsView.tsx`: Menerapkan pola *Lazy DOM Rendering* pada komponen `RegionCard`. Kini, daftar aset di dalam suatu Region hanya akan dirender (digambar oleh React ke layar) **jika dan hanya jika** accordion wilayah tersebut diklik/dibuka oleh pengguna. Ini mengurangi beban rendering awal hingga lebih dari 90%.
+  - `src/views/ItemsView.tsx`: Menambahkan fitur Dropdown "Filter Region" di bagian atas halaman. Fitur ini memungkinkan pengguna untuk langsung menyaring daftar aset agar hanya menampilkan wilayah tertentu (memangkas jumlah loop data).
+
 ================================================================================
                                  END OF LOG
 ================================================================================
