@@ -49,12 +49,16 @@ export async function syncTelegramUser(): Promise<TelegramUser> {
     // Sinkronisasi ulang username jika ada perubahan di sisi Telegram atau jika sebelumnya kosong
     const currentSdkUsername = sdkUser.username || null;
     if (existingUser.username !== currentSdkUsername) {
-      await supabase
-        .from('telegram_users')
-        .update({ username: currentSdkUsername })
-        .eq('telegram_id', sdkUser.id);
-        
-      existingUser.username = currentSdkUsername;
+      const { error: rpcErr } = await supabase.rpc('sync_telegram_username', {
+        p_telegram_id: sdkUser.id,
+        p_username: currentSdkUsername
+      });
+      
+      if (!rpcErr) {
+        existingUser.username = currentSdkUsername;
+      } else {
+        console.warn('Gagal sync username (RPC mungkin belum ada):', rpcErr.message);
+      }
     }
 
     return existingUser as TelegramUser;
