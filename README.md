@@ -41,7 +41,7 @@
   - Opsi interaktif Admin: hubungkan typo ke kategori resmi, auto-create kategori baru, atau tombol **"Abaikan / Skip"** unit tertentu.
   - Upload ulang CSV yang sama aman 100% karena menggunakan UPSERT berbasis `serial_number`.
 - **🔐 Dual Authentication (Telegram Auto-Login & Web Form Login)**:
-  - **Via Telegram Mini App**: Auto-login menggunakan Telegram ID dari SDK (`window.Telegram.WebApp`) — tanpa form, tanpa password.
+  - **Via Telegram Mini App**: Auto-login menggunakan Telegram ID dari SDK (`window.Telegram.WebApp`) — tanpa form, tanpa password. Otomatis sinkronisasi profil (nama & username) secara *real-time* ke Supabase.
   - **Via Browser Web**: Halaman login dengan form **Telegram Username / ID + Password** (bcrypt hash, diverifikasi di server via Supabase RPC `SECURITY DEFINER` — tidak terkena RLS).
   - **Set Password Web**: User dapat mengatur password akses web dari dalam aplikasi saat login via Telegram (menu Profil → Password Akses Web).
   - **Logout Web**: Sesi web menggunakan `sessionStorage` (logout otomatis saat browser ditutup).

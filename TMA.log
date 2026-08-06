@@ -724,6 +724,15 @@ Implementasi:
   - `src/App.tsx`: Menghapus rute independen `<ItemsView />` dan me-routing ulang fungsi klik pada dashboard stat card agar tetap berada di tab `'dashboard'`.
   - `src/views/DashboardView.tsx`: Menerapkan pola *Smart Conditonal Rendering*. Jika kotak pencarian diisi atau filter diaktifkan, widget statistik di Dashboard secara otomatis akan bersembunyi (transition out) digantikan oleh komponen `<ItemsView />` yang di-embed secara langsung (transition in), lengkap dengan tombol "Tutup Filter" untuk kembali ke mode statistik awal.
 
+--------------------------------------------------------------------------------
+STEP 41: BUGFIX - AUTO-SYNC TELEGRAM USERNAME (2026-08-07)
+--------------------------------------------------------------------------------
+Kebutuhan: Pengguna tidak bisa login menggunakan username di versi Web karena nilai `username` di tabel `telegram_users` kosong (NULL). Hal ini terjadi karena akun ditambahkan secara manual oleh admin atau username Telegram pengguna baru saja di-set setelah akun terdaftar, sementara fungsi `syncUser` sebelumnya hanya melakukan insert satu kali dan tidak pernah memperbarui data.
+
+Implementasi:
+  - `src/services/userService.ts`: Menambahkan logika auto-sync pada fungsi `syncUser`. Kini, setiap kali pengguna membuka Telegram Mini App, sistem akan memeriksa apakah `existingUser.username` berbeda dengan `sdkUser.username`. Jika berbeda (atau jika sebelumnya NULL), aplikasi otomatis menjalankan perintah `UPDATE` ke Supabase.
+  - Dampak: Pengguna kini dapat memperbaiki data `username` mereka di database secara otomatis hanya dengan membuka Mini App satu kali, sehingga mereka bisa login via web menggunakan username yang valid.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

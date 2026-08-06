@@ -46,6 +46,17 @@ export async function syncTelegramUser(): Promise<TelegramUser> {
     .single();
 
   if (existingUser && !fetchErr) {
+    // Sinkronisasi ulang username jika ada perubahan di sisi Telegram atau jika sebelumnya kosong
+    const currentSdkUsername = sdkUser.username || null;
+    if (existingUser.username !== currentSdkUsername) {
+      await supabase
+        .from('telegram_users')
+        .update({ username: currentSdkUsername })
+        .eq('telegram_id', sdkUser.id);
+        
+      existingUser.username = currentSdkUsername;
+    }
+
     return existingUser as TelegramUser;
   }
 
