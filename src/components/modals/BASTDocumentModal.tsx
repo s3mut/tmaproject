@@ -44,8 +44,8 @@ const BASTDocumentModal: React.FC<Props> = ({
         <div className="space-y-4">
           {/* Instruksi Print untuk User */}
           <div className="no-print bg-blue-500/15 border border-blue-500/40 rounded-xl p-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-xs text-blue-200">
-              <i className="fas fa-print text-blue-400 text-lg shrink-0" />
+            <div className="flex items-center gap-2.5 text-xs text-blue-700 dark:text-blue-200">
+              <i className="fas fa-print text-blue-600 dark:text-blue-400 text-lg shrink-0" />
               <span>Dokumen BAST ini dapat Anda cetak langsung atau disimpan dalam format PDF beresolusi tinggi.</span>
             </div>
             <Button size="sm" variant="primary" icon="fa-print" onClick={handlePrint} className="shrink-0">
