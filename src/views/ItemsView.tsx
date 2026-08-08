@@ -13,6 +13,7 @@ interface Props {
   loading: boolean;
   initialCategory?: string;
   initialStatus?: string;
+  categories?: Category[];
   onItemClick: (id: number) => void;
 }
 
@@ -109,13 +110,16 @@ const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCa
 };
 
 // ── Main View ─────────────────────────────────────────────────────────────────
-const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initialStatus, onItemClick }: Props) => {
+const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initialStatus, categories = [], onItemClick }: Props) => {
   const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>(
     (initialStatus && initialStatus !== 'all') ? initialStatus as AssetStatus : 'all'
   );
   const [activeRegion, setActiveRegion] = useState<string>('all');
+  const [activeCategory, setActiveCategory] = useState<string>(
+    (initialCategory && initialCategory !== 'all') ? initialCategory : 'all'
+  );
 
-  // Sync filter saat initialStatus berubah (dari klik stat card Dashboard)
+  // Sync filter saat initialStatus atau initialCategory berubah (dari klik stat card Dashboard)
   useEffect(() => {
     if (initialStatus && initialStatus !== 'all') {
       setActiveFilter(initialStatus as AssetStatus);
@@ -123,6 +127,14 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
       setActiveFilter('all');
     }
   }, [initialStatus]);
+
+  useEffect(() => {
+    if (initialCategory && initialCategory !== 'all') {
+      setActiveCategory(initialCategory);
+    } else {
+      setActiveCategory('all');
+    }
+  }, [initialCategory]);
 
   // Ekstrak opsi Region unik dari tabel Sites
   const regionOptions = useMemo(() => {
@@ -143,9 +155,9 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
   const filtered = useMemo(() => {
     let result = assets;
 
-    // Filter kategori (dari klik dashboard)
-    if (initialCategory && initialCategory !== 'all') {
-      result = result.filter((a) => a.category_name === initialCategory);
+    // Filter kategori
+    if (activeCategory !== 'all') {
+      result = result.filter((a) => a.category_name === activeCategory);
     }
 
     // Filter Region
@@ -176,7 +188,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
       );
     }
     return result;
-  }, [assets, activeFilter, activeRegion, searchValue, initialCategory, siteRegionMap]);
+  }, [assets, activeFilter, activeRegion, searchValue, activeCategory, siteRegionMap]);
 
   // Group by region
   const groupedAssets = useMemo(() => {
@@ -200,8 +212,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
   [groupedAssets]);
 
   // Apakah sedang ada filter/pencarian aktif? → expand semua region agar hasil terlihat
-  const hasActiveFilter = activeFilter !== 'all' || !!searchValue.trim() ||
-    (!!initialCategory && initialCategory !== 'all');
+  const hasActiveFilter = activeFilter !== 'all' || !!searchValue.trim() || activeCategory !== 'all';
 
   // Default: hanya region pertama yang terbuka saat tidak ada filter
   const defaultOpenRegions = useMemo(() => {
@@ -214,18 +225,31 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
     <div className="fade-in">
       {/* Filter Options */}
       <div className="mb-3 space-y-2.5">
-        {/* Dropdown Filter Region */}
-        <div className="px-1">
+        {/* Dropdown Filter Region & Kategori */}
+        <div className="flex gap-2 px-1">
           <Select
             value={activeRegion}
             onChange={(e) => setActiveRegion(e.target.value)}
-            className="text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
+            className="flex-1 text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
           >
-            <option value="all">🌍 Semua Wilayah (Global)</option>
+            <option value="all">🌍 Semua Wilayah</option>
             {regionOptions.map(r => (
-              <option key={r} value={r}>📍 Region: {r}</option>
+              <option key={r} value={r}>📍 {r}</option>
             ))}
           </Select>
+
+          {categories.length > 0 && (
+            <Select
+              value={activeCategory}
+              onChange={(e) => setActiveCategory(e.target.value)}
+              className="flex-1 text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
+            >
+              <option value="all">📦 Semua Kategori</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.name}>{c.name}</option>
+              ))}
+            </Select>
+          )}
         </div>
 
         {/* Chips Filter Status */}
@@ -249,8 +273,8 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
             ? `${assets.length} aset • ${sortedRegions.length} region`
             : <><span className="text-blue-400 font-semibold">{filtered.length}</span> dari {assets.length} aset</>
           }
-          {initialCategory && initialCategory !== 'all' && (
-            <span className="ml-1 text-slate-600">• Kategori: <span className="text-slate-400">{initialCategory}</span></span>
+          {activeCategory !== 'all' && (
+            <span className="ml-1 text-slate-600">• Kategori: <span className="text-slate-400">{activeCategory}</span></span>
           )}
           {activeFilter !== 'all' && (
             <span className="ml-1 text-slate-600">• Status: <span className="text-slate-400">{activeFilter}</span></span>

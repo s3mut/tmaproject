@@ -226,16 +226,27 @@ export async function getSiteRanking(limit = 10): Promise<SiteLoanRankRow[]> {
 /**
  * Utilization rate per kategori aset
  */
-export async function getAssetUtilization(): Promise<AssetUtilizationRow[]> {
-  const { data, error } = await supabase
-    .from('view_asset_utilization')
-    .select('*')
-    .limit(30);
+export async function getAssetUtilization(region?: string | null): Promise<AssetUtilizationRow[]> {
+  // Coba jalankan RPC dengan filter region
+  const { data, error } = await supabase.rpc('get_asset_utilization', {
+    p_region: region ?? null
+  });
 
   if (error) {
-    console.warn('view_asset_utilization tidak tersedia:', error.message);
-    return [];
+    console.warn('RPC get_asset_utilization gagal/belum ada, fallback ke view:', error.message);
+    // Fallback ke view (tanpa filter region)
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('view_asset_utilization')
+      .select('*')
+      .limit(30);
+
+    if (fallbackError) {
+      console.warn('view_asset_utilization tidak tersedia:', fallbackError.message);
+      return [];
+    }
+    return (fallbackData ?? []) as AssetUtilizationRow[];
   }
+  
   return (data ?? []) as AssetUtilizationRow[];
 }
 

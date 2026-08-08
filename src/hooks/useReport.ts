@@ -26,7 +26,7 @@ export function useReport() {
         getAssetKPI(region),
         getOverdueLoans(),
         getSiteRanking(10),
-        getAssetUtilization(),
+        getAssetUtilization(region),
         getMutationTrend(),
       ]);
       if (kpiData.status === 'fulfilled')         setKpi(kpiData.value);

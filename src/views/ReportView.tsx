@@ -107,10 +107,8 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
   const effectiveRegion = isLimited ? (currentUser?.assigned_region ?? '') : regionFilter;
 
   useEffect(() => {
-    if (activeTab === 'kpi') {
-      fetchKPI(effectiveRegion || null);
-    }
-  }, [activeTab, effectiveRegion]);
+    fetchKPI(effectiveRegion || null);
+  }, [effectiveRegion, fetchKPI]);
 
   // Pie data: asset status distribution from utilization
   const pieData = useMemo(() => {

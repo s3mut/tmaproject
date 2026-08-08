@@ -429,11 +429,54 @@ BEGIN
 END;
 $$;
 
+-- [RPC 5] Utilization rate per kategori aset (dengan filter region)
+CREATE OR REPLACE FUNCTION get_asset_utilization(
+  p_region TEXT DEFAULT NULL,
+  p_limit INT DEFAULT 30
+)
+RETURNS TABLE (
+  category_name TEXT,
+  category_icon TEXT,
+  total_assets BIGINT,
+  active_count BIGINT,
+  backup_count BIGINT,
+  borrowed_count BIGINT,
+  repair_count BIGINT,
+  retired_count BIGINT,
+  utilization_rate_pct NUMERIC
+) LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    mc.name::TEXT AS category_name,
+    mc.icon::TEXT AS category_icon,
+    COUNT(ma.id)::BIGINT AS total_assets,
+    COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Active')::BIGINT AS active_count,
+    COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Backup')::BIGINT AS backup_count,
+    COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Borrowed')::BIGINT AS borrowed_count,
+    COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Repair')::BIGINT AS repair_count,
+    COUNT(ma.id) FILTER (WHERE ma.status::TEXT = 'Retired')::BIGINT AS retired_count,
+    ROUND(
+      COUNT(ma.id) FILTER (WHERE ma.status::TEXT IN ('Active','Borrowed'))::NUMERIC
+      / NULLIF(COUNT(ma.id),0) * 100, 1
+    )::NUMERIC AS utilization_rate_pct
+  FROM master_assets ma
+  JOIN master_categories mc ON mc.id = ma.category_id
+  LEFT JOIN sites s ON s.site_alias = ma.site_alias
+  WHERE ma.deleted_at IS NULL
+    AND (p_region IS NULL OR s.region = p_region)
+  GROUP BY mc.name, mc.icon
+  ORDER BY COUNT(ma.id) DESC
+  LIMIT p_limit;
+END;
+$$;
+
 -- Grant akses ke role anon dan authenticated agar service layer bisa memanggil RPC
 GRANT EXECUTE ON FUNCTION get_loan_report TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_asset_kpi   TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_mutation_trend TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_asset_audit_trail TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_asset_utilization TO anon, authenticated;
 
 -- Grant select akses ke views
 GRANT SELECT ON view_loan_summary          TO anon, authenticated;

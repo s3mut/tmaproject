@@ -745,6 +745,19 @@ Implementasi:
   - `src/components/modals/RequestLoanModal.tsx`: Menambahkan parameter `initialSiteAlias` agar ketika Guest menekan tombol "Ajukan Pinjam Unit", form lokasi cabang langsung terisi otomatis berdasarkan Gate Screen, mencegah pengisian ulang.
   - BUGFIX (`src/components/ui/SiteSearchInput.tsx`): Memperbaiki bug _stale state_ (keterlambatan pencocokan data) pada input pencarian cabang agar tombol "Lanjutkan" bisa langsung merespons dan aktif saat kode cabang valid diketik.
 
+--------------------------------------------------------------------------------
+STEP 43: PERBAIKAN NAVIGASI KATEGORI & FILTER UTILIZATION ASET (2026-08-09)
+--------------------------------------------------------------------------------
+Kebutuhan: 
+1. Tabel Utilization pada menu Report tidak bereaksi saat region diubah (karena View SQL tidak memilki filter region).
+2. Sulitnya melakukan filter Kategori setelah Asset Viewer digabungkan ke Dashboard karena tidak ada filter Kategori di halaman pencarian aktif.
+
+Implementasi:
+  - `docs/reporting_views_and_rpcs.sql`: Mengubah mekanisme pengambilan data Utilization dari murni `view_asset_utilization` menjadi RPC baru `get_asset_utilization(p_region)` yang mengizinkan pemfilteran berdasarkan lokasi aset.
+  - `src/services/reportService.ts`: Menyesuaikan pemanggilan API agar memanggil fungsi RPC jika tersedia, dan menggunakan *fallback* ke `view_asset_utilization` jika database belum diupdate.
+  - `src/views/ReportView.tsx` & `src/hooks/useReport.ts`: Menghapus kondisi yang memblokir reload data saat tab diubah, dan memastikan data utilization juga turut me-reload data spesifik region.
+  - `src/views/ItemsView.tsx` & `src/views/DashboardView.tsx`: Menambahkan menu Dropdown *Kategori* langsung berdampingan dengan Dropdown *Region* saat user masuk ke mode Filter/Pencarian. Hal ini sangat mempermudah user melakukan filter silang tanpa perlu kembali ke halaman Dashboard.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

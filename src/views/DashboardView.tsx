@@ -233,6 +233,7 @@ const DashboardView = ({
               searchValue={searchValue}
               initialCategory={initialCategory}
               initialStatus={initialStatus}
+              categories={categories}
               loading={loading}
               onItemClick={onItemClick}
             />
