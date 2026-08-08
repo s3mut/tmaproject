@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import type { AssetDetail, AssetStatus, Site, Category } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 import { Select } from '../components/ui';
+import { groupCategories } from '../utils/categoryGroups';
 
 // Urutan tampilan status yang diinginkan
 const STATUS_ORDER: AssetStatus[] = ['Active', 'Backup', 'Repair', 'Retired', 'Disposed', 'In Transit'];
@@ -144,6 +145,8 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
   
   const siteRegionMap = useMemo(() => new Map(sites.map(s => [s.site_alias, s.region || 'Tanpa Region'])), [sites]);
 
+  const groupedCategories = useMemo(() => groupCategories(categories), [categories]);
+
   // Build dynamic status filter chips dari data aktual di database
   const statusFilters = useMemo(() => [
     { key: 'all' as const, label: 'Semua' },
@@ -245,8 +248,12 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
               className="flex-1 text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
             >
               <option value="all">📦 Semua Kategori</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.name}>{c.name}</option>
+              {groupedCategories.map(grp => (
+                <optgroup key={grp.label} label={grp.label}>
+                  {grp.items.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </optgroup>
               ))}
             </Select>
           )}

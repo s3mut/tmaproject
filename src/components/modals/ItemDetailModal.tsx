@@ -16,7 +16,7 @@ const DetailRow = ({ label, value }: { label: string; value: string | null | und
   value ? (
     <div className="glass rounded-lg p-3 flex justify-between items-center gap-4">
       <span className="text-xs text-slate-400 shrink-0">{label}</span>
-      <span className="text-sm font-medium text-slate-900 dark:text-white text-right">{value}</span>
+      <span className="text-sm font-medium text-slate-50 text-right">{value}</span>
     </div>
   ) : null;
 
@@ -48,7 +48,7 @@ const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: 
         <div className={`w-20 h-20 rounded-2xl ${item.category_color_bg} ${item.category_color_text} flex items-center justify-center mx-auto mb-3 text-2xl`}>
           <i className={`fas ${item.category_icon}`} />
         </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{item.brand} {item.model_type ?? ''}</h3>
+        <h3 className="text-lg font-bold text-slate-50">{item.brand} {item.model_type ?? ''}</h3>
         <button
           onClick={copySerial}
           className="flex items-center gap-2 mx-auto mt-0.5 px-3 py-1 rounded-lg hover:bg-slate-700/50 transition-colors group"
@@ -73,7 +73,7 @@ const ItemDetailModal = ({ isOpen, item, onClose, onEdit, onDelete, onMutate }: 
         {item.description && (
           <div className="glass rounded-lg p-3">
             <span className="text-xs text-slate-400 block mb-1">Deskripsi</span>
-            <p className="text-sm text-slate-900 dark:text-white">{item.description}</p>
+            <p className="text-sm text-slate-50">{item.description}</p>
           </div>
         )}
         <DetailRow label="Tanggal Input" value={item.created_at?.split('T')[0]} />

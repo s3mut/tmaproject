@@ -64,7 +64,7 @@ const BASTDocumentModal: React.FC<Props> = ({
                 </p>
               </div>
               <div className="text-right">
-                <span className="inline-block px-3 py-1 bg-slate-900 text-slate-900 dark:text-white text-xs font-bold font-mono rounded">
+                <span className="inline-block px-3 py-1 bg-slate-900 text-slate-50 text-xs font-bold font-mono rounded">
                   {loan.loan_code}
                 </span>
                 <p className="text-[11px] text-slate-600 mt-1 font-mono">Tanggal: {dateFormatted}</p>

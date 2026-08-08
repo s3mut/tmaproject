@@ -70,7 +70,7 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
     <div className="fade-in space-y-4">
       {/* Header Card */}
       <div className="glass rounded-2xl p-5">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <h2 className="text-base font-bold text-slate-50 mb-4 flex items-center gap-2">
           <i className="fas fa-clipboard-check text-blue-400"></i>
           Sesi Stock Opname
         </h2>
@@ -97,7 +97,7 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
             <div className="grid grid-cols-3 gap-2 text-center mb-4">
               <div className="bg-slate-800 rounded-xl p-3">
                 <div className="text-xs text-slate-400 mb-1">Total</div>
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">{totalAssets}</div>
+                <div className="text-2xl font-bold text-slate-50">{totalAssets}</div>
               </div>
               <div className="bg-emerald-900/30 rounded-xl p-3 border border-emerald-500/20">
                 <div className="text-xs text-emerald-400 mb-1">Ditemukan</div>
@@ -114,7 +114,7 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
               <div className="mb-4">
                 <div className="flex justify-between text-xs text-slate-400 mb-1.5">
                   <span>Progress Opname</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{progress}%</span>
+                  <span className="font-semibold text-slate-50">{progress}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
                   <div
@@ -229,7 +229,7 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
       {bulkModalOpen && (
         <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && !bulkLoading && setBulkModalOpen(false)}>
           <div className="modal-content p-6">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Ubah Status Massal</h2>
+            <h2 className="text-lg font-bold text-slate-50 mb-4">Ubah Status Massal</h2>
             <p className="text-sm text-slate-400 mb-4">
               Anda akan mengubah status untuk <b>{scannedAssets.length} aset</b> sekaligus.
             </p>

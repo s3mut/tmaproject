@@ -51,7 +51,7 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
       {/* Asset Info */}
       <div className="glass rounded-xl p-4 mb-5">
         <p className="text-xs text-slate-400 mb-1">Aset yang dipindah</p>
-        <p className="text-sm font-bold text-slate-900 dark:text-white">{asset.brand} {asset.model_type ?? asset.serial_number}</p>
+        <p className="text-sm font-bold text-slate-50">{asset.brand} {asset.model_type ?? asset.serial_number}</p>
         <p className="text-xs text-slate-400 font-mono mt-0.5">{asset.serial_number}</p>
       </div>
 
@@ -59,7 +59,7 @@ const MutationModal = ({ isOpen, asset, sites, onClose, onSubmit }: Props) => {
       <div className="flex items-center gap-3 mb-5">
         <div className="flex-1 glass rounded-xl p-3 text-center">
           <p className="text-xs text-slate-500 mb-1">Dari Site</p>
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">{asset.site_name ?? asset.site_alias ?? '—'}</p>
+          <p className="text-sm font-semibold text-slate-50">{asset.site_name ?? asset.site_alias ?? '—'}</p>
           {asset.full_location_code && (
             <p className="text-xs text-slate-500 mt-0.5">{asset.full_location_code}</p>
           )}

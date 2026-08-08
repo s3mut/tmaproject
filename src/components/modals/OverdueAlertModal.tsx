@@ -89,7 +89,7 @@ const OverdueAlertModal = ({ isOpen, overdueLoans, onClose, onRefresh, onShowToa
               <i className="fas fa-bell text-red-400 text-lg animate-pulse" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Alert Overdue</h2>
+              <h2 className="text-base font-bold text-slate-50">Alert Overdue</h2>
               <p className="text-xs text-slate-400">
                 {refreshing ? (
                   <><i className="fas fa-spinner fa-spin mr-1" />Memuat...</>
@@ -99,7 +99,7 @@ const OverdueAlertModal = ({ isOpen, overdueLoans, onClose, onRefresh, onShowToa
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-white transition-colors">
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-50 transition-colors">
             <i className="fas fa-times" />
           </button>
         </div>
@@ -139,14 +139,14 @@ const OverdueAlertModal = ({ isOpen, overdueLoans, onClose, onRefresh, onShowToa
               placeholder="Bot Token (dari @BotFather)"
               value={botToken}
               onChange={(e) => setBotToken(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-700 border border-slate-600 text-slate-900 dark:text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 rounded-xl bg-slate-700 border border-slate-600 text-slate-50 text-xs placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
             />
             <input
               type="text"
               placeholder="Chat ID Grup Admin (misal: -1001234567890)"
               value={chatId}
               onChange={(e) => setChatId(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-700 border border-slate-600 text-slate-900 dark:text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 rounded-xl bg-slate-700 border border-slate-600 text-slate-50 text-xs placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
             />
             <button
               onClick={() => { localStorage.setItem(BOT_TOKEN_KEY, botToken); localStorage.setItem(CHAT_ID_KEY, chatId); setShowConfig(false); onShowToast?.('Konfigurasi bot tersimpan!', 'success'); }}
@@ -162,7 +162,7 @@ const OverdueAlertModal = ({ isOpen, overdueLoans, onClose, onRefresh, onShowToa
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
                 <i className="fas fa-check-circle text-emerald-400 text-3xl" />
               </div>
-              <p className="text-slate-900 dark:text-white font-semibold">Tidak ada pinjaman overdue</p>
+              <p className="text-slate-50 font-semibold">Tidak ada pinjaman overdue</p>
               <p className="text-sm text-slate-500 mt-1">Semua unit sudah dikembalikan tepat waktu 🎉</p>
             </div>
           ) : (
@@ -172,7 +172,7 @@ const OverdueAlertModal = ({ isOpen, overdueLoans, onClose, onRefresh, onShowToa
                 <div key={loan.id} className={`rounded-2xl border p-4 space-y-2 ${urgencyColor(loan.overdue_days)}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white font-mono">{loan.loan_code}</p>
+                      <p className="text-sm font-bold text-slate-50 font-mono">{loan.loan_code}</p>
                       <p className="text-xs text-slate-300 mt-0.5">
                         <i className="fas fa-store mr-1 opacity-60" />{loan.site_alias}
                         {loan.site_name && loan.site_name !== loan.site_alias && ` — ${loan.site_name}`}

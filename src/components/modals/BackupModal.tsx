@@ -183,7 +183,7 @@ const BackupModal: React.FC<Props> = ({
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="glass rounded-xl p-3 border border-slate-700/60">
             <p className="text-xs text-slate-400 mb-1">Master Aset</p>
-            <p className="text-base font-bold text-slate-900 dark:text-white">{assets.length}</p>
+            <p className="text-base font-bold text-slate-50">{assets.length}</p>
           </div>
           <div className="glass rounded-xl p-3 border border-slate-700/60">
             <p className="text-xs text-slate-400 mb-1">Log Mutasi</p>
@@ -204,7 +204,7 @@ const BackupModal: React.FC<Props> = ({
                 <i className="fas fa-file-code text-lg" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Full Backup Snapshot</p>
+                <p className="text-sm font-semibold text-slate-50">Full Backup Snapshot</p>
                 <p className="text-xs text-slate-400">Format JSON (Seluruh Aset, Mutasi, Site & Kategori)</p>
               </div>
             </div>
@@ -220,7 +220,7 @@ const BackupModal: React.FC<Props> = ({
                 <i className="fas fa-file-csv text-lg" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Export Master Aset</p>
+                <p className="text-sm font-semibold text-slate-50">Export Master Aset</p>
                 <p className="text-xs text-slate-400">Format CSV (Siap Buka di Microsoft Excel / Upload)</p>
               </div>
             </div>
@@ -236,7 +236,7 @@ const BackupModal: React.FC<Props> = ({
                 <i className="fas fa-history text-lg" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Export Riwayat Mutasi</p>
+                <p className="text-sm font-semibold text-slate-50">Export Riwayat Mutasi</p>
                 <p className="text-xs text-slate-400">Format CSV (Audit trail & perpindahan barang)</p>
               </div>
             </div>

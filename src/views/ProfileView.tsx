@@ -155,7 +155,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-3 text-white text-xl font-bold shadow-lg shadow-blue-500/30">
           {(currentUser?.name || 'IT').split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
         </div>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">{currentUser?.name || 'Pengguna'}</h2>
+        <h2 className="text-lg font-bold text-slate-50">{currentUser?.name || 'Pengguna'}</h2>
 
         {sdkUser.username && isTelegramLogin && (
           <p className="text-xs text-blue-400 font-medium">@{sdkUser.username}</p>
@@ -182,7 +182,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
               <i className="fas fa-user-lock text-lg"></i>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Akses Tim IT (Guest)</h3>
+              <h3 className="text-sm font-bold text-slate-50">Akses Tim IT (Guest)</h3>
               <p className="text-xs text-amber-200/80 mt-0.5">
                 {isPending
                   ? 'Pengajuan akses Anda sedang dalam proses verifikasi oleh Admin IT.'
@@ -220,7 +220,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{item.title}</p>
+                  <p className="text-sm font-medium text-slate-50">{item.title}</p>
                   {(item as any).badge && (
                     <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-wider rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 uppercase">
                       {(item as any).badge}
@@ -252,7 +252,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
             <i className="fas fa-database"></i>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-900 dark:text-white">Database Supabase (PostgreSQL)</p>
+            <p className="text-xs font-medium text-slate-50">Database Supabase (PostgreSQL)</p>
             <p className="text-xs text-slate-500">
               {isTelegramLogin ? 'Auto-Synced via Telegram SDK' : 'Login via Browser (Web Session)'}
             </p>

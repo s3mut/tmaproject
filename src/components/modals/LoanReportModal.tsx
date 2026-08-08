@@ -109,11 +109,11 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
               <i className="fas fa-file-alt text-emerald-400 text-lg" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Laporan Peminjaman</h2>
+              <h2 className="text-base font-bold text-slate-50">Laporan Peminjaman</h2>
               <p className="text-xs text-slate-400">Filter & generate laporan komprehensif</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-white transition-colors">
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-50 transition-colors">
             <i className="fas fa-times" />
           </button>
         </div>
@@ -124,7 +124,7 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider ml-1">Region</label>
               <select value={region} onChange={e => setRegion(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500 mt-1">
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-emerald-500 mt-1">
                 <option value="">Semua Region</option>
                 {regions.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
@@ -132,7 +132,7 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider ml-1">Status</label>
               <select value={status} onChange={e => setStatus(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500 mt-1">
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-emerald-500 mt-1">
                 <option value="">Semua Status</option>
                 {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -140,12 +140,12 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider ml-1">Dari Tanggal</label>
               <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500 mt-1" />
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-emerald-500 mt-1" />
             </div>
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider ml-1">Sampai Tanggal</label>
               <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-500 mt-1" />
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-emerald-500 mt-1" />
             </div>
           </div>
           <div className="flex gap-2">
@@ -161,7 +161,7 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
                   <i className="fas fa-file-csv" /> CSV
                 </button>
                 <button onClick={handlePrint}
-                  className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-900 dark:text-white text-xs font-bold flex items-center gap-1.5 transition-all">
+                  className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-50 text-xs font-bold flex items-center gap-1.5 transition-all">
                   <i className="fas fa-print" /> Print
                 </button>
               </>
@@ -173,7 +173,7 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
         {generated && !loading && (
           <div className="px-4 py-3 border-b border-slate-700/30 grid grid-cols-5 gap-2 shrink-0">
             {[
-              { label: 'Total', val: summary.total, color: 'text-slate-900 dark:text-white' },
+              { label: 'Total', val: summary.total, color: 'text-slate-50' },
               { label: 'Aktif', val: summary.active, color: 'text-blue-400' },
               { label: 'Selesai', val: summary.closed, color: 'text-emerald-400' },
               { label: 'Overdue', val: summary.overdue, color: 'text-red-400' },
@@ -217,7 +217,7 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
                   <tr key={r.id} className={`hover:bg-white/5 transition-colors ${r.overdue_days > 0 ? 'bg-red-500/5' : ''}`}>
                     <td className="px-4 py-3 font-mono text-blue-400 font-semibold">{r.loan_code}</td>
                     <td className="px-4 py-3">
-                      <p className="text-slate-900 dark:text-white font-medium">{r.site_alias}</p>
+                      <p className="text-slate-50 font-medium">{r.site_alias}</p>
                       <p className="text-[10px] text-slate-500">{r.region}</p>
                     </td>
                     <td className="px-4 py-3 text-slate-300">{r.category_name}</td>

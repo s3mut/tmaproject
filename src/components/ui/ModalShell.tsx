@@ -52,12 +52,12 @@ const ModalShell = ({
                 <i className={`fas ${titleIcon} text-base`} />
               </div>
             )}
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">{title}</h2>
+            <h2 className="text-base font-bold text-slate-50">{title}</h2>
           </div>
           <button
             onClick={onClose}
             aria-label="Tutup"
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-900 dark:text-white flex items-center justify-center transition-all"
+            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-50 flex items-center justify-center transition-all"
           >
             <i className="fas fa-times text-sm" />
           </button>

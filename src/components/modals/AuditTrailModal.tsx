@@ -85,11 +85,11 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
               <i className="fas fa-history text-indigo-400 text-lg" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Audit Trail</h2>
+              <h2 className="text-base font-bold text-slate-50">Audit Trail</h2>
               <p className="text-xs text-slate-400">Riwayat lengkap pergerakan aset</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-white transition-colors">
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-50 transition-colors">
             <i className="fas fa-times" />
           </button>
         </div>
@@ -103,7 +103,7 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
               value={serialNum}
               onChange={(e) => setSerialNum(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-900 dark:text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+              className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
             />
             <button
               onClick={handleSearch}
@@ -116,12 +116,12 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
             <div className="flex-1">
               <label className="text-[10px] text-slate-500 uppercase tracking-wider ml-1">Dari Tanggal</label>
               <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 mt-1" />
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-indigo-500 mt-1" />
             </div>
             <div className="flex-1">
               <label className="text-[10px] text-slate-500 uppercase tracking-wider ml-1">Sampai Tanggal</label>
               <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 mt-1" />
+                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-indigo-500 mt-1" />
             </div>
           </div>
           {trail.length > 0 && (
@@ -164,7 +164,7 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
                       {/* Content */}
                       <div className="flex-1 bg-slate-800/60 border border-slate-700/40 rounded-2xl p-3 space-y-1.5">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs font-semibold text-slate-900 dark:text-white">{item.description}</p>
+                          <p className="text-xs font-semibold text-slate-50">{item.description}</p>
                           <span className="text-[10px] text-slate-500 shrink-0 whitespace-nowrap">{fmtDate(item.event_time)}</span>
                         </div>
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-400">

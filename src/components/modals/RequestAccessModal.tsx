@@ -49,7 +49,7 @@ const RequestAccessModal = ({ isOpen, currentUser, onClose, onSuccess }: Props) 
         <div className="bg-slate-800/80 rounded-xl p-3.5 border border-slate-700/80 space-y-2 text-xs">
           <div className="flex justify-between items-center">
             <span className="text-slate-400">Nama Telegram:</span>
-            <span className="font-semibold text-slate-900 dark:text-white">{currentUser.name}</span>
+            <span className="font-semibold text-slate-50">{currentUser.name}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-400">Telegram ID:</span>

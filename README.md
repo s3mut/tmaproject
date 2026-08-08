@@ -12,8 +12,8 @@
 
 ## 🌟 Fitur Utama
 
-- **📊 Dashboard Interaktif & Hierarchical Grouping**: Ringkasan statistik status aset dengan **filter interaktif per kategori** serta **Hierarchical Category Grouping** (pengelompokan kategori sejenis seperti varian Monitor di bawah satu payung induk). Dilengkapi sajian khusus **Terakhir Dipindah (7 Hari Terakhir)** untuk melacak mobilitas aset terkini.
-- **🎨 Atomic UI Design System**: Dibuka dengan antarmuka splash screen & halaman login berlabel profesional serta didukung arsitektur komponen modular (*Atoms & Molecules* di `src/components/ui/`), memberikan keseragamaan desain, kestabilan performa, dan pengelolaan kode yang rapi.
+- **📊 Dashboard Interaktif & Filter Presisi**: Ringkasan statistik status aset dengan filter kategori berbasis **Dropdown `<optgroup>`** yang rapi dan konsisten dengan halaman daftar aset. Filter dijamin 100% akurat tanpa kebocoran data silang kategori. Dilengkapi sajian khusus **Terakhir Dipindah (7 Hari Terakhir)** untuk melacak mobilitas aset terkini.
+- **🎨 Atomic UI Design System & Tema Gelap/Terang**: Antarmuka modular (*Atoms & Molecules*) yang memberikan keseragaman desain. Dilengkapi **Tema Gelap & Terang (Light/Dark Mode)** yang secara otomatis menyesuaikan preferensi OS perangkat pengguna saat pertama kali dibuka, dengan saklar manual di profil.
 - **⚡ High-Performance Site Auto-Complete**: Seluruh menu penentuan lokasi (Pindah Aset, Mutasi, Tambah/Edit Aset, dan Stock Opname) ditenagai oleh komponen *auto-complete search* (`SiteSearchInput`) yang mampu mengolah 2.000+ cabang lokasi dengan ringan tanpa kendala rendering/lag dari *dropdown select*.
 - **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** dalam bentuk *collapsible/accordion* yang informatif, dilengkapi indikator *breakdown* status per wilayah dan penghitung hasil filter secara reponsif.
 - **⚡ Paginated Auto-Fetch (Bebas Limit 1.000 Baris)**: Mampu memuat seluruh inventaris perusahaan (6.000+ unit aset) dengan sempurna tanpa terhalang batas default 1.000 baris per request dari PostgREST/Supabase.

@@ -19,7 +19,7 @@ const ItemCard = ({ item, onClick }: Props) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+              <h3 className="text-sm font-semibold text-slate-50 truncate">
                 {item.brand} {item.model_type ?? item.serial_number}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">{item.serial_number}</p>

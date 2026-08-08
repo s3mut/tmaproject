@@ -39,7 +39,7 @@ const KPICard = ({
       )}
     </div>
     <div>
-      <p className="text-xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="text-xl font-bold text-slate-50">{value}</p>
       <p className="text-xs font-medium text-slate-300">{label}</p>
       {sub && <p className="text-[11px] text-slate-500 mt-0.5">{sub}</p>}
     </div>
@@ -52,7 +52,7 @@ const SectionTitle = ({ icon, title, sub }: { icon: string; title: string; sub?:
       <i className={`fas ${icon} text-blue-400 text-xs`} />
     </div>
     <div>
-      <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
+      <h3 className="text-sm font-bold text-slate-50">{title}</h3>
       {sub && <p className="text-[11px] text-slate-500">{sub}</p>}
     </div>
   </div>
@@ -63,7 +63,7 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-slate-800 border border-slate-600 rounded-xl p-3 text-xs shadow-xl">
-      <p className="font-bold text-slate-900 dark:text-white mb-1">{label}</p>
+      <p className="font-bold text-slate-50 mb-1">{label}</p>
       {payload.map((p: any) => (
         <p key={p.name} style={{ color: p.color }}>{p.name}: {p.value}</p>
       ))}
@@ -162,11 +162,11 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
     <div className="fade-in space-y-4 pb-24">
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 hover:text-slate-900 dark:text-white transition-colors">
+        <button onClick={onBack} className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 hover:text-slate-50 transition-colors">
           <i className="fas fa-arrow-left" />
         </button>
         <div className="flex-1">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Laporan & Analitik</h2>
+          <h2 className="text-lg font-bold text-slate-50">Laporan & Analitik</h2>
           <p className="text-xs text-slate-400">
             {isLimited ? `Region: ${currentUser?.assigned_region}` : 'Semua Region'}
           </p>
@@ -217,7 +217,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
             onClick={() => setActiveTab(t.key)}
             className={`flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
               activeTab === t.key
-                ? 'bg-slate-700 text-slate-900 dark:text-white shadow'
+                ? 'bg-slate-700 text-slate-50 shadow'
                 : 'text-slate-400 hover:text-slate-300'
             }`}
           >
@@ -253,7 +253,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
                 <SectionTitle icon="fa-clipboard-list" title="Ringkasan Peminjaman" />
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: 'Total Tiket', val: kpi.total_loans, color: 'text-slate-900 dark:text-white' },
+                    { label: 'Total Tiket', val: kpi.total_loans, color: 'text-slate-50' },
                     { label: 'Aktif',       val: kpi.active_loans, color: 'text-blue-400' },
                     { label: 'Selesai',     val: kpi.closed_loans, color: 'text-emerald-400' },
                     { label: 'Overdue',     val: kpi.overdue_loans, color: 'text-red-400' },
@@ -362,7 +362,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
               <i className="fas fa-file-alt text-emerald-400 text-2xl" />
             </div>
             <div>
-              <h3 className="text-slate-900 dark:text-white font-bold">Generator Laporan Peminjaman</h3>
+              <h3 className="text-slate-50 font-bold">Generator Laporan Peminjaman</h3>
               <p className="text-sm text-slate-400 mt-1">Filter berdasarkan region, status, dan rentang tanggal. Export ke CSV atau Print PDF.</p>
             </div>
             <button
@@ -379,7 +379,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
               <i className="fas fa-exclamation-triangle text-red-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">Laporan Overdue</p>
+              <p className="text-sm font-semibold text-slate-50">Laporan Overdue</p>
               <p className="text-xs text-slate-400">{overdueLoans.length} tiket melewati jatuh tempo</p>
             </div>
             <button
@@ -396,7 +396,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
               <i className="fas fa-power-off text-slate-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">Laporan Aset Retired</p>
+              <p className="text-sm font-semibold text-slate-50">Laporan Aset Retired</p>
               <p className="text-xs text-slate-400">Riwayat barang dipensiunkan</p>
             </div>
             <button
@@ -419,7 +419,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
               <i className="fas fa-history text-indigo-400 text-2xl" />
             </div>
             <div>
-              <h3 className="text-slate-900 dark:text-white font-bold">Audit Trail Aset</h3>
+              <h3 className="text-slate-50 font-bold">Audit Trail Aset</h3>
               <p className="text-sm text-slate-400 mt-1">Lacak seluruh pergerakan aset: mutasi, peminjaman, pengembalian. Cari by Serial Number atau rentang tanggal.</p>
             </div>
             <button
@@ -441,7 +441,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
                 <i className={`fas ${c.icon} text-sm`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{c.title}</p>
+                <p className="text-sm font-medium text-slate-50">{c.title}</p>
                 <p className="text-xs text-slate-500">{c.sub}</p>
               </div>
               <i className="fas fa-chevron-right text-slate-600 text-xs ml-auto" />
@@ -515,9 +515,9 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
                     {utilization.map((u) => (
                       <tr key={u.category_name} className="hover:bg-white/5 transition-colors">
                         <td className="px-4 py-3">
-                          <p className="text-slate-900 dark:text-white font-medium">{u.category_name}</p>
+                          <p className="text-slate-50 font-medium">{u.category_name}</p>
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-900 dark:text-white font-bold">{u.total_assets.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-slate-50 font-bold">{u.total_assets.toLocaleString()}</td>
                         <td className="px-4 py-3 text-right text-emerald-400">{u.active_count}</td>
                         <td className="px-4 py-3 text-right text-blue-400">{u.backup_count}</td>
                         <td className="px-4 py-3 text-right text-purple-400">{u.borrowed_count}</td>
