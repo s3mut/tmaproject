@@ -144,7 +144,7 @@ const SetPasswordModal = ({ isOpen, onClose, onSuccess }: Props) => {
               <div className="w-14 h-14 rounded-2xl bg-red-500/15 text-red-400 flex items-center justify-center mx-auto mb-3 text-2xl">
                 <i className="fas fa-ban" />
               </div>
-              <p className="text-sm font-bold text-white">Hapus Akses Web?</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Hapus Akses Web?</p>
               <p className="text-xs text-slate-400 mt-1">Password web akan dihapus. Anda tidak bisa login via browser sampai set ulang password.</p>
             </div>
             <div className="flex gap-2">

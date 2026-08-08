@@ -273,7 +273,7 @@ const DashboardView = ({
                 </button>
               )}
             </div>
-            <p className="text-3xl font-bold text-white">{stats.total}</p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
             {onStatusClick && <p className="text-[10px] text-slate-600 mt-1">Tap untuk lihat semua →</p>}
           </div>
           <div
@@ -370,7 +370,7 @@ const DashboardView = ({
             className={`px-3 py-1 rounded-lg text-xs font-medium flex-shrink-0 transition-all ${
               selectedSubCatName === 'all'
                 ? 'bg-slate-200 text-slate-900 font-semibold shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                : 'bg-slate-800 text-slate-400 hover:text-slate-900 dark:text-white'
             }`}
           >
             Semua {activeGroup.label}
@@ -434,7 +434,7 @@ const DashboardView = ({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold text-white truncate">
+                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                         {m.asset_brand ? `${m.asset_brand} ` : ''}{m.asset_model_type ?? m.asset_serial_number}
                       </h4>
                     </div>

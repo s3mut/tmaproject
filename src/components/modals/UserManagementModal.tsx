@@ -176,7 +176,7 @@ const UserManagementModal: React.FC<Props> = ({
                   {/* Baris Atas: Identitas + Badge Role */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-bold text-white truncate text-sm">{u.name}</p>
+                      <p className="font-bold text-slate-900 dark:text-white truncate text-sm">{u.name}</p>
                       <p className="text-[11px] text-blue-400 font-mono mt-0.5">
                         {u.username ? `@${u.username}` : `ID: ${u.telegram_id}`}
                       </p>
@@ -207,9 +207,9 @@ const UserManagementModal: React.FC<Props> = ({
                         onChange={(e) => handleRoleChange(u.telegram_id, e.target.value as UserRole)}
                         className="text-xs py-1.5"
                       >
-                        <option value="guest" className="bg-slate-900 text-white">🔒 Guest</option>
-                        <option value="user" className="bg-slate-900 text-white">💼 User IT</option>
-                        <option value="admin" className="bg-slate-900 text-white">👑 Admin</option>
+                        <option value="guest" className="bg-slate-900 text-slate-900 dark:text-white">🔒 Guest</option>
+                        <option value="user" className="bg-slate-900 text-slate-900 dark:text-white">💼 User IT</option>
+                        <option value="admin" className="bg-slate-900 text-slate-900 dark:text-white">👑 Admin</option>
                       </Select>
                     </div>
                     <div>
@@ -220,9 +220,9 @@ const UserManagementModal: React.FC<Props> = ({
                           onChange={(e) => handleRegionChange(u.telegram_id, e.target.value)}
                           className="text-xs py-1.5 text-amber-300 border-amber-500/40"
                         >
-                          <option value="GLOBAL_ALL" className="bg-slate-900 text-white">🌐 Semua Wilayah</option>
+                          <option value="GLOBAL_ALL" className="bg-slate-900 text-slate-900 dark:text-white">🌐 Semua Wilayah</option>
                           {availableRegions.map(reg => (
-                            <option key={reg} value={reg} className="bg-slate-900 text-white">📍 {reg}</option>
+                            <option key={reg} value={reg} className="bg-slate-900 text-slate-900 dark:text-white">📍 {reg}</option>
                           ))}
                         </Select>
                       ) : (

@@ -15,7 +15,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:   'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-500/25 border border-blue-500/30',
-  secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600/50',
+  secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-slate-900 dark:text-white border border-slate-600/50',
   danger:    'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-lg shadow-red-500/25 border border-red-500/30',
   success:   'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/25 border border-emerald-500/30',
   warning:   'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 shadow-lg shadow-yellow-500/25 border border-yellow-400/30',

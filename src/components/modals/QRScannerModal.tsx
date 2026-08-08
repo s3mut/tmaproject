@@ -160,13 +160,13 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
               <i className="fas fa-qrcode text-lg"></i>
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">Scan QR / Barcode Aset</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Scan QR / Barcode Aset</h2>
               <p className="text-[11px] text-slate-400">Arahkan kamera ke kode pada label aset</p>
             </div>
           </div>
           <button
             onClick={() => { stopScanner(); onClose(); }}
-            className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"
+            className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-900 dark:text-white flex items-center justify-center"
           >
             <i className="fas fa-times text-sm"></i>
           </button>

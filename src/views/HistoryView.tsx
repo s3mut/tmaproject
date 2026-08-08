@@ -151,7 +151,7 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
                     className="w-full text-left px-4 py-3 hover:bg-blue-500/10 border-b border-slate-700/50"
                     onClick={() => { setSelectedAsset(a); setSearchQuery(a.serial_number); }}
                   >
-                    <p className="text-sm font-medium text-white">{a.brand} {a.model_type}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{a.brand} {a.model_type}</p>
                     <p className="text-xs text-slate-400 font-mono">{a.serial_number}</p>
                   </button>
                 ))}
@@ -254,7 +254,7 @@ const HistoryView = ({ mutations, assets, sites, loading, onMutate, onApproveMut
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${m.status === 'Pending' ? 'bg-amber-500' : m.status === 'Completed' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
                 <div className="flex items-start justify-between gap-2 pl-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white truncate">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                       {m.asset_brand ? `${m.asset_brand} ` : ''}{m.asset_model_type ?? m.asset_serial_number}
                     </p>
                     <div className="flex items-center gap-2 mt-2 text-xs">

@@ -30,7 +30,7 @@ const Header = ({ activeTab, searchValue, userRole, onSearchChange, onScanClick,
     <header className="sticky top-0 z-30 glass px-4 pt-4 pb-3">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-xl font-bold text-white">{title}</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h1>
           <p className="text-xs text-slate-400">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ const Header = ({ activeTab, searchValue, userRole, onSearchChange, onScanClick,
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Cari serial number, brand, atau site..."
-            className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-slate-500"
+            className="bg-transparent border-none outline-none text-sm w-full text-slate-900 dark:text-white placeholder-slate-500"
           />
           <button className="ml-2 text-blue-400" onClick={onScanClick}>
             <i className="fas fa-qrcode"></i>

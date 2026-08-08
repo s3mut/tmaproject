@@ -38,7 +38,7 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, sites
           <div className="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto text-2xl">
             <i className="fas fa-lock"></i>
           </div>
-          <h2 className="text-lg font-bold text-white">Akses Ditolak</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Akses Ditolak</h2>
           <p className="text-sm text-slate-400">
             Hanya grup <strong className="text-slate-200">Admin</strong> yang memiliki wewenang untuk mengunggah data CSV.
           </p>
@@ -183,11 +183,11 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, sites
               <i className="fas fa-file-csv text-lg"></i>
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Import CSV Master Assets</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Import CSV Master Assets</h2>
               <p className="text-xs text-slate-400">Grup Admin • Validasi Strict Kategori</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-900 dark:text-white flex items-center justify-center">
             <i className="fas fa-times"></i>
           </button>
         </div>
@@ -232,7 +232,7 @@ const CSVImportModal = ({ isOpen, userRole, categories: initialCategories, sites
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-slate-800 p-3 rounded-xl text-center border border-slate-700">
                 <p className="text-xs text-slate-400">Total di CSV</p>
-                <p className="text-lg font-bold text-white">{parseResult.total}</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{parseResult.total}</p>
               </div>
               <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-center">
                 <p className="text-xs text-emerald-400">Valid Siap Upload</p>

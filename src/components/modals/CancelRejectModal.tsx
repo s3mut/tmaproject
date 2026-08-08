@@ -126,7 +126,7 @@ const CancelRejectModal: React.FC<Props> = ({
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
+            <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-900 dark:text-white">
               {opt.label}
             </option>
           ))}

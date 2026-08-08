@@ -132,7 +132,7 @@ const DispatchLoanModal: React.FC<Props> = ({
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div>
                 <p className="text-slate-400">Toko Peminjam:</p>
-                <p className="font-bold text-white text-sm">{loan.site_alias} ({loan.site_name || 'Toko'})</p>
+                <p className="font-bold text-slate-900 dark:text-white text-sm">{loan.site_alias} ({loan.site_name || 'Toko'})</p>
               </div>
               <div>
                 <p className="text-slate-400">Kategori Diminta:</p>
@@ -187,7 +187,7 @@ const DispatchLoanModal: React.FC<Props> = ({
                           onClick={() => { setSelectedAsset(a); setSearchQuery(a.serial_number); setErrorMsg(''); }}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-white text-sm">{a.brand || 'No Brand'} {a.model_type || ''}</span>
+                            <span className="font-bold text-slate-900 dark:text-white text-sm">{a.brand || 'No Brand'} {a.model_type || ''}</span>
                             {isSameRegion ? (
                               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded border border-emerald-500/30">
                                 ⭐ Satu Region ({aRegion})
@@ -235,7 +235,7 @@ const DispatchLoanModal: React.FC<Props> = ({
                           </span>
                         )}
                       </p>
-                      <p className="text-sm font-bold text-white mt-0.5">{selectedAsset.brand} {selectedAsset.model_type}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{selectedAsset.brand} {selectedAsset.model_type}</p>
                       <p className="text-xs text-amber-300 font-mono">S/N: {selectedAsset.serial_number}</p>
                     </div>
                   </div>
@@ -308,7 +308,7 @@ const DispatchLoanModal: React.FC<Props> = ({
         {detailAsset && (
           <div className="space-y-4 text-xs">
             <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/80">
-              <h3 className="text-sm font-bold text-white mb-1">{detailAsset.brand || 'No Brand'} — {detailAsset.model_type || 'Generic'}</h3>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{detailAsset.brand || 'No Brand'} — {detailAsset.model_type || 'Generic'}</h3>
               <p className="text-amber-300 font-mono font-bold text-sm">S/N: {detailAsset.serial_number}</p>
               <span className="inline-block mt-2 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
                 Status: {detailAsset.status}
@@ -345,7 +345,7 @@ const DispatchLoanModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setDetailAsset(null)}
-                className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold transition-all"
+                className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-900 dark:text-white font-bold transition-all"
               >
                 Tutup
               </button>

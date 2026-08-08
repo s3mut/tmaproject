@@ -88,7 +88,7 @@ const ReturnCheckModal: React.FC<Props> = ({
         <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 flex items-center justify-between text-xs">
           <div>
             <span className="text-[10px] text-slate-400 block uppercase font-semibold">Unit Yang Dikembalikan:</span>
-            <p className="font-bold text-white text-sm mt-0.5">{loan.asset_brand || 'Aset'} {loan.asset_model_type || ''}</p>
+            <p className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{loan.asset_brand || 'Aset'} {loan.asset_model_type || ''}</p>
             <p className="text-amber-300 font-mono text-xs">S/N: {loan.asset_serial_number || '—'}</p>
           </div>
           <div className="text-right">
@@ -117,8 +117,8 @@ const ReturnCheckModal: React.FC<Props> = ({
                   <i className={`fas ${item.icon} text-lg mt-0.5 shrink-0`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-white">{item.label}</p>
-                      {isSelected && <i className="fas fa-check-circle text-xs text-white" />}
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{item.label}</p>
+                      {isSelected && <i className="fas fa-check-circle text-xs text-slate-900 dark:text-white" />}
                     </div>
                     <p className="text-xs text-slate-400 mt-1 leading-normal">{item.desc}</p>
                   </div>

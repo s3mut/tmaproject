@@ -176,7 +176,7 @@ const LoansView: React.FC<Props> = ({
           <div className="w-16 h-16 rounded-full bg-blue-500/20 text-blue-400 mx-auto flex items-center justify-center mb-4 text-3xl shadow-inner">
             <i className="fas fa-store" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Pilih Cabang Anda</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Pilih Cabang Anda</h2>
           <p className="text-slate-400 text-xs mb-6 max-w-sm mx-auto leading-relaxed">
             Untuk menjaga privasi data, Anda hanya dapat melihat aktivitas peminjaman dari cabang Anda sendiri. Silakan pilih kode atau alias cabang Anda.
           </p>
@@ -212,7 +212,7 @@ const LoansView: React.FC<Props> = ({
       {/* Header & Tombol Ajukan */}
       <div className="glass rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <i className="fas fa-hand-holding-box text-blue-400 text-lg" />
             Peminjaman Aset & Unit Backup Toko
           </h2>
@@ -230,7 +230,7 @@ const LoansView: React.FC<Props> = ({
                   setTempSiteInput('');
                   setTempMatchedSite(null);
                 }}
-                className="ml-1 text-blue-400 hover:text-white underline decoration-blue-500/50 underline-offset-2"
+                className="ml-1 text-blue-400 hover:text-slate-900 dark:text-white underline decoration-blue-500/50 underline-offset-2"
               >
                 [Ubah]
               </button>
@@ -262,7 +262,7 @@ const LoansView: React.FC<Props> = ({
               <i className={userRole === 'admin' ? "fas fa-crown" : "fas fa-user-shield"} />
             </div>
             <div>
-              <p className="font-extrabold text-white">
+              <p className="font-extrabold text-slate-900 dark:text-white">
                 {userRole === 'admin' ? '👑 Otoritas Admin Global (God Mode Active)' : `📍 Wilayah Wewenang Anda: Region ${assignedRegion || 'Semua (Global)'}`}
               </p>
               <p className="text-[11px] text-slate-300 mt-0.5">
@@ -295,10 +295,10 @@ const LoansView: React.FC<Props> = ({
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'glass text-slate-400 hover:text-white border border-slate-700/60'
+                    : 'glass text-slate-400 hover:text-slate-900 dark:text-white border border-slate-700/60'
                 }`}
               >
-                <i className={`fas ${tab.icon} ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                <i className={`fas ${tab.icon} ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -347,7 +347,7 @@ const LoansView: React.FC<Props> = ({
                       <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/30">
                         {loan.site_alias}
                       </span>
-                      <span className="text-xs font-bold text-white">{loan.category_name}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">{loan.category_name}</span>
                     </div>
                   </div>
 
@@ -402,7 +402,7 @@ const LoansView: React.FC<Props> = ({
                     <span className="text-slate-400 block">Status Alokasi Unit Fisik:</span>
                     {loan.asset_serial_number ? (
                       <div className="mt-1 bg-slate-800/80 rounded-xl p-2 border border-slate-700/60">
-                        <p className="font-bold text-white">{loan.asset_brand} — {loan.asset_model_type || ''}</p>
+                        <p className="font-bold text-slate-900 dark:text-white">{loan.asset_brand} — {loan.asset_model_type || ''}</p>
                         <p className="text-amber-300 font-mono text-xs">S/N: {loan.asset_serial_number}</p>
                         {loan.tracking_number && (
                           <p className="text-[11px] text-blue-300 mt-1">

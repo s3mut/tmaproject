@@ -129,7 +129,7 @@ const RequestLoanModal: React.FC<Props> = ({
             disabled={submitting}
           >
             {categories.map((c) => (
-              <option key={c.id} value={c.name} className="bg-slate-900 text-white">
+              <option key={c.id} value={c.name} className="bg-slate-900 text-slate-900 dark:text-white">
                 {c.name}
               </option>
             ))}
@@ -142,7 +142,7 @@ const RequestLoanModal: React.FC<Props> = ({
             <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
               <span className="font-bold text-blue-300 flex items-center gap-1.5">
                 <i className="fas fa-map-marker-alt text-blue-400" />
-                Region Toko: <b className="text-white uppercase">{storeRegion || 'Umum'}</b>
+                Region Toko: <b className="text-slate-900 dark:text-white uppercase">{storeRegion || 'Umum'}</b>
               </span>
               <span className="px-2 py-0.5 rounded-md bg-blue-900/50 text-blue-200 text-[10px] font-bold border border-blue-500/30">
                 Auto-Filter Region
@@ -150,7 +150,7 @@ const RequestLoanModal: React.FC<Props> = ({
             </div>
             <div>
               <p className="text-slate-300 mb-1.5 font-medium">
-                📦 Preview Alokasi Unit Backup (Kategori: <b className="text-white">{categoryName}</b>):
+                📦 Preview Alokasi Unit Backup (Kategori: <b className="text-slate-900 dark:text-white">{categoryName}</b>):
               </p>
               {availableBackups.length > 0 ? (
                 <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-lg p-2.5 text-emerald-300 space-y-1">
@@ -159,7 +159,7 @@ const RequestLoanModal: React.FC<Props> = ({
                     Tersedia {availableBackups.length} Unit Backup Ready di Region {storeRegion}!
                   </p>
                   <p className="text-[11px] text-emerald-300/80 pl-5">
-                    📍 Unit akan dialokasikan dari hub terdekat: <b className="text-white">{Array.from(new Set(availableBackups.map(a => a.site_name || a.site_alias || 'Gudang IT Region'))).join(', ')}</b>
+                    📍 Unit akan dialokasikan dari hub terdekat: <b className="text-slate-900 dark:text-white">{Array.from(new Set(availableBackups.map(a => a.site_name || a.site_alias || 'Gudang IT Region'))).join(', ')}</b>
                   </p>
                 </div>
               ) : (
@@ -212,8 +212,8 @@ const RequestLoanModal: React.FC<Props> = ({
               onChange={(e) => setShippingMethod(e.target.value)}
               disabled={submitting}
             >
-              <option value="Pick-up" className="bg-slate-900 text-white">Pick-up (Ambil di Gudang)</option>
-              <option value="Delivery" className="bg-slate-900 text-white">Delivery (Kurir / Ekspedisi)</option>
+              <option value="Pick-up" className="bg-slate-900 text-slate-900 dark:text-white">Pick-up (Ambil di Gudang)</option>
+              <option value="Delivery" className="bg-slate-900 text-slate-900 dark:text-white">Delivery (Kurir / Ekspedisi)</option>
             </Select>
           </div>
         </div>

@@ -34,7 +34,7 @@ const SitesView = ({ sites, loading }: Props) => {
             <i className="fas fa-building"></i>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-white truncate">{s.site_name}</h3>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">{s.site_name}</h3>
             <div className="flex items-center gap-2 mt-1 text-xs font-mono">
               <span className="text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
                 Kode: {s.site_code}
