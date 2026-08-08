@@ -213,7 +213,7 @@ function App() {
   // ── Auth Loading / Splash Screen ────────────────────────────────────────────
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #0a0e1a 100%)' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-slate-900">
         {/* Animated background orbs */}
         <div style={{ position: 'absolute', top: '10%', left: '15%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)', filter: 'blur(40px)', animation: 'orbFloat 6s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)', filter: 'blur(40px)', animation: 'orbFloat 8s ease-in-out infinite reverse' }} />
@@ -238,8 +238,8 @@ function App() {
 
           {/* App name & tagline */}
           <div style={{ textAlign: 'center', animation: 'fadeSlideUp 0.6s ease-out 0.2s both' }}>
-            <h1 style={{ fontSize: 26, fontWeight: 800, color: 'white', letterSpacing: '-0.5px', marginBottom: 6 }}>
-              Transit<span style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TMA</span>
+            <h1 className="text-slate-50" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 6 }}>
+              E1-<span style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TMA</span>
             </h1>
             <p style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>IT Asset Management</p>
           </div>

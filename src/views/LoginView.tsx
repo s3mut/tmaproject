@@ -27,7 +27,7 @@ const LoginView = () => {
   };
 
   return (
-    <div style={{
+    <div className="bg-slate-900" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
@@ -35,7 +35,6 @@ const LoginView = () => {
       padding: '24px 16px',
       position: 'relative',
       overflow: 'hidden',
-      background: 'linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #080c18 100%)',
     }}>
       {/* Animated background orbs */}
       <div style={{ position: 'absolute', top: '-5%', left: '-10%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'lv-orbFloat 7s ease-in-out infinite' }} />
@@ -60,8 +59,8 @@ const LoginView = () => {
               </div>
             </div>
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'white', letterSpacing: '-0.5px', margin: '0 0 6px' }}>
-            Transit<span style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TMA</span>
+          <h1 className="text-slate-50" style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', margin: '0 0 6px' }}>
+            E1-<span style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TMA</span>
           </h1>
           <p style={{ fontSize: 12, color: '#475569', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>IT Asset Inventory Management</p>
         </div>
@@ -235,7 +234,7 @@ const LoginView = () => {
               Belum punya akses?
             </p>
             <ol style={{ fontSize: 10, color: '#334155', margin: 0, paddingLeft: 14, lineHeight: 1.9 }}>
-              <li>Buka <span style={{ color: '#64748b' }}>Telegram</span> → cari bot <span style={{ color: '#60a5fa' }}>TransitTMA</span> → Start</li>
+              <li>Buka <span style={{ color: '#64748b' }}>Telegram</span> → cari bot <span style={{ color: '#60a5fa' }}>E1-TMA</span> → Start</li>
               <li>Di tab <span style={{ color: '#64748b' }}>Profil</span>, klik <span style={{ color: '#60a5fa' }}>Password Akses Web</span></li>
               <li>Set password, lalu login di sini dengan <span style={{ color: '#64748b' }}>@username</span></li>
             </ol>
@@ -243,7 +242,7 @@ const LoginView = () => {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: 10, color: '#1e293b', marginTop: 20 }}>
-          © {new Date().getFullYear()} TransitTMA — E1 IT Asset Management
+          © {new Date().getFullYear()} E1-TMA — E1 IT Asset Management
         </p>
       </div>
 

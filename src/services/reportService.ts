@@ -327,7 +327,7 @@ export async function sendOverdueNotificationToBot(params: {
     (params.overdueLoans.length > 5
       ? `\n\n_...dan ${params.overdueLoans.length - 5} lainnya. Buka aplikasi untuk detail._`
       : '') +
-    `\n\n_Dikirim otomatis oleh TransitTMA — ${new Date().toLocaleString('id-ID')}_`;
+    `\n\n_Dikirim otomatis oleh E1-TMA — ${new Date().toLocaleString('id-ID')}_`;
 
   try {
     const res = await fetch(

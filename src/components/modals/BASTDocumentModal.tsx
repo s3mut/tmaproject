@@ -58,7 +58,7 @@ const BASTDocumentModal: React.FC<Props> = ({
             {/* Header / Kop Surat */}
             <div className="border-b-2 border-gray-900 pb-4 flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-extrabold tracking-tight text-gray-900">TRANSIT TMA</h1>
+                <h1 className="text-xl font-extrabold tracking-tight text-gray-900">E1-TMA</h1>
                 <p className="text-[11px] text-gray-600 font-semibold uppercase tracking-wider">
                   IT Asset & Device Logistics Management
                 </p>

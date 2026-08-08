@@ -1,4 +1,4 @@
-# TransitTMA — IT Asset Inventory Telegram Mini App (TMA)
+# E1-TMA — IT Asset Inventory Telegram Mini App (TMA)
 
 ![React](https://img.shields.io/badge/React-19.2-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?logo=typescript)
@@ -6,7 +6,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38bdf8?logo=tailwindcss)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-emerald?logo=supabase)
 
-**TransitTMA** adalah aplikasi Telegram Mini App (TMA) berbasis React + TypeScript yang dirancang khusus untuk manajemen aset TI (*IT Asset Inventory*), pelacakan mutasi/perpindahan aset antar lokasi (*handover & movement*), audit fisik (*stock opname*), dan impor data massal berbasis CSV dengan pengawasan ketat integritas data (*strict category validation*).
+**E1-TMA** adalah aplikasi Telegram Mini App (TMA) berbasis React + TypeScript yang dirancang khusus untuk manajemen aset TI (*IT Asset Inventory*), pelacakan mutasi/perpindahan aset antar lokasi (*handover & movement*), audit fisik (*stock opname*), dan impor data massal berbasis CSV dengan pengawasan ketat integritas data (*strict category validation*).
 
 ---
 
@@ -61,7 +61,7 @@
 ## 🏗️ Arsitektur Project
 
 ```
-TransitTMA/
+E1-TMA/
 ├── .agents/
 │   └── AGENTS.md                   # Panduan Lengkap Agent AI & Developer
 ├── docs/                           # Documentation & SQL Database Scripts
@@ -156,7 +156,7 @@ TransitTMA/
 ### 2. Kloning Repository & Install Dependencies
 ```bash
 git clone https://github.com/s3mut/tmaproject.git
-cd TransitTMA
+cd E1-TMA
 npm install
 ```
 
@@ -230,4 +230,4 @@ Seluruh riwayat perkembangan, perbaikan bug, dan migrasi arsitektur dicatat seca
 ---
 
 ## 📄 Lisensi
-Project ini dibuat untuk manajemen internal TI **TransitTMA**.
+Project ini dibuat untuk manajemen internal TI **E1-TMA**.

@@ -1,12 +1,12 @@
-# AGENTS.md — Panduan Agent AI & Developer (Project TransitTMA)
+# AGENTS.md — Panduan Agent AI & Developer (Project E1-TMA)
 
-Dokumen ini berisi panduan lengkap arsitektur, standar pengkodean, kebijakan keamanan data, serta alur kerja untuk Agent AI (Antigravity/DeepMind) dan Developer yang mengerjakan project **TransitTMA**.
+Dokumen ini berisi panduan lengkap arsitektur, standar pengkodean, kebijakan keamanan data, serta alur kerja untuk Agent AI (Antigravity/DeepMind) dan Developer yang mengerjakan project **E1-TMA**.
 
 ---
 
 ## 📌 1. Ikhtisar Project (Project Overview)
 
-**TransitTMA** adalah Telegram Mini App (TMA) berbasis React + TypeScript untuk manajemen aset TI (IT Asset Inventory), pencatatan lokasi (*sites*), pelacakan mutasi (*movement/handover*), serta audit fisik (*stock opname*).
+**E1-TMA** adalah Telegram Mini App (TMA) berbasis React + TypeScript untuk manajemen aset TI (IT Asset Inventory), pencatatan lokasi (*sites*), pelacakan mutasi (*movement/handover*), serta audit fisik (*stock opname*).
 
 - **Teknologi Utama**:
   - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, FontAwesome 6 Icons.
@@ -18,7 +18,7 @@ Dokumen ini berisi panduan lengkap arsitektur, standar pengkodean, kebijakan kea
 ## 🏗️ 2. Struktur Direktori Utama
 
 ```
-TransitTMA/
+E1-TMA/
 ├── .agents/
 │   └── AGENTS.md                   # Panduan & Instruksi Agent AI
 ├── docs/                           # Dokumentasi & Script Database (SQL)
@@ -69,13 +69,13 @@ TransitTMA/
 
 ### A. Integritas Data Kategori & Strict Validation Trigger
 1. Tabel `master_assets` memiliki relasi **Foreign Key** `category_id` ke `master_categories(id)` DAN menyimpan nama `category` (TEXT) untuk konsistensi.
-2. Database dilindungi oleh Trigger PostgreSQL `handle_asset_category_strict_sync` ([docs/auto_category_trigger.sql](file:///d:/Documents/05.%20PROJECT/TransitTMA/docs/auto_category_trigger.sql)):
+2. Database dilindungi oleh Trigger PostgreSQL `handle_asset_category_strict_sync` ([docs/auto_category_trigger.sql](file:///d:/Documents/05.%20PROJECT/E1-TMA/docs/auto_category_trigger.sql)):
    - **Nama Kategori Valid** $\rightarrow$ Otomatis dihubungkan dengan `category_id` yang sesuai.
    - **Nama Kategori Tidak Terdaftar / Typo** $\rightarrow$ `RAISE EXCEPTION` (Insert ditolak oleh database untuk mencegah data kotor/typo).
 
 ### B. Proteksi Role-Based Access Control (RBAC)
 1. Fitur sensitif seperti **Import CSV Massal** dan **Soft Delete** hanya diizinkan untuk pengguna dengan `userRole === 'admin'`.
-2. Komponen [CSVImportModal.tsx](file:///d:/Documents/05.%20PROJECT/TransitTMA/src/components/modals/CSVImportModal.tsx) & tombol pada [Header.tsx](file:///d:/Documents/05.%20PROJECT/TransitTMA/src/components/Header.tsx) secara eksplisit memeriksa `userRole`.
+2. Komponen [CSVImportModal.tsx](file:///d:/Documents/05.%20PROJECT/E1-TMA/src/components/modals/CSVImportModal.tsx) & tombol pada [Header.tsx](file:///d:/Documents/05.%20PROJECT/E1-TMA/src/components/Header.tsx) secara eksplisit memeriksa `userRole`.
 
 ### C. Penanganan Payload Besar (Batch Chunking)
 1. Untuk mencegah error payload / timeout Supabase (`Query is too large`), proses upload batch pada `csvImportService.ts` WAJIB menggunakan **Chunking 250 unit per request**.
@@ -91,8 +91,8 @@ TransitTMA/
 ## 🛠️ 4. Workflow Pengembangan (Development Workflow)
 
 1. **Sebelum Mengubah Code**:
-   - Periksa `TMA.log` dan [docs/schema.sql](file:///d:/Documents/05.%20PROJECT/TransitTMA/docs/schema.sql) untuk memahami konteks perubahan sebelumnya.
-   - Jangan berasumsi tentang tipe data; selalu periksa [src/types/inventory.ts](file:///d:/Documents/05.%20PROJECT/TransitTMA/src/types/inventory.ts).
+   - Periksa `TMA.log` dan [docs/schema.sql](file:///d:/Documents/05.%20PROJECT/E1-TMA/docs/schema.sql) untuk memahami konteks perubahan sebelumnya.
+   - Jangan berasumsi tentang tipe data; selalu periksa [src/types/inventory.ts](file:///d:/Documents/05.%20PROJECT/E1-TMA/src/types/inventory.ts).
 
 2. **Pengujian Build & Type Checking**:
    - Jalankan `npx tsc --noEmit` untuk memastikan tidak ada kesalahan TypeScript.

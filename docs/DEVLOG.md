@@ -1,6 +1,6 @@
-# 📋 TransitTMA — Project Development Log
+# 📋 E1-TMA — Project Development Log
 
-> File ini adalah catatan perjalanan pengembangan proyek **TransitTMA** dari awal hingga saat ini.
+> File ini adalah catatan perjalanan pengembangan proyek **E1-TMA** dari awal hingga saat ini.
 > Selalu diperbarui setiap kali ada perubahan signifikan.
 
 ---
@@ -9,13 +9,13 @@
 
 | Item | Detail |
 |---|---|
-| **Nama Proyek** | TransitTMA |
+| **Nama Proyek** | E1-TMA |
 | **Tujuan** | Aplikasi IT Asset Inventory berbasis Telegram Mini App |
 | **Platform** | Telegram Mini App (TMA) |
 | **Stack** | React + TypeScript + Vite + Tailwind CSS v3 + Supabase |
 | **Database** | PostgreSQL via Supabase |
 | **Supabase Project** | `umhgqkbisdxfcxzkakqa.supabase.co` |
-| **Lokasi Folder** | `d:\Documents\05. PROJECT\TransitTMA` |
+| **Lokasi Folder** | `d:\Documents\05. PROJECT\E1-TMA` |
 
 ---
 
@@ -28,7 +28,7 @@
 **Tujuan:** Membuat proyek baru dari nol sebagai Telegram Mini App.
 
 #### Yang Dilakukan:
-- Membuat folder proyek baru `TransitTMA` menggunakan `npx create-vite@latest` dengan template **React + TypeScript**
+- Membuat folder proyek baru `E1-TMA` menggunakan `npx create-vite@latest` dengan template **React + TypeScript**
 - Menjalankan `npm install` untuk instalasi dependensi awal
 - Membuat tampilan awal (placeholder) di `src/App.tsx` dengan desain premium glassmorphism
 - Menulis `src/index.css` dengan design system dasar (dark mode, animasi fade-in/slide-up)
@@ -178,7 +178,7 @@ File HTML single-page dengan fitur:
 ## 🏗️ Arsitektur Saat Ini
 
 ```
-TransitTMA/
+E1-TMA/
 ├── .env                           # Supabase credentials (jangan di-commit!)
 ├── index.html                     # Entry point + Telegram SDK + Font Awesome
 ├── tailwind.config.js             # Tailwind v3 config

@@ -51,7 +51,7 @@ const BackupModal: React.FC<Props> = ({
     try {
       const backupObject = {
         metadata: {
-          system: 'TransitTMA - IT Asset Inventory',
+          system: 'E1-TMA - IT Asset Inventory',
           version: '1.0',
           timestamp: new Date().toISOString(),
           exported_by_admin: adminName || 'Administrator',
