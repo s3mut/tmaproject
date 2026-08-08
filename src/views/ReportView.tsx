@@ -192,7 +192,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
           <button
             onClick={() => setRegionFilter('')}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              !regionFilter ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+              !regionFilter ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-50'
             }`}
           >
             Semua Region
@@ -201,7 +201,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
             <button key={r}
               onClick={() => setRegionFilter(r)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                regionFilter === r ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                regionFilter === r ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-50'
               }`}
             >
               {r}

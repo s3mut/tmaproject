@@ -77,7 +77,7 @@ const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCa
             <i className={`fas ${region === 'Tanpa Region' ? 'fa-question-circle' : 'fa-map-marker-alt'} text-sm`}></i>
           </div>
           <div className="text-left min-w-0">
-            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{region}</p>
+            <p className="text-sm font-bold text-slate-50 truncate">{region}</p>
             {/* Badge breakdown status */}
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               {statusSummary.map(([status, count]) => (
@@ -91,7 +91,7 @@ const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCa
 
         {/* Kanan: total + chevron */}
         <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-          <span className="text-xs font-semibold text-slate-900 dark:text-white bg-slate-700 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-semibold text-slate-50 bg-slate-700 px-2.5 py-1 rounded-full">
             {regionAssets.length}
           </span>
           <i className={`fas fa-chevron-down text-slate-400 text-xs transition-transform duration-300 ${open ? 'rotate-180' : ''}`}></i>
