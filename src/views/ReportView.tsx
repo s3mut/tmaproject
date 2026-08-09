@@ -96,6 +96,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
   // Modals
   const [overdueOpen,  setOverdueOpen]  = useState(false);
   const [auditOpen,    setAuditOpen]    = useState(false);
+  const [initialAuditFilter, setInitialAuditFilter] = useState<string>('');
   const [loanRptOpen,  setLoanRptOpen]  = useState(false);
 
   const regions = useMemo(() => Array.from(new Set(sites.map(s => s.region).filter(Boolean))) as string[], [sites]);
@@ -188,25 +189,17 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
 
       {/* ── Region Filter (Admin only) ── */}
       {isAdmin && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            onClick={() => setRegionFilter('')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              !regionFilter ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-50'
-            }`}
+        <div className="mb-2">
+          <select
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+            className="form-input w-full rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500/50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%207.5L10%2012.5L15%207.5%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_12px_center]"
           >
-            Semua Region
-          </button>
-          {regions.map(r => (
-            <button key={r}
-              onClick={() => setRegionFilter(r)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                regionFilter === r ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-50'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
+            <option value="">Semua Region</option>
+            {regions.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -432,20 +425,26 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
 
           {/* Quick info cards */}
           {[
-            { icon: 'fa-exchange-alt', color: 'bg-blue-500/20 text-blue-400', title: 'Log Mutasi Aset', sub: 'Perpindahan lokasi antar cabang/region' },
-            { icon: 'fa-hand-holding-box', color: 'bg-purple-500/20 text-purple-400', title: 'Log Peminjaman', sub: 'Peminjaman unit backup per tiket' },
-            { icon: 'fa-pen-to-square', color: 'bg-amber-500/20 text-amber-400', title: 'Log Perubahan Status', sub: 'Active → Repair → Retired dsb.' },
+            { id: 'MUTASI', icon: 'fa-exchange-alt', color: 'bg-blue-500/20 text-blue-400', title: 'Log Mutasi Aset', sub: 'Perpindahan lokasi antar cabang/region' },
+            { id: 'PINJAM', icon: 'fa-hand-holding-box', color: 'bg-purple-500/20 text-purple-400', title: 'Log Peminjaman', sub: 'Peminjaman unit backup per tiket' },
+            { id: '', icon: 'fa-pen-to-square', color: 'bg-amber-500/20 text-amber-400', title: 'Semua Log Riwayat', sub: 'Seluruh riwayat aset' },
           ].map(c => (
-            <div key={c.title} className="glass rounded-xl p-3 flex items-center gap-3">
+            <button key={c.title}
+              onClick={() => {
+                setInitialAuditFilter(c.id);
+                setAuditOpen(true);
+              }}
+              className="w-full text-left glass rounded-xl p-3 flex items-center gap-3 hover:bg-slate-700/50 transition-colors"
+            >
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${c.color}`}>
                 <i className={`fas ${c.icon} text-sm`} />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-slate-50">{c.title}</p>
                 <p className="text-xs text-slate-500">{c.sub}</p>
               </div>
-              <i className="fas fa-chevron-right text-slate-600 text-xs ml-auto" />
-            </div>
+              <i className="fas fa-chevron-right text-slate-600 text-xs" />
+            </button>
           ))}
         </div>
       )}
@@ -556,21 +555,23 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
       {/* ── Modals ── */}
       <OverdueAlertModal
         isOpen={overdueOpen}
-        overdueLoans={overdueLoans}
         onClose={() => setOverdueOpen(false)}
-        onRefresh={refetchOverdue}
+        loans={overdueLoans}
+        onRefetch={refetchOverdue}
         onShowToast={onShowToast}
       />
       <AuditTrailModal
         isOpen={auditOpen}
         onClose={() => setAuditOpen(false)}
         onShowToast={onShowToast}
+        initialFilterType={initialAuditFilter}
       />
       <LoanReportModal
         isOpen={loanRptOpen}
         onClose={() => setLoanRptOpen(false)}
-        sites={sites}
         onShowToast={onShowToast}
+        sites={sites}
+        categories={categories}
         onGenerate={(filter) => getLoanReport({
           region:    filter.region,
           fromDate:  filter.fromDate,

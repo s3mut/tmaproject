@@ -8,6 +8,8 @@ interface Props {
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
   /** Pre-fill asset serial number dari luar (opsional) */
   initialSerial?: string;
+  /** Tipe event awal untuk filter lokal (opsional) */
+  initialFilterType?: string;
 }
 
 const EVENT_ICONS: Record<string, { icon: string; color: string }> = {
@@ -24,10 +26,11 @@ function getEventMeta(type: string) {
   return EVENT_ICONS[type] ?? { icon: 'fa-circle-dot', color: 'text-blue-400' };
 }
 
-const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: Props) => {
+const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '', initialFilterType = '' }: Props) => {
   const [serialNum,  setSerialNum]  = useState(initialSerial);
   const [fromDate,   setFromDate]   = useState('');
   const [toDate,     setToDate]     = useState('');
+  const [filterType, setFilterType] = useState(initialFilterType);
   const [trail,      setTrail]      = useState<AuditTrailRow[]>([]);
   const [loading,    setLoading]    = useState(false);
   const [searched,   setSearched]   = useState(false);
@@ -35,6 +38,17 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
   useEffect(() => {
     if (initialSerial) setSerialNum(initialSerial);
   }, [initialSerial]);
+
+  useEffect(() => {
+    if (initialFilterType) setFilterType(initialFilterType);
+  }, [initialFilterType]);
+
+  // Optionally auto-search if initialFilterType is provided
+  useEffect(() => {
+    if (isOpen && initialFilterType && !searched) {
+      handleSearch();
+    }
+  }, [isOpen, initialFilterType]);
 
   if (!isOpen) return null;
 
@@ -56,9 +70,11 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
     }
   };
 
+  const filteredTrail = trail.filter(t => filterType ? t.event_type.startsWith(filterType) : true);
+
   const handleExport = () => {
     exportToCSV(
-      trail.map((t, i) => ({
+      filteredTrail.map((t, i) => ({
         No: i + 1,
         Waktu: fmtDate(t.event_time),
         'Jenis Event': t.event_type,
@@ -124,10 +140,21 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-indigo-500 mt-1" />
             </div>
           </div>
-          {trail.length > 0 && (
+          <div className="flex gap-2">
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs focus:outline-none focus:border-indigo-500"
+            >
+              <option value="">Semua Tipe Event</option>
+              <option value="MUTASI">Mutasi (Perpindahan)</option>
+              <option value="PINJAM">Peminjaman</option>
+            </select>
+          </div>
+          {filteredTrail.length > 0 && (
             <button onClick={handleExport}
               className="w-full py-2 rounded-xl bg-emerald-600/70 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all">
-              <i className="fas fa-file-csv" /> Export CSV ({trail.length} entri)
+              <i className="fas fa-file-csv" /> Export CSV ({filteredTrail.length} entri)
             </button>
           )}
         </div>
@@ -143,7 +170,7 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
               <i className="fas fa-search text-3xl text-slate-600 mb-3 block" />
               <p className="text-slate-500 text-sm">Masukkan serial number atau pilih rentang tanggal,<br />lalu tekan tombol cari.</p>
             </div>
-          ) : trail.length === 0 ? (
+          ) : filteredTrail.length === 0 ? (
             <div className="py-12 text-center text-slate-400 text-sm">
               <i className="fas fa-inbox text-2xl opacity-40 mb-2 block" />
               Tidak ada riwayat ditemukan.
@@ -153,7 +180,7 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '' }: P
               {/* Vertical line */}
               <div className="absolute left-5 top-2 bottom-2 w-px bg-slate-700/60" />
               <div className="space-y-4">
-                {trail.map((item, i) => {
+                {filteredTrail.map((item, i) => {
                   const meta = getEventMeta(item.event_type);
                   return (
                     <div key={i} className="flex gap-4 relative">
