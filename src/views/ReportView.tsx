@@ -556,8 +556,8 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
       <OverdueAlertModal
         isOpen={overdueOpen}
         onClose={() => setOverdueOpen(false)}
-        loans={overdueLoans}
-        onRefetch={refetchOverdue}
+        overdueLoans={overdueLoans}
+        onRefresh={refetchOverdue}
         onShowToast={onShowToast}
       />
       <AuditTrailModal
@@ -571,7 +571,6 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
         onClose={() => setLoanRptOpen(false)}
         onShowToast={onShowToast}
         sites={sites}
-        categories={categories}
         onGenerate={(filter) => getLoanReport({
           region:    filter.region,
           fromDate:  filter.fromDate,

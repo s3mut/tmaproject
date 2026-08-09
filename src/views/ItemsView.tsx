@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { AssetDetail, AssetStatus, Site, Category } from '../types/inventory';
+import type { AssetDetail, AssetStatus, Site } from '../types/inventory';
+import type { Category } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 import { Select } from '../components/ui';
 import { groupCategories } from '../utils/categoryGroups';
