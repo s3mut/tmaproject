@@ -77,11 +77,11 @@ const BASTDocumentModal: React.FC<Props> = ({
             </div>
 
             {/* Pihak Terkait */}
-            <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="flex flex-col gap-3 text-xs">
               <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl">
                 <span className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Pihak 1 (Tim IT / Gudang):</span>
                 <p className="text-sm font-bold text-gray-900">{loan.dispatched_by_name || 'Tim IT Support'}</p>
-                <p className="text-gray-600 mt-0.5">Departemen: IT & Asset Logistics</p>
+                <p className="text-gray-600 mt-0.5">Departemen: IT &amp; Asset Logistics</p>
                 <p className="text-gray-500 text-[11px]">Metode: {loan.shipping_method}</p>
               </div>
               <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl">
