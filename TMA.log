@@ -771,7 +771,42 @@ Implementasi:
   - Otomatisasi Skrip (Refactor 28 File): Melakukan penyesuaian untuk properti `text-white` agar kompatibel dengan mode terang, dengan menggantinya menjadi `text-slate-900 dark:text-white` tanpa merusak warna pada elemen bertema khusus (seperti warna kancing merah/biru).
   - `src/views/ProfileView.tsx`: Menambahkan tombol saklar pergantian antarmuka ke mode Terang / Gelap.
 
+--------------------------------------------------------------------------------
+STEP 45: DASHBOARD CATEGORY FILTER DROPDOWN & LIGHT/DARK MODE FIXES (2026-08-09)
+--------------------------------------------------------------------------------
+Kebutuhan:
+1. Filter kategori di halaman Dashboard sebelumnya berupa chips statis.
+2. Mode terang (Light Mode) pada dokumen BAST dan Splash Screen bertabrakan dengan pengaturan statis.
+
+Implementasi:
+  - `src/views/DashboardView.tsx`: Mengubah filter kategori menjadi dropdown `<Select>` mengikuti halaman filter aset.
+  - Perbaikan styling CSS/Tailwind pada BAST Document dan Splash screen untuk sinkronisasi warna yang lebih baik di Light Mode.
+  - Melakukan refactoring teks aplikasi yang berlabel "TransitTMA" menjadi "E1-TMA" di seluruh berkas.
+
+--------------------------------------------------------------------------------
+STEP 46: REPORT REGION DROPDOWN, FUNCTIONAL AUDIT LOG, & MENU CLEANUP (2026-08-09)
+--------------------------------------------------------------------------------
+Kebutuhan:
+1. Filter region pada halaman Report berupa button row panjang yang kurang fleksibel, diubah ke Dropdown.
+2. Menu Log (Mutasi, Peminjaman, Perubahan Status) pada ReportView sebelumnya sekadar div informasi mati, diaktifkan agar membuka AuditTrailModal secara reaktif.
+3. Pembersihan menu duplikat di ProfileView (Laporan Peminjaman, Audit Trail, Laporan Retired) yang redundan.
+
+Implementasi:
+  - `src/views/ReportView.tsx`: Mengganti deretan tombol *Region* menjadi dropdown select.
+  - `src/components/modals/AuditTrailModal.tsx`: Memperbaiki hooks order (`useCallback`) dan penanganan auto-search saat modal dibuka.
+  - `src/views/ProfileView.tsx`: Menghapus menu duplikat dan menyisakan satu menu utama "Laporan & Analitik" dan "Alert Overdue".
+
+--------------------------------------------------------------------------------
+STEP 47: MODUL PRINT REUSABLE & PENYESUAIAN LAYOUT BAST (2026-08-09)
+--------------------------------------------------------------------------------
+Kebutuhan:
+1. Hasil cetak BAST terpotong/hanya tercetak bagian header saat dicetak dari WebView Telegram.
+2. Layout Pihak 1 dan Pihak 2 berdampingan (grid) kurang jelas dan terlalu sempit.
+
+Implementasi:
+  - `src/utils/printDocument.ts`: Membuat modul utilitas cetak reusable yang membuka *popup window* baru berisikan HTML/CSS lengkap *print-ready* A4 serta pemicu otomatis `window.print()`.
+  - `src/components/modals/BASTDocumentModal.tsx`: Mengubah layout Pihak 1 & Pihak 2 menjadi susunan vertikal (bertumpuk atas-bawah), dan mengintegrasikannya dengan utilitas `printDocument`.
+
 ================================================================================
                                  END OF LOG
-================================================================================S T E P   4 5 :   R e f a c t o r e d   D a s h b o a r d   f i l t e r   t o   m a t c h   I t e m s V i e w   d r o p d o w n   s t y l e   t o   f i x   b u g s   a n d   i m p r o v e   u s a b i l i t y  
- 
+================================================================================
