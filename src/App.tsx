@@ -320,6 +320,7 @@ function App() {
               setIsShowingItems(false);
             }}
             mutations={mutations}
+            loans={loans}
             categories={categories}
             loading={loading}
             onItemClick={handleItemClick}

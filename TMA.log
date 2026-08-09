@@ -820,6 +820,17 @@ Implementasi:
   - `src/views/ItemsView.tsx`: Menambahkan prop `initialRegion` dan sync `activeRegion` saat dipanggil dari Dashboard.
   - `src/App.tsx`: Mengelola state `selectedRegion` & `isShowingItems` untuk mengontrol pergantian tampilan antara statistik Beranda dan daftar aset terfilter.
 
+--------------------------------------------------------------------------------
+STEP 49: INTEGRASI LOG PEMINJAMAN UNIT BACKUP KE DASHBOARD RECENT MOVEMENTS (2026-08-09)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Transaksi pengiriman/peminjaman unit backup ke toko (`asset_loans`) sebelumnya disimpan terpisah dari mutasi permanen (`asset_mutations`), sehingga aktivitas pergerakan unit backup tidak muncul pada widget "Terakhir Dipindah (7 Hari)" di Beranda (Dashboard).
+
+Implementasi:
+  - `src/views/DashboardView.tsx`: Menambahkan prop `loans?: AssetLoan[]` dan menggabungkan data transaksi mutasi permanen + peminjaman unit backup ke dalam satu *feed* pergerakan aset 7 hari terakhir secara terpadu.
+  - Menambahkan penanda badge khusus `PINJAM` dan skema warna status peminjaman pada item feed di Beranda.
+  - `src/App.tsx`: Meneruskan properti `loans={loans}` dari custom hook `useInventory` ke `DashboardView`.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

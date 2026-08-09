@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import type { AssetDetail, Category, MutationDetail, Site } from '../types/inventory';
+import type { AssetDetail, Category, MutationDetail, Site, AssetLoan, LoanStatus } from '../types/inventory';
+import { loanStatusConfig } from '../types/inventory';
 import { SectionHeader, EmptyState, Select } from '../components/ui';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { MutationBadge } from '../components/ui/Badge';
@@ -16,6 +17,7 @@ interface Props {
   isShowingItems?: boolean;
   onClearFilters?: () => void;
   mutations?: MutationDetail[];
+  loans?: AssetLoan[];
   categories: Category[];
   loading: boolean;
   onItemClick: (id: number) => void;
@@ -23,6 +25,20 @@ interface Props {
   onRegionClick?: (reg: string) => void;
   onViewAll?: () => void;
   onStatusClick?: (status: string, category: string, region: string) => void;
+}
+
+interface CombinedMovement {
+  id: string;
+  asset_id: number;
+  asset_brand?: string | null;
+  asset_model_type?: string | null;
+  asset_serial_number: string;
+  asset_category_name: string;
+  from_site_name: string;
+  to_site_name: string;
+  mutation_date: string;
+  status: string;
+  isLoan: boolean;
 }
 
 function formatTime7Days(isoString: string): string {
@@ -58,7 +74,7 @@ const StatCard = ({ label, value, color, icon, gradient, border, onClick }: {
 const DashboardView = ({ 
   assets, sites, searchValue = '', initialCategory = 'all', initialStatus = 'all', initialRegion = 'all',
   isShowingItems = false, onClearFilters,
-  mutations = [], categories, loading, onItemClick, onCategoryClick, onRegionClick, onViewAll, onStatusClick 
+  mutations = [], loans = [], categories, loading, onItemClick, onCategoryClick, onRegionClick, onViewAll, onStatusClick 
 }: Props) => {
   const groupedCategories = useMemo(() => groupCategories(categories), [categories]);
 
@@ -95,23 +111,58 @@ const DashboardView = ({
     return result;
   }, [assets, initialCategory, initialRegion, siteRegionMap]);
 
-  // Filter mutasi 7 hari terakhir berdasarkan kategori & region yang dipilih
+  // Gabungkan mutasi permanen & transaksi peminjaman (loans) 7 hari terakhir
   const recentMutations = useMemo(() => {
+    const mutList: CombinedMovement[] = (mutations || []).map(m => ({
+      id: `mut-${m.id}`,
+      asset_id: m.asset_id,
+      asset_brand: m.asset_brand,
+      asset_model_type: m.asset_model_type,
+      asset_serial_number: m.asset_serial_number,
+      asset_category_name: m.asset_category_name,
+      from_site_name: m.from_site_name || 'Site Awal',
+      to_site_name: m.to_site_name,
+      mutation_date: m.mutation_date,
+      status: m.status,
+      isLoan: false,
+    }));
+
+    const loanList: CombinedMovement[] = (loans || [])
+      .filter(l => l.asset_id !== null && l.status !== 'Cancelled' && l.status !== 'Rejected')
+      .map(l => {
+        const isReturn = l.status === 'Return In-Transit' || l.status === 'Closed';
+        const date = l.dispatched_at || l.created_at;
+        return {
+          id: `loan-${l.id}`,
+          asset_id: l.asset_id!,
+          asset_brand: l.asset_brand || null,
+          asset_model_type: l.asset_model_type || null,
+          asset_serial_number: l.asset_serial_number || l.loan_code,
+          asset_category_name: l.category_name,
+          from_site_name: isReturn ? (l.site_name || l.site_alias) : 'Gudang IT',
+          to_site_name: isReturn ? 'Gudang IT' : (l.site_name || l.site_alias),
+          mutation_date: date,
+          status: l.status,
+          isLoan: true,
+        };
+      });
+
+    const combined = [...mutList, ...loanList];
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    return (mutations || []).filter((m) => {
+    return combined.filter((m) => {
       const mutDate = new Date(m.mutation_date);
       if (mutDate < sevenDaysAgo) return false;
       if (initialCategory !== 'all' && m.asset_category_name !== initialCategory) return false;
       if (initialRegion !== 'all') {
-        const regFrom = m.from_site_name ? siteRegionMap.get(m.from_site_name) : (m.from_site_code ? siteRegionMap.get(m.from_site_code) : null);
-        const regTo = m.to_site_name ? siteRegionMap.get(m.to_site_name) : (m.to_site_code ? siteRegionMap.get(m.to_site_code) : null);
+        const regFrom = m.from_site_name ? siteRegionMap.get(m.from_site_name) : null;
+        const regTo = m.to_site_name ? siteRegionMap.get(m.to_site_name) : null;
         if (regFrom !== initialRegion && regTo !== initialRegion) return false;
       }
       return true;
-    }).slice(0, 5);
-  }, [mutations, initialCategory, initialRegion, siteRegionMap]);
+    }).sort((a, b) => new Date(b.mutation_date).getTime() - new Date(a.mutation_date).getTime()).slice(0, 5);
+  }, [mutations, loans, initialCategory, initialRegion, siteRegionMap]);
 
   // Hitung stats dari filtered assets
   const stats = useMemo(() => ({
@@ -304,14 +355,23 @@ const DashboardView = ({
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-400 flex items-center justify-center flex-shrink-0 text-sm font-bold shadow-inner">
-                      <i className="fas fa-exchange-alt"></i>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold shadow-inner ${
+                      m.isLoan 
+                        ? 'bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 text-purple-400' 
+                        : 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-400'
+                    }`}>
+                      <i className={m.isLoan ? "fas fa-hand-holding-box" : "fas fa-exchange-alt"}></i>
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold text-slate-50 truncate">
                           {m.asset_brand ? `${m.asset_brand} ` : ''}{m.asset_model_type ?? m.asset_serial_number}
                         </h4>
+                        {m.isLoan && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
+                            PINJAM
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
                         <span className="text-slate-300 font-medium">{m.from_site_name || 'Site Awal'}</span>
@@ -321,7 +381,13 @@ const DashboardView = ({
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <MutationBadge status={m.status} />
+                    {m.isLoan ? (
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${loanStatusConfig[m.status as LoanStatus]?.bg || 'bg-slate-700'} ${loanStatusConfig[m.status as LoanStatus]?.text || 'text-slate-300'}`}>
+                        {loanStatusConfig[m.status as LoanStatus]?.label || m.status}
+                      </span>
+                    ) : (
+                      <MutationBadge status={m.status as any} />
+                    )}
                     <p className="text-[10px] text-slate-500 mt-1 font-mono">
                       {formatTime7Days(m.mutation_date)}
                     </p>
