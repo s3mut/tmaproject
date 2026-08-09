@@ -9,7 +9,7 @@ const tabTitles: Record<TabName, TabConfig> = {
   sites:     { title: 'Daftar Site',   subtitle: 'Lokasi cabang & operasional' },
   opname:    { title: 'Stock Opname',  subtitle: 'Audit fisik aset' },
   profile:   { title: 'Profil',        subtitle: 'Pengaturan akun' },
-  report:    { title: 'Laporan Bug / Feedback', subtitle: 'Kirim laporan & feedback' },
+  report:    { title: 'Laporan & Analitik', subtitle: 'KPI, utilization & audit trail' },
 };
 
 interface Props {
