@@ -807,6 +807,19 @@ Implementasi:
   - `src/utils/printDocument.ts`: Membuat modul utilitas cetak reusable yang membuka *popup window* baru berisikan HTML/CSS lengkap *print-ready* A4 serta pemicu otomatis `window.print()`.
   - `src/components/modals/BASTDocumentModal.tsx`: Mengubah layout Pihak 1 & Pihak 2 menjadi susunan vertikal (bertumpuk atas-bawah), dan mengintegrasikannya dengan utilitas `printDocument`.
 
+--------------------------------------------------------------------------------
+STEP 48: PERBAIKAN ALUR NAVIGASI DASHBOARD & DROPDOWN FILTER REGION BERANDA (2026-08-09)
+--------------------------------------------------------------------------------
+Kebutuhan:
+1. Mengubah filter kategori/region di Beranda agar tidak langsung berpindah ke halaman daftar aset secara otomatis tanpa konfirmasi pengguna.
+2. Menambahkan dropdown Filter Region tepat di bawah dropdown Filter Kategori di halaman Beranda.
+3. Pengguna baru akan diajak/dibawa ke daftar aset terfilter (ItemsView) hanya ketika menekan salah satu Stat Card (Total, Active, Backup, Retired, Repair, In Transit).
+
+Implementasi:
+  - `src/views/DashboardView.tsx`: Menambahkan dropdown Filter Region Aset (pilihan "Semua Region" & region unik dari sites). Menghubungkan perhitungan statistik dan mutasi 7 hari agar langsung ter-update di Beranda tanpa berpindah halaman. Navigasi ke `ItemsView` di-trigger secara eksplisit via `onStatusClick` ketika Stat Card diklik.
+  - `src/views/ItemsView.tsx`: Menambahkan prop `initialRegion` dan sync `activeRegion` saat dipanggil dari Dashboard.
+  - `src/App.tsx`: Mengelola state `selectedRegion` & `isShowingItems` untuk mengontrol pergantian tampilan antara statistik Beranda dan daftar aset terfilter.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

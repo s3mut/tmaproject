@@ -15,6 +15,7 @@ interface Props {
   loading: boolean;
   initialCategory?: string;
   initialStatus?: string;
+  initialRegion?: string;
   categories?: Category[];
   onItemClick: (id: number) => void;
 }
@@ -112,11 +113,13 @@ const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCa
 };
 
 // ── Main View ─────────────────────────────────────────────────────────────────
-const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initialStatus, categories = [], onItemClick }: Props) => {
+const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initialStatus, initialRegion, categories = [], onItemClick }: Props) => {
   const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>(
     (initialStatus && initialStatus !== 'all') ? initialStatus as AssetStatus : 'all'
   );
-  const [activeRegion, setActiveRegion] = useState<string>('all');
+  const [activeRegion, setActiveRegion] = useState<string>(
+    (initialRegion && initialRegion !== 'all') ? initialRegion : 'all'
+  );
   const [activeCategory, setActiveCategory] = useState<string>(
     (initialCategory && initialCategory !== 'all') ? initialCategory : 'all'
   );
@@ -137,6 +140,14 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
       setActiveCategory('all');
     }
   }, [initialCategory]);
+
+  useEffect(() => {
+    if (initialRegion && initialRegion !== 'all') {
+      setActiveRegion(initialRegion);
+    } else {
+      setActiveRegion('all');
+    }
+  }, [initialRegion]);
 
   // Ekstrak opsi Region unik dari tabel Sites
   const regionOptions = useMemo(() => {

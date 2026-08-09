@@ -12,14 +12,17 @@ interface Props {
   searchValue?: string;
   initialCategory?: string;
   initialStatus?: string;
+  initialRegion?: string;
+  isShowingItems?: boolean;
   onClearFilters?: () => void;
   mutations?: MutationDetail[];
   categories: Category[];
   loading: boolean;
   onItemClick: (id: number) => void;
   onCategoryClick: (cat: string) => void;
+  onRegionClick?: (reg: string) => void;
   onViewAll?: () => void;
-  onStatusClick?: (status: string, category: string) => void;
+  onStatusClick?: (status: string, category: string, region: string) => void;
 }
 
 function formatTime7Days(isoString: string): string {
@@ -53,18 +56,46 @@ const StatCard = ({ label, value, color, icon, gradient, border, onClick }: {
 );
 
 const DashboardView = ({ 
-  assets, sites, searchValue = '', initialCategory = 'all', initialStatus = 'all', onClearFilters,
-  mutations = [], categories, loading, onItemClick, onCategoryClick, onViewAll, onStatusClick 
+  assets, sites, searchValue = '', initialCategory = 'all', initialStatus = 'all', initialRegion = 'all',
+  isShowingItems = false, onClearFilters,
+  mutations = [], categories, loading, onItemClick, onCategoryClick, onRegionClick, onViewAll, onStatusClick 
 }: Props) => {
   const groupedCategories = useMemo(() => groupCategories(categories), [categories]);
 
-  // Filter aset berdasarkan kategori yang dipilih
-  const filteredAssets = useMemo(() => {
-    if (initialCategory === 'all') return assets;
-    return assets.filter(a => a.category_name === initialCategory);
-  }, [assets, initialCategory]);
+  // Map site alias, site code, & site name ke region
+  const siteRegionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    sites.forEach(s => {
+      const reg = s.region || 'Tanpa Region';
+      if (s.site_code) map.set(s.site_code, reg);
+      if (s.site_alias) map.set(s.site_alias, reg);
+      if (s.site_name) map.set(s.site_name, reg);
+    });
+    return map;
+  }, [sites]);
 
-  // Filter mutasi 7 hari terakhir berdasarkan kategori yang dipilih
+  // Ekstrak opsi Region unik dari tabel Sites
+  const regionOptions = useMemo(() => {
+    const regSet = new Set(sites.map(s => s.region || 'Tanpa Region'));
+    return Array.from(regSet).sort();
+  }, [sites]);
+
+  // Filter aset di dashboard berdasarkan kategori & region yang dipilih
+  const filteredAssets = useMemo(() => {
+    let result = assets;
+    if (initialCategory !== 'all') {
+      result = result.filter(a => a.category_name === initialCategory);
+    }
+    if (initialRegion !== 'all') {
+      result = result.filter(a => {
+        const reg = a.site_alias ? (siteRegionMap.get(a.site_alias) || 'Tanpa Region') : 'Tanpa Region';
+        return reg === initialRegion;
+      });
+    }
+    return result;
+  }, [assets, initialCategory, initialRegion, siteRegionMap]);
+
+  // Filter mutasi 7 hari terakhir berdasarkan kategori & region yang dipilih
   const recentMutations = useMemo(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -73,41 +104,48 @@ const DashboardView = ({
       const mutDate = new Date(m.mutation_date);
       if (mutDate < sevenDaysAgo) return false;
       if (initialCategory !== 'all' && m.asset_category_name !== initialCategory) return false;
+      if (initialRegion !== 'all') {
+        const regFrom = m.from_site_name ? siteRegionMap.get(m.from_site_name) : (m.from_site_code ? siteRegionMap.get(m.from_site_code) : null);
+        const regTo = m.to_site_name ? siteRegionMap.get(m.to_site_name) : (m.to_site_code ? siteRegionMap.get(m.to_site_code) : null);
+        if (regFrom !== initialRegion && regTo !== initialRegion) return false;
+      }
       return true;
     }).slice(0, 5);
-  }, [mutations, initialCategory]);
+  }, [mutations, initialCategory, initialRegion, siteRegionMap]);
 
   // Hitung stats dari filtered assets
   const stats = useMemo(() => ({
     total:     filteredAssets.length,
-    active:    filteredAssets.filter(a => a.status === 'Active').length,
+    active:    filteredAssets.filter(a => (a.status ?? 'Active') === 'Active').length,
     backup:    filteredAssets.filter(a => a.status === 'Backup').length,
     retired:   filteredAssets.filter(a => a.status === 'Retired').length,
     repair:    filteredAssets.filter(a => a.status === 'Repair').length,
     inTransit: filteredAssets.filter(a => a.status === 'In Transit').length,
   }), [filteredAssets]);
 
-  // Klik stat card: navigasi ke Items dengan status + kategori aktif
+  // Klik stat card: barulah navigasi ke Items dengan status + kategori + region aktif
   const handleStatClick = (status: string) => {
     if (onStatusClick) {
-      onStatusClick(status, initialCategory);
+      onStatusClick(status, initialCategory, initialRegion);
     }
   };
 
-  const hasActiveFilter = Boolean(searchValue.trim() || initialCategory !== 'all' || initialStatus !== 'all');
+  // Tampilkan ItemsView HANYA jika isShowingItems true (diklik dari stat card) atau user mengetik di search bar
+  const showItemsView = Boolean(isShowingItems || searchValue.trim() !== '');
 
   return (
     <div className="fade-in">
-      {/* ── ITEMS VIEW COMPONENT (Muncul jika ada filter/pencarian) ── */}
-      <div className={`transition-all duration-300 ${hasActiveFilter ? 'block' : 'hidden'}`}>
-        {hasActiveFilter && (
+      {/* ── ITEMS VIEW COMPONENT (Muncul HANYA jika stat card diklik / ada pencarian) ── */}
+      <div className={`transition-all duration-300 ${showItemsView ? 'block' : 'hidden'}`}>
+        {showItemsView && (
           <>
             <div className="mb-4 flex items-center justify-between bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl shadow-lg">
               <div>
-                <p className="text-sm font-bold text-blue-400">Pencarian & Filter Aktif</p>
+                <p className="text-sm font-bold text-blue-400">Daftar Aset Terfilter</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  {searchValue && `Kata Kunci: "${searchValue}" `}
+                  {searchValue && `Pencarian: "${searchValue}" `}
                   {initialCategory !== 'all' && `| Kat: ${initialCategory} `}
+                  {initialRegion !== 'all' && `| Reg: ${initialRegion} `}
                   {initialStatus !== 'all' && `| Stat: ${initialStatus}`}
                 </p>
               </div>
@@ -127,6 +165,7 @@ const DashboardView = ({
               searchValue={searchValue}
               initialCategory={initialCategory}
               initialStatus={initialStatus}
+              initialRegion={initialRegion}
               categories={categories}
               loading={loading}
               onItemClick={onItemClick}
@@ -135,30 +174,50 @@ const DashboardView = ({
         )}
       </div>
 
-      {/* ── DASHBOARD WIDGETS (Disembunyikan jika ada filter/pencarian) ── */}
-      <div className={`transition-all duration-500 ${hasActiveFilter ? 'opacity-0 max-h-0 overflow-hidden' : 'opacity-100 max-h-[9999px]'}`}>
+      {/* ── DASHBOARD WIDGETS (Tampil saat di Beranda) ── */}
+      <div className={`transition-all duration-500 ${showItemsView ? 'opacity-0 max-h-0 overflow-hidden' : 'opacity-100 max-h-[9999px]'}`}>
         
-        {/* Dropdown Filter Kategori di atas Stats */}
-        <div className="mb-4">
-          <label className="text-xs font-bold text-slate-500 mb-1.5 block uppercase tracking-wider pl-1">
-            <i className="fas fa-filter mr-1.5"></i> Filter Kategori Aset
-          </label>
-          <Select
-            value={initialCategory}
-            onChange={(e) => onCategoryClick(e.target.value)}
-            className="w-full text-sm py-2.5 bg-slate-800/80 border-slate-700/60 font-semibold shadow-sm"
-          >
-            <option value="all">📦 Semua Kategori</option>
-            {groupedCategories.map((grp) => (
-              <optgroup key={grp.label} label={grp.label}>
-                {grp.items.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Select>
+        {/* Dropdown Filter Kategori & Region di atas Stats */}
+        <div className="space-y-3 mb-4">
+          <div>
+            <label className="text-xs font-bold text-slate-500 mb-1.5 block uppercase tracking-wider pl-1">
+              <i className="fas fa-filter mr-1.5"></i> Filter Kategori Aset
+            </label>
+            <Select
+              value={initialCategory}
+              onChange={(e) => onCategoryClick(e.target.value)}
+              className="w-full text-sm py-2.5 bg-slate-800/80 border-slate-700/60 font-semibold shadow-sm"
+            >
+              <option value="all">📦 Semua Kategori</option>
+              {groupedCategories.map((grp) => (
+                <optgroup key={grp.label} label={grp.label}>
+                  {grp.items.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-500 mb-1.5 block uppercase tracking-wider pl-1">
+              <i className="fas fa-map-marker-alt mr-1.5"></i> Filter Region Aset
+            </label>
+            <Select
+              value={initialRegion}
+              onChange={(e) => onRegionClick && onRegionClick(e.target.value)}
+              className="w-full text-sm py-2.5 bg-slate-800/80 border-slate-700/60 font-semibold shadow-sm"
+            >
+              <option value="all">🌐 Semua Region</option>
+              {regionOptions.map((r) => (
+                <option key={r} value={r}>
+                  📍 Region {r}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -170,17 +229,20 @@ const DashboardView = ({
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs text-slate-400">
-                  {initialCategory === 'all' ? 'Total Aset' : `Total — ${initialCategory}`}
+                  {initialCategory === 'all' && initialRegion === 'all'
+                    ? 'Total Aset'
+                    : `Total — ${initialCategory !== 'all' ? initialCategory : ''} ${initialRegion !== 'all' ? `(Reg ${initialRegion})` : ''}`}
                 </span>
-                {initialCategory !== 'all' && (
+                {(initialCategory !== 'all' || initialRegion !== 'all') && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onCategoryClick('all');
+                      if (onRegionClick) onRegionClick('all');
                     }}
                     className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all flex items-center gap-1"
                   >
-                    <i className="fas fa-times"></i> Reset
+                    <i className="fas fa-times"></i> Reset Filter
                   </button>
                 )}
               </div>

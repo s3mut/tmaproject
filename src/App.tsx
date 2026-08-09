@@ -39,6 +39,8 @@ function App() {
   const [searchValue, setSearchValue]       = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus]     = useState<string>('all');
+  const [selectedRegion, setSelectedRegion]     = useState<string>('all');
+  const [isShowingItems, setIsShowingItems]     = useState<boolean>(false);
 
   // Modals state
   const [formOpen, setFormOpen]             = useState(false);
@@ -89,6 +91,7 @@ function App() {
   const handleTabChange = (tab: TabName) => {
     setActiveTab(tab);
     setSearchValue('');
+    setIsShowingItems(false);
   };
 
   // Category click from dashboard
@@ -96,10 +99,17 @@ function App() {
     setSelectedCategory(cat);
   };
 
-  // Status click from Dashboard stat card
-  const handleStatusClick = (status: string, category: string) => {
+  // Region click from dashboard
+  const handleRegionClick = (reg: string) => {
+    setSelectedRegion(reg);
+  };
+
+  // Status click from Dashboard stat card: Barulah bawa ke ItemsView dengan filter
+  const handleStatusClick = (status: string, category: string, region: string) => {
     setSelectedCategory(category);
+    setSelectedRegion(region);
     setSelectedStatus(status);
+    setIsShowingItems(true);
   };
 
   // Item actions
@@ -300,16 +310,21 @@ function App() {
             searchValue={searchValue}
             initialCategory={selectedCategory}
             initialStatus={selectedStatus}
+            initialRegion={selectedRegion}
+            isShowingItems={isShowingItems}
             onClearFilters={() => {
               setSearchValue('');
               setSelectedCategory('all');
               setSelectedStatus('all');
+              setSelectedRegion('all');
+              setIsShowingItems(false);
             }}
             mutations={mutations}
             categories={categories}
             loading={loading}
             onItemClick={handleItemClick}
             onCategoryClick={handleCategoryClick}
+            onRegionClick={handleRegionClick}
             onViewAll={() => setActiveTab('history')}
             onStatusClick={handleStatusClick}
           />
