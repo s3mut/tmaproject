@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { AuditTrailRow } from '../../services/reportService';
 import { getAuditTrail, exportToCSV, fmtDate } from '../../services/reportService';
 
@@ -8,7 +8,7 @@ interface Props {
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
   /** Pre-fill asset serial number dari luar (opsional) */
   initialSerial?: string;
-  /** Tipe event awal untuk filter lokal (opsional) */
+  /** Tipe event awal untuk filter lokal (opsional): 'MUTASI', 'PINJAM', atau '' (semua) */
   initialFilterType?: string;
 }
 
@@ -26,41 +26,31 @@ function getEventMeta(type: string) {
   return EVENT_ICONS[type] ?? { icon: 'fa-circle-dot', color: 'text-blue-400' };
 }
 
-const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '', initialFilterType = '' }: Props) => {
-  const [serialNum,  setSerialNum]  = useState(initialSerial);
+const AuditTrailModal = ({
+  isOpen,
+  onClose,
+  onShowToast,
+  initialSerial = '',
+  initialFilterType = '',
+}: Props) => {
+  const [serialNum,  setSerialNum]  = useState('');
   const [fromDate,   setFromDate]   = useState('');
   const [toDate,     setToDate]     = useState('');
-  const [filterType, setFilterType] = useState(initialFilterType);
+  const [filterType, setFilterType] = useState('');
   const [trail,      setTrail]      = useState<AuditTrailRow[]>([]);
   const [loading,    setLoading]    = useState(false);
   const [searched,   setSearched]   = useState(false);
 
-  useEffect(() => {
-    if (initialSerial) setSerialNum(initialSerial);
-  }, [initialSerial]);
-
-  useEffect(() => {
-    if (initialFilterType) setFilterType(initialFilterType);
-  }, [initialFilterType]);
-
-  // Optionally auto-search if initialFilterType is provided
-  useEffect(() => {
-    if (isOpen && initialFilterType && !searched) {
-      handleSearch();
-    }
-  }, [isOpen, initialFilterType]);
-
-  if (!isOpen) return null;
-
-  const handleSearch = async () => {
+  // ── handleSearch HARUS didefinisikan sebelum useEffect & sebelum early return ──
+  const handleSearch = useCallback(async (overrideSerial?: string) => {
     setLoading(true);
     setSearched(true);
     try {
       const data = await getAuditTrail({
-        serialNum: serialNum.trim() || null,
+        serialNum: (overrideSerial ?? serialNum).trim() || null,
         fromDate:  fromDate || null,
         toDate:    toDate   || null,
-        limit: 100,
+        limit: 200,
       });
       setTrail(data);
     } catch (e: any) {
@@ -68,9 +58,35 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '', ini
     } finally {
       setLoading(false);
     }
-  };
+  }, [serialNum, fromDate, toDate, onShowToast]);
 
-  const filteredTrail = trail.filter(t => filterType ? t.event_type.startsWith(filterType) : true);
+  // Reset state setiap kali modal dibuka, dan isi default dari props
+  useEffect(() => {
+    if (isOpen) {
+      setSerialNum(initialSerial);
+      setFilterType(initialFilterType);
+      setTrail([]);
+      setSearched(false);
+      setFromDate('');
+      setToDate('');
+    }
+  }, [isOpen, initialSerial, initialFilterType]);
+
+  // Auto-search saat modal baru dibuka (tanpa perlu user tekan tombol)
+  useEffect(() => {
+    if (isOpen) {
+      // Kecil timeout agar state reset di atas sempat diaplikasikan dulu
+      const timer = setTimeout(() => {
+        handleSearch(initialSerial || undefined);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]); // Hanya saat isOpen berubah menjadi true
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+  const filteredTrail = trail.filter(t =>
+    filterType ? t.event_type.startsWith(filterType) : true
+  );
 
   const handleExport = () => {
     exportToCSV(
@@ -84,10 +100,13 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '', ini
         'Ke Lokasi': t.to_loc,
         Catatan: t.notes ?? '-',
       })),
-      `Audit_Trail_${serialNum || 'All'}`
+      `Audit_Trail_${serialNum || filterType || 'All'}`
     );
     onShowToast?.('📥 Audit trail berhasil diekspor!', 'success');
   };
+
+  // ── Early return SETELAH semua hooks ──────────────────────────────────────
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
@@ -102,7 +121,9 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '', ini
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-50">Audit Trail</h2>
-              <p className="text-xs text-slate-400">Riwayat lengkap pergerakan aset</p>
+              <p className="text-xs text-slate-400">
+                {filterType === 'MUTASI' ? 'Log Mutasi Aset' : filterType === 'PINJAM' ? 'Log Peminjaman' : 'Semua Riwayat Aset'}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-50 transition-colors">
@@ -122,7 +143,7 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '', ini
               className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-50 text-xs placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
             />
             <button
-              onClick={handleSearch}
+              onClick={() => handleSearch()}
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
             >
               <i className="fas fa-search" />
@@ -173,7 +194,9 @@ const AuditTrailModal = ({ isOpen, onClose, onShowToast, initialSerial = '', ini
           ) : filteredTrail.length === 0 ? (
             <div className="py-12 text-center text-slate-400 text-sm">
               <i className="fas fa-inbox text-2xl opacity-40 mb-2 block" />
-              Tidak ada riwayat ditemukan.
+              {trail.length > 0
+                ? `Tidak ada data ${filterType || 'event'} yang cocok. (Total data: ${trail.length})`
+                : 'Tidak ada riwayat ditemukan.'}
             </div>
           ) : (
             <div className="relative">
