@@ -821,16 +821,23 @@ Implementasi:
   - `src/App.tsx`: Mengelola state `selectedRegion` & `isShowingItems` untuk mengontrol pergantian tampilan antara statistik Beranda dan daftar aset terfilter.
 
 --------------------------------------------------------------------------------
-STEP 50: INTEGRASI BARCODE CAMERA SCANNER PADA FORM TAMBAH/EDIT ASET (2026-08-12)
+STEP 51: FITUR EXPORT DATA INVENTORY KE GOOGLE SHEETS VIA WEBHOOK (2026-08-12)
 --------------------------------------------------------------------------------
 Kebutuhan:
-  - Pada form Tambah / Edit Aset (`ItemFormModal.tsx`), pengguna membutuhkan fleksibilitas untuk mengisi nilai barcode (Serial Number, Aktiva, External ID) baik dengan mengetik manual maupun memindai (scan) barcode/QR code menggunakan kamera perangkat.
+  - Memberikan wewenang kepada pengguna Tim IT untuk mengekspor snapshot data aset (External ID, Serial Number, Lokasi, Status, Aktiva, Kategori, Deskripsi, Tanggal Update) langsung ke Google Sheets yang telah mereka siapkan via Webhook.
 
 Implementasi:
-  - `src/components/modals/ItemFormModal.tsx`:
-    * Mengintegrasikan `QRScannerModal` langsung ke dalam form.
-    * Menambahkan tombol ikon barcode scanner (`fa-qrcode`) di dalam slot kanan komponen `<Input>` untuk field **Serial Number**, **Aktiva**, dan **External ID**.
-    * Pengguna dapat memilih untuk mengetik secara manual seperti biasa atau menekan ikon scanner untuk membuka kamera. Hasil scan otomatis diisi (*auto-fill*) dan di-trim ke field input aktif.
+  - `src/services/gsheetExportService.ts`:
+    * Membuat fungsi penyaringan aset berdasarkan pilihan rentang waktu (`all`, `today`, `7days`, `30days`).
+    * Pemetaan kolom data sesuai skema Google Sheets.
+    * Pengiriman payload via HTTP POST dengan `mode: 'no-cors'` agar terhindar dari kendala preflight CORS pada Google Apps Script WebApp.
+    * Template kode Google Apps Script siap pakai (1-klik copy).
+  - `src/components/modals/ExportGSheetModal.tsx`:
+    * Input WebApp URL dengan auto-save ke `localStorage` (`e1_tma_gsheet_url`).
+    * Dropdown filter rentang waktu update data aset.
+    * Panduan petunjuk setup Google Apps Script 1-klik & tombol download CSV cadangan.
+  - `src/views/ProfileView.tsx`:
+    * Menambahkan opsi menu "Export ke Google Sheets" pada daftar menu Profile pengguna IT.
 
 ================================================================================
                                  END OF LOG

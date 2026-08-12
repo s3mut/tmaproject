@@ -8,6 +8,7 @@ import SetPasswordModal from '../components/modals/SetPasswordModal';
 import BackupModal from '../components/modals/BackupModal';
 import UserManagementModal from '../components/modals/UserManagementModal';
 import OverdueAlertModal from '../components/modals/OverdueAlertModal';
+import ExportGSheetModal from '../components/modals/ExportGSheetModal';
 import { getOverdueLoans } from '../services/reportService';
 import type { OverdueLoan } from '../services/reportService';
 import { getPendingUsersCount } from '../services/userService';
@@ -29,6 +30,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
   const [backupModalOpen, setBackupModalOpen]   = useState(false);
   const [userMgmtModalOpen, setUserMgmtModalOpen] = useState(false);
   const [overdueOpen, setOverdueOpen]           = useState(false);
+  const [gsheetModalOpen, setGsheetModalOpen]   = useState(false);
   const [overdueLoans, setOverdueLoans]         = useState<OverdueLoan[]>([]);
   const [pendingReqCount, setPendingReqCount]   = useState(0);
 
@@ -73,6 +75,12 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         badgeDot: pendingReqCount > 0 ? String(pendingReqCount) : undefined,
       },
     ] : []),
+    {
+      icon: 'fa-file-excel', color: 'text-emerald-400', bg: 'bg-emerald-500/20',
+      title: 'Export ke Google Sheets', subtitle: 'Kirim snapshot data inventory ke spreadsheet Google Anda',
+      onClick: () => setGsheetModalOpen(true),
+      hideGuest: true,
+    },
     {
       icon: 'fa-chart-pie', color: 'text-blue-400', bg: 'bg-blue-500/20',
       title: 'Laporan & Analitik', subtitle: 'KPI, utilization, audit trail, laporan peminjaman',
@@ -305,6 +313,14 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
           setOverdueLoans(data);
           return data;
         }}
+        onShowToast={onShowToast}
+      />
+
+      {/* Export to Google Sheets Modal */}
+      <ExportGSheetModal
+        isOpen={gsheetModalOpen}
+        onClose={() => setGsheetModalOpen(false)}
+        assets={assets}
         onShowToast={onShowToast}
       />
     </div>

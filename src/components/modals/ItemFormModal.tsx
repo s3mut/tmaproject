@@ -69,6 +69,9 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
   const handleScanResult = (scannedText: string) => {
     if (activeScanField) {
       set(activeScanField, scannedText.trim());
+      try {
+        (window as any).Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+      } catch {}
     }
     setActiveScanField(null);
   };
