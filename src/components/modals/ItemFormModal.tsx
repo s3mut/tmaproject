@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { AssetDetail, AssetStatus, Site, Category } from '../../types/inventory';
 import { ModalShell, Button, Input, Select, SiteSearchInput, Textarea } from '../ui';
+import QRScannerModal from './QRScannerModal';
 
 interface FormData {
   serial_number: string;
@@ -30,11 +31,12 @@ const defaultForm: FormData = {
 };
 
 /**
- * ItemFormModal — refactored with design system components.
+ * ItemFormModal — refactored with design system components & barcode scanner integration.
  */
 const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit }: Props) => {
-  const [form, setForm]         = useState<FormData>(defaultForm);
+  const [form, setForm]             = useState<FormData>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
+  const [activeScanField, setActiveScanField] = useState<'serial_number' | 'aktiva' | 'external_id' | null>(null);
 
   useEffect(() => {
     if (categories.length > 0 && form.category_id === 0) {
@@ -64,6 +66,13 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
 
+  const handleScanResult = (scannedText: string) => {
+    if (activeScanField) {
+      set(activeScanField, scannedText.trim());
+    }
+    setActiveScanField(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -83,13 +92,49 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
           placeholder="S/N dari perangkat"
           value={form.serial_number}
           onChange={e => set('serial_number', e.target.value)}
-        />
+        >
+          <button
+            type="button"
+            onClick={() => setActiveScanField('serial_number')}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-slate-800/80 active:scale-95 transition-all cursor-pointer"
+            title="Scan Serial Number / Barcode dengan Kamera"
+          >
+            <i className="fas fa-qrcode text-base" />
+          </button>
+        </Input>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Aktiva" placeholder="Nomor aktiva"
-            value={form.aktiva} onChange={e => set('aktiva', e.target.value)} />
-          <Input label="External ID" placeholder="ID eksternal"
-            value={form.external_id} onChange={e => set('external_id', e.target.value)} />
+          <Input
+            label="Aktiva"
+            placeholder="Nomor aktiva"
+            value={form.aktiva}
+            onChange={e => set('aktiva', e.target.value)}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveScanField('aktiva')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-slate-800/80 active:scale-95 transition-all cursor-pointer"
+              title="Scan Barcode Aktiva dengan Kamera"
+            >
+              <i className="fas fa-qrcode text-base" />
+            </button>
+          </Input>
+
+          <Input
+            label="External ID"
+            placeholder="ID eksternal"
+            value={form.external_id}
+            onChange={e => set('external_id', e.target.value)}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveScanField('external_id')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-slate-800/80 active:scale-95 transition-all cursor-pointer"
+              title="Scan External ID dengan Kamera"
+            >
+              <i className="fas fa-qrcode text-base" />
+            </button>
+          </Input>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -134,8 +179,16 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
           <Button type="submit" variant="primary" fullWidth loading={submitting}>Simpan</Button>
         </div>
       </form>
+
+      {/* Camera QR/Barcode Scanner Modal */}
+      <QRScannerModal
+        isOpen={activeScanField !== null}
+        onClose={() => setActiveScanField(null)}
+        onScanResult={handleScanResult}
+      />
     </ModalShell>
   );
 };
 
 export default ItemFormModal;
+
