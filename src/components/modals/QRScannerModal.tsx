@@ -17,6 +17,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
   const [torchOn, setTorchOn] = useState(false);
   const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
   const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
+  const [isNativeTg, setIsNativeTg] = useState(false);
   const isRunningRef = useRef(false);
 
   const stopScanner = async () => {
@@ -128,11 +129,40 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
   // Mulai scanner saat modal terbuka
   useEffect(() => {
     if (isOpen) {
-      loadCameraList();
-      // Tunggu sebentar DOM sudah render
-      const t = setTimeout(() => startScanner(), 300);
-      return () => clearTimeout(t);
+      const tgWebApp = (window as any).Telegram?.WebApp;
+      if (tgWebApp?.showScanQrPopup) {
+        setIsNativeTg(true);
+        try {
+          tgWebApp.showScanQrPopup(
+            { text: 'Arahkan kamera ke QR / Barcode Aset' },
+            (scannedText: string) => {
+              if (scannedText) {
+                onScanResult(scannedText.trim());
+                try { tgWebApp.closeScanQrPopup(); } catch {}
+                onClose();
+                return true;
+              }
+              return false;
+            }
+          );
+        } catch {
+          setIsNativeTg(false);
+          loadCameraList();
+          const t = setTimeout(() => startScanner(), 300);
+          return () => clearTimeout(t);
+        }
+      } else {
+        setIsNativeTg(false);
+        loadCameraList();
+        const t = setTimeout(() => startScanner(), 300);
+        return () => clearTimeout(t);
+      }
     } else {
+      const tgWebApp = (window as any).Telegram?.WebApp;
+      if (tgWebApp?.closeScanQrPopup) {
+        try { tgWebApp.closeScanQrPopup(); } catch {}
+      }
+      setIsNativeTg(false);
       stopScanner();
       setState('idle');
       setErrorMsg('');
@@ -144,10 +174,14 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
   useEffect(() => {
     return () => {
       stopScanner();
+      const tgWebApp = (window as any).Telegram?.WebApp;
+      if (tgWebApp?.closeScanQrPopup) {
+        try { tgWebApp.closeScanQrPopup(); } catch {}
+      }
     };
   }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen || isNativeTg) return null;
 
   return (
     <div className="modal-overlay active" onClick={(e) => { if (e.target === e.currentTarget) { stopScanner(); onClose(); } }}>

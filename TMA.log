@@ -839,6 +839,18 @@ Implementasi:
   - `src/views/ProfileView.tsx`:
     * Menambahkan opsi menu "Export ke Google Sheets" pada daftar menu Profile pengguna IT.
 
+--------------------------------------------------------------------------------
+STEP 52: INTEGRASI TELEGRAM NATIVE QR SCANNER API PADA SCANNER ASET (2026-08-14)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Mengatasi masalah popup izin kamera yang meminta persetujuan berulang kali saat menekan tombol scan barcode di Telegram WebApp.
+
+Implementasi:
+  - `src/components/modals/QRScannerModal.tsx`:
+    * Mengintegrasikan API Native Scanner bawaan Telegram WebApp (`window.Telegram.WebApp.showScanQrPopup`).
+    * Saat berjalan di dalam Telegram (Android/iOS), aplikasi menggunakan scanner C++/Java native Telegram sehingga izin kamera hanya perlu disetujui 1x di level OS perangkat tanpa ada popup otorisasi browser berulang kali.
+    * Menjaga fallback otomatis ke `html5-qrcode` saat aplikasi diakses melalui web browser biasa (non-Telegram).
+
 ================================================================================
                                  END OF LOG
 ================================================================================
