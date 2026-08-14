@@ -31,7 +31,7 @@ const LoginView = () => {
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300 ${
-      isDark ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-br from-slate-100 via-white to-blue-50/60 text-slate-900'
+      isDark ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-br from-slate-100 via-white to-blue-50/60 text-black'
     }`}>
       {/* Component-scoped animation styles */}
       <style>{`
@@ -69,7 +69,7 @@ const LoginView = () => {
           className={`px-3 py-2 rounded-xl border flex items-center gap-2 text-xs font-bold shadow-sm transition-all cursor-pointer ${
             isDark
               ? 'bg-slate-900/90 border-slate-700 text-yellow-400 hover:bg-slate-800'
-              : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-slate-200/80'
+              : 'bg-white border-slate-300 text-black hover:bg-slate-50 shadow-slate-200/80'
           }`}
           title={`Beralih ke Tema ${isDark ? 'Terang' : 'Gelap'}`}
         >
@@ -93,7 +93,7 @@ const LoginView = () => {
           <h1 className="text-2xl font-black tracking-tight mb-1">
             E1-<span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">TMA</span>
           </h1>
-          <p className={`text-xs font-bold tracking-wider uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`text-xs font-bold tracking-wider uppercase ${isDark ? 'text-slate-400' : 'text-black'}`}>
             IT Asset Inventory Management
           </p>
         </div>
@@ -105,10 +105,10 @@ const LoginView = () => {
             : 'bg-white border-slate-200/90 shadow-xl shadow-slate-300/40'
         }`}>
           <div className="mb-5">
-            <h2 className={`text-base font-bold mb-1 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+            <h2 className={`text-base font-bold mb-1 ${isDark ? 'text-slate-100' : 'text-black'}`}>
               Masuk ke Akun
             </h2>
-            <p className={`text-xs leading-relaxed font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+            <p className={`text-xs leading-relaxed font-medium ${isDark ? 'text-slate-300' : 'text-black'}`}>
               Gunakan Telegram Username atau ID beserta password TMA Anda.
             </p>
           </div>
@@ -125,13 +125,13 @@ const LoginView = () => {
             {/* Telegram ID / Username */}
             <div>
               <label className={`block text-[11px] font-bold tracking-wider uppercase mb-1.5 ${
-                isDark ? 'text-slate-300' : 'text-slate-700'
+                isDark ? 'text-slate-300' : 'text-black'
               }`}>
                 TELEGRAM ID <span className="text-blue-600 dark:text-blue-400">/ @USERNAME</span>
               </label>
               <div className="relative group">
                 <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm transition-colors group-focus-within:text-blue-500 ${
-                  isDark ? 'text-slate-500' : 'text-slate-400'
+                  isDark ? 'text-slate-500' : 'text-black'
                 }`}>
                   <i className="fab fa-telegram" />
                 </div>
@@ -145,7 +145,7 @@ const LoginView = () => {
                   className={`w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl border outline-none transition-all focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
                     isDark
                       ? 'bg-slate-950/70 border-slate-800 text-slate-100 placeholder:text-slate-500 focus:bg-slate-900'
-                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white'
+                      : 'bg-slate-50 border-slate-300 text-black placeholder:text-slate-500 focus:bg-white'
                   }`}
                 />
               </div>
@@ -154,13 +154,13 @@ const LoginView = () => {
             {/* Password */}
             <div>
               <label className={`block text-[11px] font-bold tracking-wider uppercase mb-1.5 ${
-                isDark ? 'text-slate-300' : 'text-slate-700'
+                isDark ? 'text-slate-300' : 'text-black'
               }`}>
                 PASSWORD
               </label>
               <div className="relative group">
                 <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm transition-colors group-focus-within:text-blue-500 ${
-                  isDark ? 'text-slate-500' : 'text-slate-400'
+                  isDark ? 'text-slate-500' : 'text-black'
                 }`}>
                   <i className="fas fa-lock" />
                 </div>
@@ -174,14 +174,14 @@ const LoginView = () => {
                   className={`w-full pl-10 pr-11 py-3 text-xs sm:text-sm rounded-xl border outline-none transition-all focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
                     isDark
                       ? 'bg-slate-950/70 border-slate-800 text-slate-100 placeholder:text-slate-500 focus:bg-slate-900'
-                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white'
+                      : 'bg-slate-50 border-slate-300 text-black placeholder:text-slate-500 focus:bg-white'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass((v) => !v)}
                   className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 text-sm transition-colors cursor-pointer ${
-                    isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700'
+                    isDark ? 'text-slate-400 hover:text-slate-200' : 'text-black hover:text-slate-700'
                   }`}
                 >
                   <i className={`fas ${showPass ? 'fa-eye-slash' : 'fa-eye'}`} />
@@ -221,10 +221,10 @@ const LoginView = () => {
               <i className="fab fa-telegram text-base" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-xs font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+              <p className={`text-xs font-bold ${isDark ? 'text-slate-100' : 'text-black'}`}>
                 Akses via Telegram
               </p>
-              <p className={`text-[11px] leading-relaxed font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              <p className={`text-[11px] leading-relaxed font-medium ${isDark ? 'text-slate-300' : 'text-black'}`}>
                 Buka lewat Mini App untuk <span className="text-blue-600 dark:text-blue-400 font-bold">login otomatis</span> — tanpa password.
               </p>
             </div>
@@ -235,11 +235,11 @@ const LoginView = () => {
           <div className={`px-3.5 py-2.5 rounded-2xl border backdrop-blur-md flex items-center gap-2.5 transition-all ${
             isDark
               ? 'bg-slate-900/60 border-slate-800 text-slate-300'
-              : 'bg-white/80 border-slate-200 text-slate-700 shadow-sm'
+              : 'bg-white/80 border-slate-200 text-black shadow-sm'
           }`}>
             <i className="fas fa-shield-halved text-emerald-600 dark:text-emerald-400 text-xs shrink-0" />
-            <p className="text-[11px] font-medium leading-relaxed">
-              Koneksi terenkripsi via <span className={`font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>Supabase RLS</span> · Data tersimpan aman
+            <p className={`text-[11px] font-medium leading-relaxed ${isDark ? 'text-slate-300' : 'text-black'}`}>
+              Koneksi terenkripsi via <span className={`font-bold ${isDark ? 'text-slate-100' : 'text-black'}`}>Supabase RLS</span> · Data tersimpan aman
             </p>
           </div>
 
@@ -250,24 +250,24 @@ const LoginView = () => {
               : 'bg-white border-slate-200/90 shadow-sm'
           }`}>
             <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${
-              isDark ? 'text-slate-200' : 'text-slate-900'
+              isDark ? 'text-slate-200' : 'text-black'
             }`}>
               <i className="fas fa-circle-question text-amber-500" />
               Belum punya akses?
             </p>
             <ol className={`text-[11px] space-y-1 pl-4 list-decimal leading-relaxed font-medium ${
-              isDark ? 'text-slate-300' : 'text-slate-700'
+              isDark ? 'text-slate-300' : 'text-black'
             }`}>
-              <li>Buka <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>Telegram</strong> → cari bot <strong className="text-blue-600 dark:text-blue-400 font-bold">E1-TMA</strong> → Start</li>
-              <li>Di tab <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>Profil</strong>, klik <strong className="text-blue-600 dark:text-blue-400 font-bold">Password Akses Web</strong></li>
-              <li>Set password, lalu login di sini dengan <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>@username</strong></li>
+              <li>Buka <strong className={isDark ? 'text-slate-100' : 'text-black'}>Telegram</strong> → cari bot <strong className="text-blue-600 dark:text-blue-400 font-bold">E1-TMA</strong> → Start</li>
+              <li>Di tab <strong className={isDark ? 'text-slate-100' : 'text-black'}>Profil</strong>, klik <strong className="text-blue-600 dark:text-blue-400 font-bold">Password Akses Web</strong></li>
+              <li>Set password, lalu login di sini dengan <strong className={isDark ? 'text-slate-100' : 'text-black'}>@username</strong></li>
             </ol>
           </div>
         </div>
 
         {/* Footer */}
         <p className={`text-center text-[11px] font-bold ${
-          isDark ? 'text-slate-400' : 'text-slate-500'
+          isDark ? 'text-slate-400' : 'text-black'
         }`}>
           © {new Date().getFullYear()} E1-TMA — E1 IT Asset Management
         </p>
@@ -277,4 +277,3 @@ const LoginView = () => {
 };
 
 export default LoginView;
-
