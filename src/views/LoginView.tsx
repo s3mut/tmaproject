@@ -12,7 +12,6 @@ const LoginView = () => {
   const [showPass, setShowPass]     = useState(false);
   const [error, setError]           = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [focused, setFocused]       = useState<'id' | 'pass' | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +31,19 @@ const LoginView = () => {
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300 ${
-      isDark ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/50 text-slate-900'
+      isDark ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-br from-slate-100 via-white to-blue-50/60 text-slate-900'
     }`}>
+      {/* Component-scoped animation styles */}
+      <style>{`
+        @keyframes lv-fadeSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-lv-fadeSlideUp {
+          animation: lv-fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+      `}</style>
+
       {/* Animated background orbs */}
       <div className={`absolute -top-10 -left-10 w-96 h-96 rounded-full blur-3xl pointer-events-none animate-pulse ${
         isDark ? 'bg-blue-600/10' : 'bg-blue-400/20'
@@ -69,7 +79,7 @@ const LoginView = () => {
       </div>
 
       {/* Main Container */}
-      <div className="w-full max-w-sm relative z-10 space-y-6 my-auto">
+      <div className="w-full max-w-sm relative z-10 space-y-6 my-auto animate-lv-fadeSlideUp">
         {/* Header & Logo */}
         <div className="text-center">
           <div className="relative inline-flex items-center justify-center mb-3">
@@ -83,7 +93,7 @@ const LoginView = () => {
           <h1 className="text-2xl font-black tracking-tight mb-1">
             E1-<span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">TMA</span>
           </h1>
-          <p className={`text-xs font-bold tracking-wider uppercase ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`text-xs font-bold tracking-wider uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             IT Asset Inventory Management
           </p>
         </div>
@@ -119,9 +129,9 @@ const LoginView = () => {
               }`}>
                 TELEGRAM ID <span className="text-blue-600 dark:text-blue-400">/ @USERNAME</span>
               </label>
-              <div className="relative">
-                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm transition-colors ${
-                  focused === 'id' ? 'text-blue-600 dark:text-blue-400' : isDark ? 'text-slate-500' : 'text-slate-400'
+              <div className="relative group">
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm transition-colors group-focus-within:text-blue-500 ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
                 }`}>
                   <i className="fab fa-telegram" />
                 </div>
@@ -130,18 +140,12 @@ const LoginView = () => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  onFocus={() => setFocused('id')}
-                  onBlur={() => setFocused(null)}
                   placeholder="@username atau 12345678"
                   required
-                  className={`w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl border outline-none transition-all ${
+                  className={`w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl border outline-none transition-all focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
                     isDark
-                      ? focused === 'id'
-                        ? 'bg-slate-900 border-blue-500 ring-2 ring-blue-500/20 text-slate-100'
-                        : 'bg-slate-950/70 border-slate-800 text-slate-100 placeholder:text-slate-500'
-                      : focused === 'id'
-                        ? 'bg-white border-blue-500 ring-2 ring-blue-500/20 text-slate-900'
-                        : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400'
+                      ? 'bg-slate-950/70 border-slate-800 text-slate-100 placeholder:text-slate-500 focus:bg-slate-900'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white'
                   }`}
                 />
               </div>
@@ -154,9 +158,9 @@ const LoginView = () => {
               }`}>
                 PASSWORD
               </label>
-              <div className="relative">
-                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm transition-colors ${
-                  focused === 'pass' ? 'text-blue-600 dark:text-blue-400' : isDark ? 'text-slate-500' : 'text-slate-400'
+              <div className="relative group">
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm transition-colors group-focus-within:text-blue-500 ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
                 }`}>
                   <i className="fas fa-lock" />
                 </div>
@@ -165,18 +169,12 @@ const LoginView = () => {
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocused('pass')}
-                  onBlur={() => setFocused(null)}
                   placeholder="••••••••"
                   required
-                  className={`w-full pl-10 pr-11 py-3 text-xs sm:text-sm rounded-xl border outline-none transition-all ${
+                  className={`w-full pl-10 pr-11 py-3 text-xs sm:text-sm rounded-xl border outline-none transition-all focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
                     isDark
-                      ? focused === 'pass'
-                        ? 'bg-slate-900 border-blue-500 ring-2 ring-blue-500/20 text-slate-100'
-                        : 'bg-slate-950/70 border-slate-800 text-slate-100 placeholder:text-slate-500'
-                      : focused === 'pass'
-                        ? 'bg-white border-blue-500 ring-2 ring-blue-500/20 text-slate-900'
-                        : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400'
+                      ? 'bg-slate-950/70 border-slate-800 text-slate-100 placeholder:text-slate-500 focus:bg-slate-900'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white'
                   }`}
                 />
                 <button
@@ -197,12 +195,12 @@ const LoginView = () => {
               id="login-submit"
               disabled={submitting || isLoading}
               className={`w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center justify-center gap-2 shadow-lg transition-all ${
-                submitting
+                submitting || isLoading
                   ? 'opacity-70 cursor-not-allowed bg-blue-600'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] shadow-blue-500/25 cursor-pointer'
               }`}
             >
-              {submitting ? (
+              {(submitting || isLoading) ? (
                 <><i className="fas fa-spinner fa-spin" /> Memverifikasi...</>
               ) : (
                 <><i className="fas fa-arrow-right-to-bracket" /> Masuk</>
@@ -279,3 +277,4 @@ const LoginView = () => {
 };
 
 export default LoginView;
+
