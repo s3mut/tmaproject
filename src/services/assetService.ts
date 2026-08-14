@@ -116,3 +116,30 @@ export async function getRetiredReports(telegramId?: number): Promise<any[]> {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+// Batch Pemusnahan Massal Aset
+export async function bulkDisposeAssets(
+  disposals: Array<{ assetId: number; reason: string }>,
+  telegramId: number
+): Promise<void> {
+  for (const item of disposals) {
+    const { error } = await supabase.rpc('change_asset_status', {
+      p_asset_id: item.assetId,
+      p_new_status: 'Disposed',
+      p_telegram_id: telegramId,
+      p_notes: item.reason ? `[PEMUSNAHAN MASSAL] ${item.reason}` : '[PEMUSNAHAN MASSAL]'
+    });
+
+    if (error) {
+      // Fallback direct status update
+      await supabase
+        .from('master_assets')
+        .update({
+          status: 'Disposed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', item.assetId);
+    }
+  }
+}
+

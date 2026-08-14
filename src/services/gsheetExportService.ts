@@ -13,6 +13,15 @@ export interface GSheetExportRow {
   updated_at: string;
 }
 
+export interface DisposalExportItem {
+  aktiva: string;
+  brand: string;
+  model_type: string;
+  serial_number: string;
+  reason: string;
+  location: string;
+}
+
 /**
  * Filter assets based on updated_at timestamp filter
  */
@@ -74,13 +83,13 @@ export const exportToGoogleSheetWebhook = async (webhookUrl: string, rows: GShee
   }
 
   const payload = {
+    action: 'overwrite_inventory',
     app: 'E1-TMA',
     timestamp: new Date().toISOString(),
     total_records: rows.length,
     data: rows,
   };
 
-  // mode: 'no-cors' allows sending POST payload to Google Apps Script without CORS preflight block
   await fetch(url, {
     method: 'POST',
     mode: 'no-cors',
@@ -94,17 +103,103 @@ export const exportToGoogleSheetWebhook = async (webhookUrl: string, rows: GShee
 };
 
 /**
- * Ready-to-copy Google Apps Script template for user's Google Sheet
+ * Appends BAST Pemusnahan data to sheet tab 'BAST-Ei' in user's Google Sheet
+ */
+export const exportDisposalToGoogleSheetWebhook = async (
+  webhookUrl: string,
+  params: {
+    bastNo: string;
+    disposalDate: string;
+    processedBy: string;
+    items: DisposalExportItem[];
+  }
+): Promise<boolean> => {
+  const url = webhookUrl.trim();
+  if (!url) throw new Error('URL Webhook / Google Apps Script belum diisi!');
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    throw new Error('URL harus diawali dengan http:// atau https://');
+  }
+
+  const payload = {
+    action: 'append_disposal',
+    sheet_name: 'BAST-Ei',
+    bast_no: params.bastNo,
+    disposal_date: params.disposalDate,
+    processed_by: params.processedBy,
+    total_records: params.items.length,
+    data: params.items,
+  };
+
+  await fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return true;
+};
+
+/**
+ * Ready-to-copy Google Apps Script template supporting snapshot export & BAST-Ei disposal append
  */
 export const GOOGLE_APPS_SCRIPT_CODE = `function doPost(e) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
     var contents = JSON.parse(e.postData.contents);
-    var data = contents.data || [];
+    var action = contents.action || 'overwrite_inventory';
     
-    // Clear data sebelumnya & buat header
-    sheet.clearContents();
-    sheet.appendRow([
+    // --- 1. ACTION: APPEND PEMUSNAHAN (TAB BAST-Ei) ---
+    if (action === 'append_disposal') {
+      var sheetName = contents.sheet_name || 'BAST-Ei';
+      var sheet = ss.getSheetByName(sheetName);
+      
+      // Buat tab 'BAST-Ei' jika belum ada
+      if (!sheet) {
+        sheet = ss.insertSheet(sheetName);
+        sheet.appendRow([
+          "No. BAST",
+          "Tanggal Pemusnahan",
+          "Aktiva",
+          "Merk",
+          "Type",
+          "S/N",
+          "Alasan Pemusnahan",
+          "Lokasi",
+          "Diproses Oleh"
+        ]);
+        var hRange = sheet.getRange(1, 1, 1, 9);
+        hRange.setFontWeight("bold");
+        hRange.setBackground("#991b1b");
+        hRange.setFontColor("#ffffff");
+      }
+      
+      // Append data pemusnahan (melanjutkan baris sebelumnya)
+      var dataItems = contents.data || [];
+      dataItems.forEach(function(item) {
+        sheet.appendRow([
+          contents.bast_no || "",
+          contents.disposal_date || "",
+          item.aktiva || "",
+          item.brand || "",
+          item.model_type || "",
+          item.serial_number || "",
+          item.reason || "",
+          item.location || "",
+          contents.processed_by || ""
+        ]);
+      });
+      
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", count: dataItems.length }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // --- 2. ACTION: SNAPSHOT FULL INVENTORY ---
+    var activeSheet = ss.getActiveSheet();
+    activeSheet.clearContents();
+    activeSheet.appendRow([
       "External ID",
       "Serial Number",
       "Lokasi / Site",
@@ -115,15 +210,14 @@ export const GOOGLE_APPS_SCRIPT_CODE = `function doPost(e) {
       "Terakhir Diperbarui"
     ]);
     
-    // Styling Header
-    var headerRange = sheet.getRange(1, 1, 1, 8);
+    var headerRange = activeSheet.getRange(1, 1, 1, 8);
     headerRange.setFontWeight("bold");
     headerRange.setBackground("#1e293b");
     headerRange.setFontColor("#ffffff");
     
-    // Append rows
-    data.forEach(function(item) {
-      sheet.appendRow([
+    var inventoryData = contents.data || [];
+    inventoryData.forEach(function(item) {
+      activeSheet.appendRow([
         item.external_id || "",
         item.serial_number || "",
         item.location || "",
@@ -135,7 +229,7 @@ export const GOOGLE_APPS_SCRIPT_CODE = `function doPost(e) {
       ]);
     });
     
-    return ContentService.createTextOutput(JSON.stringify({ status: "success", count: data.length }))
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", count: inventoryData.length }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))

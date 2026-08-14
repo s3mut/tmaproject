@@ -9,6 +9,7 @@ import BackupModal from '../components/modals/BackupModal';
 import UserManagementModal from '../components/modals/UserManagementModal';
 import OverdueAlertModal from '../components/modals/OverdueAlertModal';
 import ExportGSheetModal from '../components/modals/ExportGSheetModal';
+import BulkDisposalModal from '../components/modals/BulkDisposalModal';
 import { getOverdueLoans } from '../services/reportService';
 import type { OverdueLoan } from '../services/reportService';
 import { getPendingUsersCount } from '../services/userService';
@@ -31,6 +32,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
   const [userMgmtModalOpen, setUserMgmtModalOpen] = useState(false);
   const [overdueOpen, setOverdueOpen]           = useState(false);
   const [gsheetModalOpen, setGsheetModalOpen]   = useState(false);
+  const [bulkDisposalModalOpen, setBulkDisposalModalOpen] = useState(false);
   const [overdueLoans, setOverdueLoans]         = useState<OverdueLoan[]>([]);
   const [pendingReqCount, setPendingReqCount]   = useState(0);
 
@@ -75,6 +77,12 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         badgeDot: pendingReqCount > 0 ? String(pendingReqCount) : undefined,
       },
     ] : []),
+    {
+      icon: 'fa-dumpster', color: 'text-red-400', bg: 'bg-red-500/20',
+      title: 'Pemusnahan Massal & BAST', subtitle: 'Proses penghapusan aset massal & cetak BAST Pemusnahan',
+      onClick: () => setBulkDisposalModalOpen(true),
+      hideGuest: true,
+    },
     {
       icon: 'fa-file-excel', color: 'text-emerald-400', bg: 'bg-emerald-500/20',
       title: 'Export ke Google Sheets', subtitle: 'Kirim snapshot data inventory ke spreadsheet Google Anda',
@@ -321,6 +329,19 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         isOpen={gsheetModalOpen}
         onClose={() => setGsheetModalOpen(false)}
         assets={assets}
+        onShowToast={onShowToast}
+      />
+
+      {/* Bulk Disposal Modal */}
+      <BulkDisposalModal
+        isOpen={bulkDisposalModalOpen}
+        onClose={() => setBulkDisposalModalOpen(false)}
+        assets={assets}
+        currentUserId={currentUser?.telegram_id}
+        currentUserName={currentUser?.name}
+        onSuccess={() => {
+          if (onShowToast) onShowToast('✅ Data pemusnahan berhasil disimpan!', 'success');
+        }}
         onShowToast={onShowToast}
       />
     </div>

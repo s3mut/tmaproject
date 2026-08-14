@@ -851,6 +851,26 @@ Implementasi:
     * Saat berjalan di dalam Telegram (Android/iOS), aplikasi menggunakan scanner C++/Java native Telegram sehingga izin kamera hanya perlu disetujui 1x di level OS perangkat tanpa ada popup otorisasi browser berulang kali.
     * Menjaga fallback otomatis ke `html5-qrcode` saat aplikasi diakses melalui web browser biasa (non-Telegram).
 
+--------------------------------------------------------------------------------
+STEP 53: MODUL PEMUSNAHAN MASSAL & CETAK BAST DENGAN SYNC TAB GOOGLE SHEET BAST-Ei (2026-08-14)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Memfasilitasi proses pemusnahan massal banyak unit aset sekaligus dengan pencetakan dokumen resmi Berita Acara Pemusnahan Aset TI (BAST Pemusnahan).
+  - Melakukan enkspor/sync otomatis ke Google Sheet milik user pada tab sheet khusus `BAST-Ei` (membuat tab `BAST-Ei` jika belum ada, dan melanjutkan data sebelumnya jika sudah ada).
+
+Implementasi:
+  - `src/utils/printDisposalBAST.ts`:
+    * Membuat modul cetak dokumen A4 BAST Pemusnahan Aset TI dengan kolom persis: **Aktiva**, **MERK**, **TYPE**, **S/N**, **ALASAN PEMUSNAHAN**, dan **LOKASI**, serta 3 kolom tanda tangan legalitas.
+  - `src/services/gsheetExportService.ts`:
+    * Menambahkan fungsi `exportDisposalToGoogleSheetWebhook` dengan action `append_disposal` dan `sheet_name: 'BAST-Ei'`.
+    * Memperbarui template Google Apps Script untuk otomatis membuat sheet tab `BAST-Ei` dengan header merah dan meng-append baris pemusnahan di bawah data sebelumnya.
+  - `src/services/assetService.ts`:
+    * Menambahkan fungsi batch DB `bulkDisposeAssets` untuk mengalihkan status banyak aset ke `Disposed`.
+  - `src/components/modals/BulkDisposalModal.tsx`:
+    * Modal UI seleksi aset massal, pengisian alasan pemusnahan per unit/global, penomoran BAST otomatis, auto-sync ke tab `BAST-Ei`, dan pemicu pencetakan BAST.
+  - `src/views/ProfileView.tsx`:
+    * Menambahkan opsi menu baru "Pemusnahan Massal & BAST" pada menu Profile Tim IT.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
