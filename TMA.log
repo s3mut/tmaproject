@@ -871,6 +871,20 @@ Implementasi:
   - `src/views/ProfileView.tsx`:
     * Menambahkan opsi menu baru "Pemusnahan Massal & BAST" pada menu Profile Tim IT.
 
+--------------------------------------------------------------------------------
+STEP 54: PERBAIKAN KONTRAS TAMPILAN LOGIN VIEW & SUPPORT TEMA CERAH (2026-08-14)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Mengatasi masalah kontras teks rendah pada halaman Login Web (`LoginView.tsx`) di mana warna font gelap tertimpa background card gelap sehingga teks sulit dibaca.
+  - Menyesuaikan tampilan Login View agar secara fleksibel mendukung Tema Cerah (*Light Mode*) dan Tema Gelap (*Dark Mode*).
+
+Implementasi:
+  - `src/views/LoginView.tsx`:
+    * Menggunakan `useTheme()` context untuk merestrukturisasi styling secara dinamis.
+    * Pada Mode Terang (*Light Mode*): Menggunakan card putih bersih (`bg-white/90 border-slate-200`), judul & label teks hitam/slate gelap (`text-slate-900`, `text-slate-700`, `text-slate-600`), dan input `bg-slate-50 border-slate-300` sehingga kontras 100% sangat jelas dan mudah dibaca.
+    * Pada Mode Gelap (*Dark Mode*): Menggunakan card `bg-slate-900/90 border-slate-800` dan teks terang (`text-slate-100`, `text-slate-300`).
+    * Menambahkan tombol toggle Tema (Mode Terang / Mode Gelap) di pojok kanan atas halaman login.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
