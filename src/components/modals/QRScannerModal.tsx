@@ -128,11 +128,20 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
 
   // Mulai scanner saat modal terbuka
   useEffect(() => {
+    let handlePopupClosed: (() => void) | null = null;
+    const tgWebApp = (window as any).Telegram?.WebApp;
+
     if (isOpen) {
-      const tgWebApp = (window as any).Telegram?.WebApp;
       if (tgWebApp?.showScanQrPopup) {
         setIsNativeTg(true);
         try {
+          handlePopupClosed = () => {
+            onClose();
+          };
+          if (tgWebApp.onEvent) {
+            tgWebApp.onEvent('scanQrPopupClosed', handlePopupClosed);
+          }
+
           tgWebApp.showScanQrPopup(
             { text: 'Arahkan kamera ke QR / Barcode Aset' },
             (scannedText: string) => {
@@ -149,7 +158,12 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
           setIsNativeTg(false);
           loadCameraList();
           const t = setTimeout(() => startScanner(), 300);
-          return () => clearTimeout(t);
+          return () => {
+            clearTimeout(t);
+            if (handlePopupClosed && tgWebApp?.offEvent) {
+              tgWebApp.offEvent('scanQrPopupClosed', handlePopupClosed);
+            }
+          };
         }
       } else {
         setIsNativeTg(false);
@@ -158,7 +172,6 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
         return () => clearTimeout(t);
       }
     } else {
-      const tgWebApp = (window as any).Telegram?.WebApp;
       if (tgWebApp?.closeScanQrPopup) {
         try { tgWebApp.closeScanQrPopup(); } catch {}
       }
@@ -168,6 +181,12 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
       setErrorMsg('');
       setTorchOn(false);
     }
+
+    return () => {
+      if (handlePopupClosed && tgWebApp?.offEvent) {
+        tgWebApp.offEvent('scanQrPopupClosed', handlePopupClosed);
+      }
+    };
   }, [isOpen]);
 
   // Cleanup saat unmount
