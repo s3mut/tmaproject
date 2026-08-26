@@ -951,6 +951,17 @@ Implementasi:
   - `src/services/transactionService.ts`: Mengkalkulasi `due_date` otomatis (tanggal penerimaan + durasi pinjam) saat status berubah menjadi "In Progress".
   - `supabase/functions/cron-overdue/index.ts`: Membuat *Edge Function* untuk dieksekusi via *cron job* yang akan menyeleksi barang *overdue* dan menembak notifikasi rekap harian ke Telegram Admin IT per *region*.
 
+--------------------------------------------------------------------------------
+STEP 60: CODEBASE AUDIT & CLEANUP (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Membersihkan *file* mati, *props* palsu (dummy), dan fitur UI yang masih beku dari peninggalan versi sebelumnya.
+
+Implementasi:
+  - Menghapus 100% `src/services/loanService.ts` dan `src/services/mutationService.ts` yang sudah tergantikan oleh `transactionService.ts`.
+  - Membersihkan pengiriman *dummy props* `mutations={[]}` dan `loans={[]}` dari `App.tsx` ke `DashboardView.tsx`.
+  - Menyembunyikan/menghapus sementara menu "Generate QR Labels" di halaman Profil karena fiturnya belum siap.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

@@ -319,8 +319,7 @@ function App() {
               setSelectedRegion('all');
               setIsShowingItems(false);
             }}
-            mutations={[]} // Temp fix until Dashboard is updated
-            loans={[]} // Temp fix until Dashboard is updated
+            transactions={transactions}
             lockedAssetIds={lockedAssetIds}
             categories={categories}
             loading={loading}

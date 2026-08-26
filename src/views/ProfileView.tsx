@@ -107,13 +107,6 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
       onClick: () => setOverdueOpen(true),
       badgeDot: overdueLoans.length > 0 ? String(overdueLoans.length) : undefined,
       hideGuest: true,
-    },
-    {
-      icon: 'fa-qrcode', color: 'text-purple-400', bg: 'bg-purple-500/20',
-      title: 'Generate QR Labels', subtitle: 'Cetak label aset',
-      onClick: () => alert('Fitur QR Labels akan segera tersedia!'),
-      hideGuest: true,
-    },
     {
       icon: 'fa-sync-alt', color: 'text-emerald-400', bg: 'bg-emerald-500/20',
       title: 'Sinkronisasi Data', subtitle: 'Refresh dari Supabase',
