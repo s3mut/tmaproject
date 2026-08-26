@@ -962,6 +962,16 @@ Implementasi:
   - Membersihkan pengiriman *dummy props* `mutations={[]}` dan `loans={[]}` dari `App.tsx` ke `DashboardView.tsx`.
   - Menyembunyikan/menghapus sementara menu "Generate QR Labels" di halaman Profil karena fiturnya belum siap.
 
+--------------------------------------------------------------------------------
+STEP 61: NOTIFIKASI TELEGRAM PADA TAHAP DISPATCH (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Peminjam (User) butuh notifikasi Telegram saat barang pesanannya dikirim (dialokasikan) oleh Admin IT.
+
+Implementasi:
+  - `src/services/transactionService.ts`: Menambahkan logika pemanggilan Edge Function `telegram-bot/dispatch` ketika Admin menyetujui "Kirim & Serahkan Unit" (`status === 'In Transit'`).
+  - `supabase/functions/telegram-bot/index.ts`: Menambahkan *endpoint* baru `/dispatch` untuk mengirimkan pesan Telegram "Barang pesanan Anda telah Dialokasikan dan Dikirim oleh Admin" langsung ke DM (*Direct Message*) pemohon aslinya (`requested_by`).
+
 ================================================================================
                                  END OF LOG
 ================================================================================

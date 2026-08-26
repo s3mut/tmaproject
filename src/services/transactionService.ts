@@ -178,6 +178,39 @@ export async function updateTransactionStatus(
 
   if (error) throw new Error(error.message);
 
+  // Trigger Telegram Notification for Dispatch
+  if (newStatus === 'In Transit') {
+    try {
+      const { data: trxFull } = await supabase
+        .from('asset_transactions')
+        .select(`
+          transaction_code,
+          transaction_type,
+          requested_by,
+          asset_id
+        `)
+        .eq('id', transactionId)
+        .single();
+
+      if (trxFull) {
+        const { data: assetData } = await supabase.from('master_assets').select('serial_number, brand, model_type').eq('id', trxFull.asset_id).single();
+        
+        await supabase.functions.invoke('telegram-bot/dispatch', {
+          body: {
+            transaction_code: trxFull.transaction_code,
+            type: trxFull.transaction_type,
+            requested_by: trxFull.requested_by,
+            asset_brand: assetData?.brand || '',
+            asset_model: assetData?.model_type || '',
+            serial_number: assetData?.serial_number || ''
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to invoke telegram-bot for dispatch:', err);
+    }
+  }
+
   // Jika transaksi selesai, perbarui lokasi fisik aset (master_assets)
   if (newStatus === 'Completed') {
     // Ambil detail transaksi untuk mengetahui to_site_code dan asset_id

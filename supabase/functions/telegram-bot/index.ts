@@ -196,6 +196,35 @@ Deno.serve(async (req) => {
       return new Response("OK", { status: 200 });
     }
 
+    // ==========================================
+    // 3. ENDPOINT: /dispatch
+    // ==========================================
+    // Dipanggil saat Admin mengklik tombol "Kirim & Serahkan Unit" (In Transit)
+    if (url.pathname.endsWith("/dispatch")) {
+      if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+      const body = await req.json();
+      const { transaction_code, type, requested_by, asset_brand, asset_model, serial_number } = body;
+
+      const messageText = `*📦 PENGIRIMAN ASET (${type.toUpperCase()})*\n\n` +
+                          `Barang pesanan Anda telah *Dialokasikan dan Dikirim* oleh Admin.\n\n` +
+                          `*Kode Trx*: ${transaction_code}\n` +
+                          `*Barang*: ${asset_brand} ${asset_model}\n` +
+                          `*S/N*: ${serial_number}\n\n` +
+                          `Silakan konfirmasi penerimaan di aplikasi TMA jika barang sudah tiba di lokasi Anda.`;
+
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: requested_by,
+          text: messageText,
+          parse_mode: "Markdown",
+        })
+      });
+
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    }
+
     return new Response("Not Found", { status: 404 });
   } catch (error) {
     console.error("Function error:", error);
