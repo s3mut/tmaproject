@@ -132,7 +132,8 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
     const tgWebApp = (window as any).Telegram?.WebApp;
 
     if (isOpen) {
-      if (tgWebApp?.showScanQrPopup) {
+      const canUseNativeQr = tgWebApp?.isVersionAtLeast && tgWebApp.isVersionAtLeast('6.4') && tgWebApp?.showScanQrPopup;
+      if (canUseNativeQr) {
         setIsNativeTg(true);
         try {
           handlePopupClosed = () => {
@@ -147,7 +148,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
             (scannedText: string) => {
               if (scannedText) {
                 onScanResult(scannedText.trim());
-                try { tgWebApp.closeScanQrPopup(); } catch {}
+                try { tgWebApp.closeScanQrPopup?.(); } catch {}
                 onClose();
                 return true;
               }
@@ -173,7 +174,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
       }
     } else {
       if (tgWebApp?.closeScanQrPopup) {
-        try { tgWebApp.closeScanQrPopup(); } catch {}
+        try { tgWebApp.closeScanQrPopup?.(); } catch {}
       }
       setIsNativeTg(false);
       stopScanner();
@@ -195,7 +196,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
       stopScanner();
       const tgWebApp = (window as any).Telegram?.WebApp;
       if (tgWebApp?.closeScanQrPopup) {
-        try { tgWebApp.closeScanQrPopup(); } catch {}
+        try { tgWebApp.closeScanQrPopup?.(); } catch {}
       }
     };
   }, []);
