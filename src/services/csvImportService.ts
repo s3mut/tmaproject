@@ -114,14 +114,15 @@ export function parseCSVText(csvText: string, categories: Category[], sites: Sit
       if (matchedSite) {
         validSiteAlias = matchedSite;
       } else {
-        // Jika site_alias di CSV tidak ditemukan di tabel sites, set null agar aman
         validSiteAlias = null;
       }
     }
 
     // Normalisasi status
-    const validStatuses: AssetStatus[] = ['Active', 'Backup', 'Repair', 'Disposed', 'In Transit', 'Retired'];
-    const matchedStatus = validStatuses.find(s => s.toLowerCase() === rawStatus.toLowerCase()) || 'Active';
+    let status: AssetStatus = 'Active';
+    if (rawStatus === 'Backup') status = 'Backup';
+    else if (rawStatus === 'Retired') status = 'Retired';
+    else if (rawStatus === 'Disposed') status = 'Disposed';
 
     // Check category match
     const matchedCat = categoryMap.get(catInput.toUpperCase());

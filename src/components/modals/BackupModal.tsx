@@ -121,15 +121,6 @@ const BackupModal: React.FC<Props> = ({
 
   const handleExportMutationsCSV = () => {
     try {
-      const headers = [
-        'ID Mutasi',
-        'Serial Number Aset',
-        'Brand Aset',
-        'Model Aset',
-        'Dari Site',
-        'Ke Site (Kode)',
-        'Ke Site (Nama)',
-        'Status',
       if (transactions.length === 0) {
         onShowToast?.('Data transaksi kosong, tidak ada yang diexport.', 'error');
         return;

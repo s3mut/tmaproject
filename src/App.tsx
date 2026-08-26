@@ -10,7 +10,6 @@ import Toast from './components/Toast';
 import ItemFormModal from './components/modals/ItemFormModal';
 import ItemDetailModal from './components/modals/ItemDetailModal';
 import QRScannerModal from './components/modals/QRScannerModal';
-import MutationModal from './components/modals/MutationModal';
 import TransactionModal from './components/modals/TransactionModal';
 import CSVImportModal from './components/modals/CSVImportModal';
 import ConfirmModal from './components/modals/ConfirmModal';
@@ -326,7 +325,7 @@ function App() {
             onItemClick={handleItemClick}
             onCategoryClick={handleCategoryClick}
             onRegionClick={handleRegionClick}
-            onViewAll={() => setActiveTab('history')}
+            onViewAll={() => setActiveTab('transactions')}
             onStatusClick={handleStatusClick}
           />
         )}

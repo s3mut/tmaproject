@@ -30,6 +30,15 @@ interface RegionCardProps {
   onItemClick: (id: number) => void;
 }
 
+const statusBadge: Record<string, { bg: string, text: string, icon: string }> = {
+  'Active':     { bg: 'bg-green-500/15',  text: 'text-green-400',  icon: 'fa-check-circle' },
+  'Backup':     { bg: 'bg-blue-500/15',   text: 'text-blue-400',   icon: 'fa-archive' },
+  'Repair':     { bg: 'bg-amber-500/15',  text: 'text-amber-400',  icon: 'fa-tools' },
+  'Disposed':   { bg: 'bg-red-500/15',    text: 'text-red-400',    icon: 'fa-trash-alt' },
+  'In Transit': { bg: 'bg-purple-500/15', text: 'text-purple-400', icon: 'fa-truck' },
+  'Retired':    { bg: 'bg-slate-500/15',  text: 'text-slate-400',  icon: 'fa-power-off' }
+};
+
 const STATUS_COLOR: Record<string, string> = {
   Active:     'text-emerald-400',
   Backup:     'text-blue-400',

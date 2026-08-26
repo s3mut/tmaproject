@@ -6,6 +6,7 @@ import { SiteSearchInput } from '../components/ui';
 
 interface Props {
   assets: AssetDetail[];
+  sites: Site[];
   lockedAssetIds?: Set<number>;
   onBulkStatusChange?: (assetIds: number[], newStatus: AssetStatus, notes: string) => Promise<void>;
 }

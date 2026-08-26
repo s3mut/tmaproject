@@ -152,7 +152,8 @@ const DashboardView = ({
     backup:    filteredAssets.filter(a => a.status === 'Backup').length,
     retired:   filteredAssets.filter(a => a.status === 'Retired').length,
     disposed:  filteredAssets.filter(a => a.status === 'Disposed').length,
-  }), [filteredAssets]);
+    inTransit: (transactions || []).filter(t => t.status === 'In Transit').length,
+  }), [filteredAssets, transactions]);
 
   // Klik stat card: barulah navigasi ke Items dengan status + kategori + region aktif
   const handleStatClick = (status: string) => {
