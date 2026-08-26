@@ -173,7 +173,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
         return () => clearTimeout(t);
       }
     } else {
-      if (tgWebApp?.closeScanQrPopup) {
+      if (tgWebApp?.isVersionAtLeast?.('6.4') && tgWebApp?.closeScanQrPopup) {
         try { tgWebApp.closeScanQrPopup?.(); } catch {}
       }
       setIsNativeTg(false);
@@ -195,7 +195,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
     return () => {
       stopScanner();
       const tgWebApp = (window as any).Telegram?.WebApp;
-      if (tgWebApp?.closeScanQrPopup) {
+      if (tgWebApp?.isVersionAtLeast?.('6.4') && tgWebApp?.closeScanQrPopup) {
         try { tgWebApp.closeScanQrPopup?.(); } catch {}
       }
     };
