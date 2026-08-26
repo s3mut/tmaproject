@@ -981,6 +981,43 @@ Kebutuhan:
 Implementasi:
   - `src/views/OpnameView.tsx`: Mengganti tombol besar "Scan Aset" dengan kolom pencarian (*input text*) ala *search bar* yang memiliki *icon* QR Scanner di sudut kanan (mirip dengan tampilan Beranda). Pengguna kini bisa mengetik S/N lalu menekan *Enter* untuk mencentang aset.
 
+--------------------------------------------------------------------------------
+STEP 63: TRANSACTION LIFECYCLE & REGION APPROVAL (2026-08-27)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Validasi *approval* transaksi berdasarkan wilayah (Region) Admin, serta siklus hidup pengembalian aset.
+
+Implementasi:
+  - Menambahkan status `Returning` pada *lifecycle* transaksi.
+  - Memodifikasi `getTransactions` agar mengambil `to_site_region`.
+  - Memperbarui `TransactionsView` agar Admin hanya dapat menyetujui transaksi yang sesuai dengan `assigned_region` miliknya.
+  - Menambahkan tombol "Kembalikan Unit" untuk user (saat status `In Progress`) dan "Terima di Gudang" (saat status `Returning`).
+
+--------------------------------------------------------------------------------
+STEP 64: STRICT TYPESCRIPT & BUILD FIXES (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Build produksi Vite (npm run build) gagal akibat tipe data TypeScript yang bentrok pasca *refactoring* dan hilangnya beberapa *interface* usang.
+
+Implementasi:
+  - Menyelesaikan semua peringatan dan error *compiler* TypeScript:
+    * Membersihkan variabel usang dari destructuring (TS6133).
+    * Mengganti referensi `AssetLoan` yang hilang ke `any` sebagai hotfix compatibility (TS2305).
+    * Memperbaiki pemanggilan Record<TransactionStatus, ...> pada indeks *array* menggunakan `keyof typeof` (TS7053).
+    * Memperketat *type casting* `AssetStatus | 'all'` pada state *filtering* di `ItemsView.tsx`.
+    * Mengubah pemanggilan `Card` usang pada `TransactionsView.tsx` menjadi komponen div glass biasa.
+
+--------------------------------------------------------------------------------
+STEP 65: QR SCANNER VERSION COMPATIBILITY FIX (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Telegram WebApp SDK v6.0 mengalami *crash* saat memanggil metode *Native Scanner* `closeScanQrPopup()`, karena metode ini baru didukung sejak v6.4.
+
+Implementasi:
+  - Mengubah fungsi deteksi scanner di `QRScannerModal.tsx` agar memverifikasi menggunakan `isVersionAtLeast('6.4')`.
+  - Jika versi pengguna di bawah v6.4, Telegram secara otomatis akan diarahkan (*fallback*) menggunakan HTML5 Video Web Camera biasa (zxing-library) alih-alih mencoba menggunakan Native Scanner Telegram yang tidak disupport.
+  - Menggunakan *optional chaining* `tgWebApp.closeScanQrPopup?.()` pada semua fase eksekusi dan *cleanup effect* agar tidak menimbulkan *unhandled promise rejection* atau crash di aplikasi versi lawas.
+
 ================================================================================
                                  END OF LOG
 ================================================================================
