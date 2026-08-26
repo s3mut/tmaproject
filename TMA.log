@@ -972,6 +972,15 @@ Implementasi:
   - `src/services/transactionService.ts`: Menambahkan logika pemanggilan Edge Function `telegram-bot/dispatch` ketika Admin menyetujui "Kirim & Serahkan Unit" (`status === 'In Transit'`).
   - `supabase/functions/telegram-bot/index.ts`: Menambahkan *endpoint* baru `/dispatch` untuk mengirimkan pesan Telegram "Barang pesanan Anda telah Dialokasikan dan Dikirim oleh Admin" langsung ke DM (*Direct Message*) pemohon aslinya (`requested_by`).
 
+--------------------------------------------------------------------------------
+STEP 62: MANUAL S/N INPUT PADA STOCK OPNAME (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Tim di lapangan terkadang menemukan stiker *barcode* rusak atau sulit di-scan oleh kamera, sehingga butuh cara alternatif (ketik S/N manual) saat melakukan *Stock Opname*.
+
+Implementasi:
+  - `src/views/OpnameView.tsx`: Mengganti tombol besar "Scan Aset" dengan kolom pencarian (*input text*) ala *search bar* yang memiliki *icon* QR Scanner di sudut kanan (mirip dengan tampilan Beranda). Pengguna kini bisa mengetik S/N lalu menekan *Enter* untuk mencentang aset.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

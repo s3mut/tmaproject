@@ -21,6 +21,7 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), onBulkStatusCha
   const [bulkStatus, setBulkStatus] = useState<AssetStatus>('Retired');
   const [bulkNotes, setBulkNotes] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [manualSN, setManualSN] = useState('');
 
   const activeSiteAlias = siteInput.trim();
 
@@ -168,15 +169,34 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), onBulkStatusCha
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 mt-2">
-              <div className="flex gap-2 flex-1">
-                <button
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2"
-                  onClick={() => setScannerOpen(true)}
-                >
-                  <i className="fas fa-qrcode"></i>
-                  Scan Aset
-                </button>
+            <div className="flex flex-col gap-2 mt-2">
+              <div className="flex gap-2 w-full">
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i className="fas fa-search text-slate-400"></i>
+                  </div>
+                  <input
+                    type="text"
+                    value={manualSN}
+                    onChange={(e) => setManualSN(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && manualSN) {
+                        handleScanResult(manualSN);
+                        setManualSN('');
+                      }
+                    }}
+                    className="w-full bg-slate-900/80 border border-slate-700 text-slate-50 text-sm rounded-xl pl-10 pr-12 py-3.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-inner"
+                    placeholder="Ketik S/N manual lalu Enter..."
+                  />
+                  <button
+                    onClick={() => setScannerOpen(true)}
+                    className="absolute inset-y-0 right-1 px-3 flex items-center text-slate-400 hover:text-blue-400 transition-colors"
+                    title="Scan via Kamera"
+                  >
+                    <i className="fas fa-qrcode text-xl"></i>
+                  </button>
+                </div>
+                
                 {scannedAssets.length > 0 && (
                   <button
                     className="px-4 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium transition-all"
