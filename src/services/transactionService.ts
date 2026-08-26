@@ -175,7 +175,7 @@ export async function updateTransactionStatus(
     // Ambil detail transaksi untuk mengetahui to_site_code dan asset_id
     const { data: trxData, error: trxErr } = await supabase
       .from('asset_transactions')
-      .select('asset_id, to_site_code, transaction_type')
+      .select('asset_id, to_site_code, from_site_code, transaction_type')
       .eq('id', transactionId)
       .single();
 
@@ -184,10 +184,14 @@ export async function updateTransactionStatus(
       return;
     }
 
-    if (trxData.asset_id && trxData.to_site_code && (trxData.transaction_type === 'Mutation' || trxData.transaction_type === 'Borrowing')) {
+    if (trxData.asset_id && trxData.to_site_code && trxData.from_site_code && (trxData.transaction_type === 'Mutation' || trxData.transaction_type === 'Borrowing')) {
+      // Jika mutasi selesai = pindah permanen ke target
+      // Jika pinjam selesai = dikembalikan ke lokasi asal
+      const finalSite = trxData.transaction_type === 'Mutation' ? trxData.to_site_code : trxData.from_site_code;
+      
       const { error: assetErr } = await supabase
         .from('master_assets')
-        .update({ site_alias: trxData.to_site_code })
+        .update({ site_alias: finalSite })
         .eq('id', trxData.asset_id);
 
       if (assetErr) {

@@ -924,7 +924,7 @@ Kebutuhan:
 Implementasi:
   - `docs/schema.sql`: Memastikan penggunaan kolom `assigned_region` di tabel `telegram_users` agar notifikasi DM persetujuan bisa dikirimkan secara presisi kepada admin IT di wilayah tujuan transaksi (mendukung kata kunci "ALL" untuk Super Admin).
   - `supabase/functions/telegram-bot/index.ts`: Membuat Supabase Edge Function yang berisi 2 endpoint (`/notify` untuk diklik dari React, dan `/webhook` untuk merespons klik Inline Keyboard Telegram).
-  - `src/services/transactionService.ts`: Memperbarui fungsi `createTransaction` agar secara otomatis memanggil endpoint Edge Function saat membuat transaksi baru.
+  - `src/services/transactionService.ts`: Memperbarui fungsi `createTransaction` agar secara otomatis memanggil endpoint Edge Function saat membuat transaksi baru. Juga memperbaiki logika `updateTransactionStatus` agar aset yang dipinjam (Borrowing) dikembalikan ke lokasi asalnya (`from_site_code`) setelah transaksi diselesaikan (Completed).
   - `src/views/ProfileView.tsx`: Mengubah label teks indikator database.
 
 --------------------------------------------------------------------------------
