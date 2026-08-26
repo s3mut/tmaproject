@@ -1,13 +1,12 @@
-export type TabName = 'dashboard' | 'history' | 'loans' | 'sites' | 'opname' | 'profile' | 'report';
+export type TabName = 'dashboard' | 'transactions' | 'sites' | 'opname' | 'profile' | 'report';
 
 interface NavItem { tab: TabName; icon: string; label: string; }
 
 const navItems: NavItem[] = [
-  { tab: 'dashboard', icon: 'fa-home',           label: 'Beranda' },
-  { tab: 'history',   icon: 'fa-exchange-alt',   label: 'Mutasi' },
-  { tab: 'loans',     icon: 'fa-hand-holding-box', label: 'Pinjam' },
-  { tab: 'opname',    icon: 'fa-qrcode',         label: 'Opname' },
-  { tab: 'profile',   icon: 'fa-user',           label: 'Profil' },
+  { tab: 'dashboard',    icon: 'fa-home',           label: 'Beranda' },
+  { tab: 'transactions', icon: 'fa-exchange-alt',   label: 'Transaksi' },
+  { tab: 'opname',       icon: 'fa-qrcode',         label: 'Opname' },
+  { tab: 'profile',      icon: 'fa-user',           label: 'Profil' },
 ];
 
 interface Props {
@@ -18,7 +17,7 @@ interface Props {
 
 const BottomNav = ({ activeTab, onTabChange, isGuest }: Props) => {
   const visibleNavItems = navItems.filter(item => {
-    if (isGuest && item.tab !== 'loans' && item.tab !== 'profile') {
+    if (isGuest && item.tab !== 'transactions' && item.tab !== 'profile') {
       return false;
     }
     return true;

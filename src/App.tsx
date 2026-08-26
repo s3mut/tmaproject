@@ -11,12 +11,12 @@ import ItemFormModal from './components/modals/ItemFormModal';
 import ItemDetailModal from './components/modals/ItemDetailModal';
 import QRScannerModal from './components/modals/QRScannerModal';
 import MutationModal from './components/modals/MutationModal';
+import TransactionModal from './components/modals/TransactionModal';
 import CSVImportModal from './components/modals/CSVImportModal';
 import ConfirmModal from './components/modals/ConfirmModal';
 
 import DashboardView from './views/DashboardView';
-import HistoryView from './views/HistoryView';
-import LoansView from './views/LoansView';
+import TransactionsView from './views/TransactionsView';
 import SitesView from './views/SitesView';
 import OpnameView from './views/OpnameView';
 import ProfileView from './views/ProfileView';
@@ -28,10 +28,8 @@ declare global { interface Window { Telegram?: any; } }
 function App() {
   const { currentUser, authMethod, isLoading: authLoading } = useAuth();
   const { 
-    assets, mutations, sites, categories, loans,
-    loading, error, addAsset, editAsset, removeAsset, mutateAsset, approveAssetMutation,
-    requestAssetLoan, dispatchAssetLoan, receiveAssetLoan, initiateAssetLoanReturn, closeAssetLoanTicket,
-    cancelAssetLoan, rejectAssetLoan, approveAssetLoan, forceCancelAssetLoan,
+    assets, transactions, sites, categories, lockedAssetIds,
+    loading, error, addAsset, editAsset, removeAsset, createNewTransaction, updateTrxStatus,
     refresh
   } = useInventory();
 
@@ -46,7 +44,7 @@ function App() {
   const [formOpen, setFormOpen]             = useState(false);
   const [detailOpen, setDetailOpen]         = useState(false);
   const [qrOpen, setQrOpen]                 = useState(false);
-  const [mutationOpen, setMutationOpen]     = useState(false);
+  const [transactionOpen, setTransactionOpen] = useState(false);
   const [csvImportOpen, setCsvImportOpen]   = useState(false);
   const [editItem, setEditItem]             = useState<AssetDetail | null>(null);
   const [detailItem, setDetailItem]         = useState<AssetDetail | null>(null);
@@ -80,10 +78,10 @@ function App() {
     if (error) showToast(`Error: ${error}`, 'error');
   }, [error, showToast]);
 
-  // Jika user berstatus guest, otomatis arahkan tab default ke 'loans' (Pinjam)
+  // Jika user berstatus guest, otomatis arahkan tab default ke 'transactions'
   useEffect(() => {
     if (currentUser?.role === 'guest') {
-      setActiveTab('loans');
+      setActiveTab('transactions');
     }
   }, [currentUser?.role]);
 
@@ -168,15 +166,17 @@ function App() {
     }
   };
 
-  const handleMutateClick = () => { setDetailOpen(false); setMutationOpen(true); };
+  const handleMutateClick = () => { setDetailOpen(false); setTransactionOpen(true); };
 
-  const handleMutationSubmit = async (toSiteCode: string, notes: string) => {
-    if (!detailItem) return;
+  const handleTransactionSubmit = async (data: any) => {
     try {
-      await mutateAsset(detailItem.id, detailItem.site_alias ?? null, toSiteCode, notes);
-      setMutationOpen(false);
+      await createNewTransaction({
+        ...data,
+        requested_by: currentUser?.telegram_id ?? 0,
+      });
+      setTransactionOpen(false);
       setDetailItem(null);
-      showToast('Mutasi aset (Pending) berhasil dicatat!');
+      showToast('Permintaan transaksi berhasil dibuat!');
     } catch (e: any) {
       showToast(e.message, 'error');
     }
@@ -319,8 +319,9 @@ function App() {
               setSelectedRegion('all');
               setIsShowingItems(false);
             }}
-            mutations={mutations}
-            loans={loans}
+            mutations={[]} // Temp fix until Dashboard is updated
+            loans={[]} // Temp fix until Dashboard is updated
+            lockedAssetIds={lockedAssetIds}
             categories={categories}
             loading={loading}
             onItemClick={handleItemClick}
@@ -330,79 +331,32 @@ function App() {
             onStatusClick={handleStatusClick}
           />
         )}
-        {activeTab === 'history' && (
-          <HistoryView
-            mutations={mutations}
-            assets={assets}
-            sites={sites}
-            loading={loading}
-            onMutate={async (assetId, fromSiteAlias, toSiteAlias, notes) => {
-              await mutateAsset(assetId, fromSiteAlias, toSiteAlias, notes);
-              showToast('Mutasi aset berhasil dicatat!');
-            }}
-            onApproveMutation={async (mutationId, assetId, toSiteCode) => {
-              try {
-                await approveAssetMutation(mutationId, assetId, toSiteCode);
-                showToast('Aset berhasil diterima!');
-              } catch (e: any) {
-                showToast(e.message, 'error');
-              }
-            }}
-          />
-        )}
-        {activeTab === 'loans' && (
-          <LoansView
-            loans={loans}
+        {activeTab === 'transactions' && (
+          <TransactionsView
+            transactions={transactions}
             assets={assets}
             sites={sites}
             categories={categories}
             loading={loading}
             userRole={currentUser?.role}
-            assignedRegion={currentUser?.assigned_region || null}
             currentUserId={currentUser?.telegram_id || 0}
             currentUserName={currentUser?.name || 'User'}
             onRefresh={refresh}
-            onRequestLoan={async (params) => {
-              await requestAssetLoan({ ...params, requestedById: currentUser?.telegram_id || 0, requestedByName: currentUser?.name || 'Toko' });
-              showToast('✨ Pengajuan pinjaman berhasil dibuat!');
-            }}
-            onDispatchLoan={async (params) => {
-              await dispatchAssetLoan(params);
-              showToast('🚀 Unit berhasil dipindai & dikirim ke toko!');
-            }}
-            onReceiveLoan={async (params) => {
-              await receiveAssetLoan(params);
-            }}
-            onInitiateReturn={async (loanId, assetId) => {
-              await initiateAssetLoanReturn(loanId, assetId);
-            }}
-            onCloseTicket={async (params) => {
-              await closeAssetLoanTicket(params);
-              showToast('✅ Tiket pinjam ditutup. Status aset fisik telah diperbarui!');
-            }}
-            onApproveLoan={async (loanId) => {
-              await approveAssetLoan(loanId, currentUser?.telegram_id || 0, currentUser?.name || 'Admin');
-              showToast('✨ Pengajuan dikonfirmasi siap untuk diproses alokasi!');
-            }}
-            onCancelLoan={async (loanId, reason) => {
-              await cancelAssetLoan(loanId, reason || 'Dibatalkan mandiri oleh pengaju', currentUser?.role || 'guest', currentUser?.telegram_id || 0);
-              showToast('⚪ Pengajuan peminjaman dibatalkan.');
-            }}
-            onRejectLoan={async (loanId, reason) => {
-              await rejectAssetLoan(loanId, currentUser?.name || 'Admin', reason, currentUser?.role || 'user', currentUser?.telegram_id || 0);
-              showToast('🚫 Pengajuan peminjaman ditolak.');
-            }}
-            onForceCancelLoan={async (loanId, reason, currentAssetId) => {
-              await forceCancelAssetLoan(loanId, currentUser?.telegram_id || 0, currentUser?.name || 'God Mode Admin', reason, currentAssetId);
-              showToast('⚡ Tiket berhasil dibatal-paksakan (God Mode Override)!');
+            onUpdateStatus={async (id, status) => {
+              try {
+                await updateTrxStatus(id, status, currentUser?.telegram_id || 0);
+                showToast(`Status transaksi berhasil diperbarui menjadi ${status}`);
+              } catch (e: any) {
+                showToast(e.message, 'error');
+              }
             }}
             onShowToast={showToast}
           />
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
-        {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} onBulkStatusChange={handleBulkStatusChange} />}
-        {activeTab === 'profile' && <ProfileView assets={assets} mutations={mutations} sites={sites} categories={categories} onShowToast={showToast} onOpenReport={() => setActiveTab('report')} />}
-        {activeTab === 'report' && <ReportView onBack={() => setActiveTab('profile')} onShowToast={showToast} sites={sites} categories={categories} />}
+        {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} lockedAssetIds={lockedAssetIds} onBulkStatusChange={handleBulkStatusChange} />}
+        {activeTab === 'profile' && <ProfileView assets={assets} transactions={transactions} sites={sites} categories={categories} onShowToast={showToast} onOpenReport={() => setActiveTab('report')} />}
+        {activeTab === 'report' && <ReportView onBack={() => setActiveTab('profile')} onShowToast={showToast} sites={sites} categories={categories} transactions={transactions} />}
       </main>
 
       {showFab && (
@@ -429,12 +383,13 @@ function App() {
         onDelete={handleDeleteClick}
         onMutate={handleMutateClick}
       />
-      <MutationModal
-        isOpen={mutationOpen}
+      <TransactionModal
+        isOpen={transactionOpen}
         asset={detailItem}
         sites={sites}
-        onClose={() => setMutationOpen(false)}
-        onSubmit={handleMutationSubmit}
+        categories={categories}
+        onClose={() => setTransactionOpen(false)}
+        onSubmit={handleTransactionSubmit}
       />
       <QRScannerModal
         isOpen={qrOpen}

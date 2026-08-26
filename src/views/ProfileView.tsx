@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AssetDetail, MutationDetail, Site, Category } from '../types/inventory';
+import type { AssetDetail, TransactionDetail, Site, Category } from '../types/inventory';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getTelegramSDKUser } from '../services/userService';
@@ -16,14 +16,14 @@ import { getPendingUsersCount } from '../services/userService';
 
 interface Props {
   assets?:     AssetDetail[];
-  mutations?:  MutationDetail[];
+  transactions?: TransactionDetail[];
   sites?:      Site[];
   categories?: Category[];
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
   onOpenReport?: () => void;
 }
 
-const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [], onShowToast, onOpenReport }: Props) => {
+const ProfileView = ({ assets = [], transactions = [], sites = [], categories = [], onShowToast, onOpenReport }: Props) => {
   const { currentUser, authMethod, logout, refreshUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -288,7 +288,7 @@ const ProfileView = ({ assets = [], mutations = [], sites = [], categories = [],
         isOpen={backupModalOpen}
         onClose={() => setBackupModalOpen(false)}
         assets={assets}
-        mutations={mutations}
+        transactions={transactions}
         sites={sites}
         categories={categories}
         adminName={currentUser?.name}

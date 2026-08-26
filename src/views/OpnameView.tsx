@@ -6,11 +6,11 @@ import { SiteSearchInput } from '../components/ui';
 
 interface Props {
   assets: AssetDetail[];
-  sites: Site[];
+  lockedAssetIds?: Set<number>;
   onBulkStatusChange?: (assetIds: number[], newStatus: AssetStatus, notes: string) => Promise<void>;
 }
 
-const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
+const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), onBulkStatusChange }: Props) => {
   const [siteInput, setSiteInput] = useState<string>('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedAssets, setScannedAssets] = useState<AssetDetail[]>([]);
@@ -25,7 +25,7 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
   const activeSiteAlias = siteInput.trim();
 
   // Filter assets by typed site alias (case-insensitive)
-  const siteAssets = useMemo(() => {
+  const allSiteAssets = useMemo(() => {
     if (!activeSiteAlias) return [];
     const query = activeSiteAlias.toLowerCase();
     return assets.filter(
@@ -33,6 +33,20 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
            (a.full_location_code && a.full_location_code.toLowerCase() === query)
     );
   }, [assets, activeSiteAlias]);
+
+  // Pisahkan aset yang terkunci (dalam transaksi) agar tidak perlu di-opname
+  const { siteAssets, lockedCount } = useMemo(() => {
+    const valid: AssetDetail[] = [];
+    let locked = 0;
+    for (const a of allSiteAssets) {
+      if (lockedAssetIds.has(a.id)) {
+        locked++;
+      } else {
+        valid.push(a);
+      }
+    }
+    return { siteAssets: valid, lockedCount: locked };
+  }, [allSiteAssets, lockedAssetIds]);
 
   const totalAssets = siteAssets.length;
   const foundCount  = scannedAssets.length;
@@ -108,6 +122,13 @@ const OpnameView = ({ assets, sites, onBulkStatusChange }: Props) => {
                 <div className="text-2xl font-bold text-amber-400">{remaining}</div>
               </div>
             </div>
+            
+            {lockedCount > 0 && (
+              <div className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg mb-4 flex items-center justify-center gap-1.5 font-medium">
+                <i className="fas fa-lock"></i>
+                {lockedCount} aset dikecualikan (sedang diproses / In Transit)
+              </div>
+            )}
 
             {/* Progress Bar */}
             {totalAssets > 0 && (

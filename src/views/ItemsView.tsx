@@ -16,6 +16,7 @@ interface Props {
   initialCategory?: string;
   initialStatus?: string;
   initialRegion?: string;
+  lockedAssetIds?: Set<number>;
   categories?: Category[];
   onItemClick: (id: number) => void;
 }
@@ -24,6 +25,7 @@ interface Props {
 interface RegionCardProps {
   region: string;
   regionAssets: AssetDetail[];
+  lockedAssetIds?: Set<number>;
   defaultOpen: boolean;
   onItemClick: (id: number) => void;
 }
@@ -37,7 +39,7 @@ const STATUS_COLOR: Record<string, string> = {
   'In Transit': 'text-purple-400',
 };
 
-const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCardProps) => {
+const RegionCard = ({ region, regionAssets, lockedAssetIds, defaultOpen, onItemClick }: RegionCardProps) => {
   const [open, setOpen] = useState(defaultOpen);
   const [hasRendered, setHasRendered] = useState(defaultOpen);
 
@@ -104,7 +106,7 @@ const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCa
       <div className={`transition-all duration-300 overflow-hidden ${open ? 'max-h-[9999px] opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="px-3 pb-3 space-y-2 border-t border-slate-700/50 pt-3">
           {hasRendered && regionAssets.map((a) => (
-            <ItemCard key={a.id} item={a} onClick={onItemClick} />
+            <ItemCard key={a.id} item={a} isLocked={lockedAssetIds?.has(a.id)} onClick={onItemClick} />
           ))}
         </div>
       </div>
@@ -113,7 +115,7 @@ const RegionCard = ({ region, regionAssets, defaultOpen, onItemClick }: RegionCa
 };
 
 // ── Main View ─────────────────────────────────────────────────────────────────
-const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initialStatus, initialRegion, categories = [], onItemClick }: Props) => {
+const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initialStatus, initialRegion, lockedAssetIds, categories = [], onItemClick }: Props) => {
   const [activeFilter, setActiveFilter] = useState<AssetStatus | 'all'>(
     (initialStatus && initialStatus !== 'all') ? initialStatus as AssetStatus : 'all'
   );
@@ -339,6 +341,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
               key={region}
               region={region}
               regionAssets={regionAssets}
+              lockedAssetIds={lockedAssetIds}
               defaultOpen={defaultOpenRegions.has(region)}
               onItemClick={onItemClick}
             />

@@ -8,8 +8,9 @@
 -- 0. Membuat Tipe Data ENUM
 -- ==========================================
 CREATE TYPE user_role AS ENUM ('admin', 'user', 'guest');
-CREATE TYPE asset_status AS ENUM ('Active', 'Backup', 'Repair', 'Disposed', 'In Transit', 'Retired');
-CREATE TYPE mutation_status AS ENUM ('Pending', 'Completed', 'Rejected');
+CREATE TYPE asset_status AS ENUM ('Active', 'Backup', 'Disposed', 'Retired');
+CREATE TYPE transaction_type AS ENUM ('Mutation', 'Borrowing', 'Repair');
+CREATE TYPE transaction_status AS ENUM ('Requested', 'Approved', 'In Transit', 'In Progress', 'Completed', 'Rejected', 'Cancelled');
 CREATE TYPE opname_status AS ENUM ('Ditemukan', 'Hilang', 'Nyasar');
 
 -- ==========================================
@@ -95,25 +96,44 @@ FOR EACH ROW
 EXECUTE FUNCTION update_timestamp_column();
 
 -- ==========================================
--- 4. Membuat Tabel Mutasi (Log & Handover)
+-- 4. Membuat Tabel Transaksi (Mutasi, Peminjaman, Service)
 -- ==========================================
-CREATE TABLE asset_mutations (
+CREATE TABLE asset_transactions (
     id BIGSERIAL PRIMARY KEY,
-    asset_id BIGINT NOT NULL,
-    from_site_code VARCHAR(4),
-    to_site_code VARCHAR(4) NOT NULL,
-    moved_by BIGINT NOT NULL,
-    notes TEXT,
-    status mutation_status DEFAULT 'Pending',
-    received_by BIGINT,
-    received_at TIMESTAMP,
-    mutation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    transaction_code VARCHAR(50) UNIQUE NOT NULL, 
+    transaction_type transaction_type NOT NULL,
+    status transaction_status DEFAULT 'Requested',
     
-    CONSTRAINT fk_mutation_asset FOREIGN KEY (asset_id) REFERENCES master_assets(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_mutation_from_site FOREIGN KEY (from_site_code) REFERENCES sites(site_code) ON UPDATE CASCADE ON DELETE SET NULL,
-    CONSTRAINT fk_mutation_to_site FOREIGN KEY (to_site_code) REFERENCES sites(site_code) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_mutation_user FOREIGN KEY (moved_by) REFERENCES telegram_users(telegram_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_mutation_receiver FOREIGN KEY (received_by) REFERENCES telegram_users(telegram_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    asset_id BIGINT, 
+    category_id INTEGER, 
+    
+    from_site_code VARCHAR(4),
+    to_site_code VARCHAR(4),
+    
+    requested_by BIGINT NOT NULL,
+    approved_by BIGINT,
+    dispatched_by BIGINT,
+    received_by BIGINT,
+    
+    purpose TEXT,
+    shipping_method VARCHAR(50),
+    tracking_number VARCHAR(100),
+    notes TEXT,
+    
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_at TIMESTAMP,
+    dispatched_at TIMESTAMP,
+    received_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    
+    CONSTRAINT fk_trx_asset FOREIGN KEY (asset_id) REFERENCES master_assets(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_trx_category FOREIGN KEY (category_id) REFERENCES master_categories(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_trx_from_site FOREIGN KEY (from_site_code) REFERENCES sites(site_code) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_trx_to_site FOREIGN KEY (to_site_code) REFERENCES sites(site_code) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_trx_req_user FOREIGN KEY (requested_by) REFERENCES telegram_users(telegram_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_trx_app_user FOREIGN KEY (approved_by) REFERENCES telegram_users(telegram_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_trx_dis_user FOREIGN KEY (dispatched_by) REFERENCES telegram_users(telegram_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_trx_rec_user FOREIGN KEY (received_by) REFERENCES telegram_users(telegram_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- ==========================================
@@ -189,7 +209,7 @@ ALTER TABLE sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE master_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE telegram_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE master_assets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE asset_mutations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_opname ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_opname_details ENABLE ROW LEVEL SECURITY;
 
@@ -206,9 +226,9 @@ CREATE POLICY "Allow read assets" ON master_assets FOR SELECT USING (true);
 CREATE POLICY "Allow insert assets" ON master_assets FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow update assets" ON master_assets FOR UPDATE USING (true);
 
-CREATE POLICY "Allow read mutations" ON asset_mutations FOR SELECT USING (true);
-CREATE POLICY "Allow insert mutations" ON asset_mutations FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow update mutations" ON asset_mutations FOR UPDATE USING (true);
+CREATE POLICY "Allow read transactions" ON asset_transactions FOR SELECT USING (true);
+CREATE POLICY "Allow insert transactions" ON asset_transactions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update transactions" ON asset_transactions FOR UPDATE USING (true);
 
 CREATE POLICY "Allow read opname" ON stock_opname FOR SELECT USING (true);
 CREATE POLICY "Allow insert opname" ON stock_opname FOR INSERT WITH CHECK (true);

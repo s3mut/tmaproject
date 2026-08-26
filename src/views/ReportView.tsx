@@ -6,7 +6,7 @@ import {
 import { useReport } from '../hooks/useReport';
 import { useAuth } from '../contexts/AuthContext';
 import { getLoanReport, exportToCSV } from '../services/reportService';
-import type { Site, Category } from '../types/inventory';
+import type { TransactionDetail, Site, Category } from '../types/inventory';
 import OverdueAlertModal from '../components/modals/OverdueAlertModal';
 import AuditTrailModal   from '../components/modals/AuditTrailModal';
 import LoanReportModal   from '../components/modals/LoanReportModal';
@@ -77,12 +77,13 @@ interface Props {
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
   sites?: Site[];
   categories?: Category[];
+  transactions?: TransactionDetail[];
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 type TabKey = 'kpi' | 'loans' | 'audit' | 'utilization';
 
-const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
+const ReportView = ({ onBack, onShowToast, sites = [], categories = [], transactions = [] }: Props) => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>('kpi');
   const [regionFilter, setRegionFilter] = useState<string>('');
@@ -110,6 +111,15 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
   useEffect(() => {
     fetchKPI(effectiveRegion || null);
   }, [effectiveRegion, fetchKPI]);
+
+  const stats = useMemo(() => {
+    return {
+      totalMutations: transactions.filter(t => t.transaction_type === 'Mutation').length,
+      totalLoans: transactions.filter(t => t.transaction_type === 'Borrowing').length,
+      activeLoans: transactions.filter(t => t.transaction_type === 'Borrowing' && (t.status === 'Approved' || t.status === 'In Transit' || t.status === 'In Progress')).length,
+      completedMutations: transactions.filter(t => t.transaction_type === 'Mutation' && t.status === 'Completed').length
+    };
+  }, [transactions]);
 
   // Pie data: asset status distribution from utilization
   const pieData = useMemo(() => {

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import type { AssetDetail, Category, MutationDetail, Site, AssetLoan, LoanStatus } from '../types/inventory';
-import { loanStatusConfig } from '../types/inventory';
+import type { AssetDetail, Category, TransactionDetail, Site } from '../types/inventory';
+import { transactionStatusConfig } from '../types/inventory';
 import { SectionHeader, EmptyState, Select } from '../components/ui';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { MutationBadge } from '../components/ui/Badge';
@@ -16,8 +16,8 @@ interface Props {
   initialRegion?: string;
   isShowingItems?: boolean;
   onClearFilters?: () => void;
-  mutations?: MutationDetail[];
-  loans?: AssetLoan[];
+  transactions?: TransactionDetail[];
+  lockedAssetIds?: Set<number>;
   categories: Category[];
   loading: boolean;
   onItemClick: (id: number) => void;
@@ -39,6 +39,7 @@ interface CombinedMovement {
   mutation_date: string;
   status: string;
   isLoan: boolean;
+  transaction_type: string;
 }
 
 function formatTime7Days(isoString: string): string {
@@ -74,7 +75,7 @@ const StatCard = ({ label, value, color, icon, gradient, border, onClick }: {
 const DashboardView = ({ 
   assets, sites, searchValue = '', initialCategory = 'all', initialStatus = 'all', initialRegion = 'all',
   isShowingItems = false, onClearFilters,
-  mutations = [], loans = [], categories, loading, onItemClick, onCategoryClick, onRegionClick, onViewAll, onStatusClick 
+  transactions = [], lockedAssetIds = new Set(), categories, loading, onItemClick, onCategoryClick, onRegionClick, onViewAll, onStatusClick 
 }: Props) => {
   const groupedCategories = useMemo(() => groupCategories(categories), [categories]);
 
@@ -111,43 +112,23 @@ const DashboardView = ({
     return result;
   }, [assets, initialCategory, initialRegion, siteRegionMap]);
 
-  // Gabungkan mutasi permanen & transaksi peminjaman (loans) 7 hari terakhir
+  // Transaksi 7 hari terakhir
   const recentMutations = useMemo(() => {
-    const mutList: CombinedMovement[] = (mutations || []).map(m => ({
-      id: `mut-${m.id}`,
-      asset_id: m.asset_id,
-      asset_brand: m.asset_brand,
-      asset_model_type: m.asset_model_type,
-      asset_serial_number: m.asset_serial_number,
-      asset_category_name: m.asset_category_name,
-      from_site_name: m.from_site_name || 'Site Awal',
-      to_site_name: m.to_site_name,
-      mutation_date: m.mutation_date,
-      status: m.status,
-      isLoan: false,
+    const combined: CombinedMovement[] = (transactions || []).map(t => ({
+      id: `trx-${t.id}`,
+      asset_id: t.asset_id || 0,
+      asset_brand: t.asset_brand,
+      asset_model_type: t.asset_model_type,
+      asset_serial_number: t.asset_serial_number || '-',
+      asset_category_name: t.asset_category_name || '-',
+      from_site_name: t.from_site_name || 'Site Awal',
+      to_site_name: t.to_site_name || '-',
+      mutation_date: t.requested_at,
+      status: t.status,
+      isLoan: t.transaction_type === 'Borrowing',
+      transaction_type: t.transaction_type,
     }));
 
-    const loanList: CombinedMovement[] = (loans || [])
-      .filter(l => l.asset_id !== null && l.status !== 'Cancelled' && l.status !== 'Rejected')
-      .map(l => {
-        const isReturn = l.status === 'Return In-Transit' || l.status === 'Closed';
-        const date = l.dispatched_at || l.created_at;
-        return {
-          id: `loan-${l.id}`,
-          asset_id: l.asset_id!,
-          asset_brand: l.asset_brand || null,
-          asset_model_type: l.asset_model_type || null,
-          asset_serial_number: l.asset_serial_number || l.loan_code,
-          asset_category_name: l.category_name,
-          from_site_name: isReturn ? (l.site_name || l.site_alias) : 'Gudang IT',
-          to_site_name: isReturn ? 'Gudang IT' : (l.site_name || l.site_alias),
-          mutation_date: date,
-          status: l.status,
-          isLoan: true,
-        };
-      });
-
-    const combined = [...mutList, ...loanList];
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -162,7 +143,7 @@ const DashboardView = ({
       }
       return true;
     }).sort((a, b) => new Date(b.mutation_date).getTime() - new Date(a.mutation_date).getTime()).slice(0, 5);
-  }, [mutations, loans, initialCategory, initialRegion, siteRegionMap]);
+  }, [transactions, initialCategory, initialRegion, siteRegionMap]);
 
   // Hitung stats dari filtered assets
   const stats = useMemo(() => ({
@@ -170,8 +151,7 @@ const DashboardView = ({
     active:    filteredAssets.filter(a => (a.status ?? 'Active') === 'Active').length,
     backup:    filteredAssets.filter(a => a.status === 'Backup').length,
     retired:   filteredAssets.filter(a => a.status === 'Retired').length,
-    repair:    filteredAssets.filter(a => a.status === 'Repair').length,
-    inTransit: filteredAssets.filter(a => a.status === 'In Transit').length,
+    disposed:  filteredAssets.filter(a => a.status === 'Disposed').length,
   }), [filteredAssets]);
 
   // Klik stat card: barulah navigasi ke Items dengan status + kategori + region aktif
@@ -217,6 +197,7 @@ const DashboardView = ({
               initialCategory={initialCategory}
               initialStatus={initialStatus}
               initialRegion={initialRegion}
+              lockedAssetIds={lockedAssetIds}
               categories={categories}
               loading={loading}
               onItemClick={onItemClick}
@@ -319,9 +300,9 @@ const DashboardView = ({
           <StatCard label="Retired" value={stats.retired} color="text-slate-500"  icon="fa-power-off"
             gradient="linear-gradient(135deg, rgba(100,116,139,0.1), rgba(100,116,139,0.05))" border="rgba(100,116,139,0.2)"
             onClick={() => handleStatClick('Retired')} />
-          <StatCard label="Repair"  value={stats.repair}  color="text-yellow-400" icon="fa-tools"
-            gradient="linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.05))" border="rgba(234,179,8,0.2)"
-            onClick={() => handleStatClick('Repair')} />
+          <StatCard label="Disposed"  value={stats.disposed}  color="text-red-400" icon="fa-trash-alt"
+            gradient="linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05))" border="rgba(239,68,68,0.2)"
+            onClick={() => handleStatClick('Disposed')} />
         </div>
 
         {/* Aset Terakhir Dipindah (7 Hari Terakhir) */}
@@ -381,13 +362,9 @@ const DashboardView = ({
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    {m.isLoan ? (
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${loanStatusConfig[m.status as LoanStatus]?.bg || 'bg-slate-700'} ${loanStatusConfig[m.status as LoanStatus]?.text || 'text-slate-300'}`}>
-                        {loanStatusConfig[m.status as LoanStatus]?.label || m.status}
-                      </span>
-                    ) : (
-                      <MutationBadge status={m.status as any} />
-                    )}
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${transactionStatusConfig[m.status as any]?.bg || 'bg-slate-700'} ${transactionStatusConfig[m.status as any]?.text || 'text-slate-300'}`}>
+                      {transactionStatusConfig[m.status as any]?.label || m.status}
+                    </span>
                     <p className="text-[10px] text-slate-500 mt-1 font-mono">
                       {formatTime7Days(m.mutation_date)}
                     </p>

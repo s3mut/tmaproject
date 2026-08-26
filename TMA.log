@@ -885,6 +885,35 @@ Implementasi:
     * Pada Mode Gelap (*Dark Mode*): Menggunakan card `bg-slate-900/90 border-slate-800` dan teks terang (`text-slate-100`, `text-slate-300`).
     * Menambahkan tombol toggle Tema (Mode Terang / Mode Gelap) di pojok kanan atas halaman login.
 
+--------------------------------------------------------------------------------
+STEP 55: PENYATUAN SISTEM TRANSAKSI (MUTASI, PEMINJAMAN, PERBAIKAN) (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Menyederhanakan kompleksitas database dan antarmuka dengan menggabungkan sistem `asset_mutations` dan `asset_loans` menjadi satu tabel terpadu `asset_transactions`.
+  - Mengubah status fisik `asset_status` menjadi murni kondisi barang (Active, Backup, Disposed, Retired). Status alur pengiriman dipindahkan ke status transaksi (Requested, Approved, In Transit, In Progress, Completed, dsb).
+
+Implementasi:
+  - `docs/schema.sql`: Menghapus tabel `asset_mutations`, ENUM `mutation_status`, dan membuat tabel `asset_transactions` beserta tipe ENUM `transaction_type` dan `transaction_status`.
+  - `src/types/inventory.ts`: Mendefinisikan antarmuka `AssetTransaction` dan `TransactionDetail` baru. Membuat config UI `transactionStatusConfig`.
+  - `src/services/transactionService.ts`: Membuat service universal untuk menggantikan `mutationService` dan `loanService`.
+  - `src/hooks/useInventory.ts`: Mengubah state provider agar mengekspos state `transactions` dan aksi `createNewTransaction`, `updateTrxStatus`.
+  - `src/views/TransactionsView.tsx` & `src/components/modals/TransactionModal.tsx`: Membuat tampilan dan modal baru untuk semua tipe transaksi secara terpadu.
+  - Menghapus komponen usang: `HistoryView.tsx`, `LoansView.tsx`, `MutationModal.tsx`.
+  - `src/App.tsx`, `src/views/DashboardView.tsx`, `src/views/ProfileView.tsx`, `src/views/ReportView.tsx`: Menyesuaikan *prop passing* dari mutasi dan peminjaman ke sistem *transactions* yang baru.
+
+--------------------------------------------------------------------------------
+STEP 56: LOGICAL GAPS FIX - TRANSACTION & ASSET LOCKING (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Menyelesaikan celah logika di mana aset yang sudah selesai dimutasi (Completed) tidak memperbarui lokasi fisiknya (`site_alias`) di tabel utama `master_assets`.
+  - Memberikan indikator bagi aset yang sedang diproses (contoh: In Transit) agar tidak membingungkan pengguna saat melakukan Stock Opname di site asal.
+
+Implementasi:
+  - `src/services/transactionService.ts`: Menambahkan logika pada `updateTransactionStatus` untuk secara otomatis meng-update `site_alias` di `master_assets` jika status transaksi diubah menjadi "Completed".
+  - `src/hooks/useInventory.ts`: Mengkomputasi state `lockedAssetIds` menggunakan `useMemo` untuk menandai aset-aset yang masih memiliki transaksi aktif.
+  - `src/views/OpnameView.tsx`: Menerima props `lockedAssetIds` dan secara otomatis mengecualikan aset-aset terkunci tersebut dari daftar aset yang wajib di-scan.
+  - `src/components/ItemCard.tsx`: Menambahkan prop `isLocked` untuk meredupkan tampilan aset (opacity) dan menampilkan lencana "🔒" kuning, serta meneruskannya melalui `ItemsView` & `DashboardView`.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

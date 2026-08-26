@@ -3,13 +3,14 @@ import StatusBadge from './StatusBadge';
 
 interface Props {
   item: AssetDetail;
+  isLocked?: boolean;
   onClick: (id: number) => void;
 }
 
-const ItemCard = ({ item, onClick }: Props) => {
+const ItemCard = ({ item, isLocked, onClick }: Props) => {
   return (
     <div
-      className="item-card rounded-xl p-4 card-hover cursor-pointer"
+      className={`item-card rounded-xl p-4 cursor-pointer transition-all ${isLocked ? 'opacity-80 border-amber-500/30' : 'card-hover'}`}
       onClick={() => onClick(item.id)}
     >
       <div className="flex items-start gap-3">
@@ -19,8 +20,9 @@ const ItemCard = ({ item, onClick }: Props) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-slate-50 truncate">
+              <h3 className="text-sm font-semibold text-slate-50 truncate flex items-center gap-2">
                 {item.brand} {item.model_type ?? item.serial_number}
+                {isLocked && <i className="fas fa-lock text-amber-500 text-xs" title="Sedang diproses"></i>}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">{item.serial_number}</p>
             </div>

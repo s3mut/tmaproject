@@ -3,11 +3,11 @@
 // ============================================================
 
 // ----- ENUMs -----
-export type AssetStatus = 'Active' | 'Backup' | 'Repair' | 'Disposed' | 'In Transit' | 'Retired' | 'Borrowed';
+export type AssetStatus = 'Active' | 'Backup' | 'Disposed' | 'Retired';
 export type UserRole = 'admin' | 'user' | 'guest';
-export type MutationStatus = 'Pending' | 'Completed' | 'Rejected';
+export type TransactionType = 'Mutation' | 'Borrowing' | 'Repair';
+export type TransactionStatus = 'Requested' | 'Approved' | 'In Transit' | 'In Progress' | 'Completed' | 'Rejected' | 'Cancelled';
 export type OpnameStatus = 'Ditemukan' | 'Hilang' | 'Nyasar';
-export type LoanStatus = 'Requested' | 'Waiting Admin Approval' | 'Approved' | 'In-Transit' | 'Borrowed' | 'Return In-Transit' | 'Closed' | 'Rejected' | 'Cancelled';
 
 // ----- TABLE: sites -----
 export interface Site {
@@ -59,18 +59,34 @@ export interface MasterAsset {
   deleted_at: string | null;
 }
 
-// ----- TABLE: asset_mutations -----
-export interface AssetMutation {
+// ----- TABLE: asset_transactions -----
+export interface AssetTransaction {
   id: number;              // BIGSERIAL PK
-  asset_id: number;
+  transaction_code: string;
+  transaction_type: TransactionType;
+  status: TransactionStatus;
+  
+  asset_id: number | null;
+  category_id: number | null;
+  
   from_site_code: string | null;
-  to_site_code: string;
-  moved_by: number;        // telegram_id FK
-  notes: string | null;
-  status: MutationStatus;
+  to_site_code: string | null;
+  
+  requested_by: number;
+  approved_by: number | null;
+  dispatched_by: number | null;
   received_by: number | null;
+  
+  purpose: string | null;
+  shipping_method: string | null;
+  tracking_number: string | null;
+  notes: string | null;
+  
+  requested_at: string;
+  approved_at: string | null;
+  dispatched_at: string | null;
   received_at: string | null;
-  mutation_date: string;
+  completed_at: string | null;
 }
 
 // ----- TABLE: stock_opname -----
@@ -105,16 +121,18 @@ export interface AssetDetail extends MasterAsset {
   site_region?: string | null;
 }
 
-// ----- Mutation with joins (untuk tampilan history) -----
-export interface MutationDetail extends AssetMutation {
-  asset_serial_number: string;
-  asset_category_name: string;
-  asset_brand: string | null;
-  asset_model_type: string | null;
-  from_site_name: string | null;
-  to_site_name: string;
-  moved_by_name: string;
-  received_by_name: string | null;
+// ----- Transaction with joins (untuk tampilan history) -----
+export interface TransactionDetail extends AssetTransaction {
+  asset_serial_number?: string;
+  asset_category_name?: string;
+  asset_brand?: string | null;
+  asset_model_type?: string | null;
+  from_site_name?: string | null;
+  to_site_name?: string | null;
+  requested_by_name: string;
+  approved_by_name?: string | null;
+  dispatched_by_name?: string | null;
+  received_by_name?: string | null;
 }
 
 // ============================================================
@@ -124,67 +142,20 @@ export interface MutationDetail extends AssetMutation {
 export const assetStatusConfig: Record<AssetStatus, { label: string; className: string; icon: string }> = {
   Active:       { label: 'Active',       className: 'status-active',       icon: 'fa-check-circle' },
   Backup:       { label: 'Backup',       className: 'status-backup',       icon: 'fa-archive' },
-  Repair:       { label: 'Repair',       className: 'status-repair',       icon: 'fa-tools' },
   Disposed:     { label: 'Disposed',     className: 'text-red-600 bg-red-100', icon: 'fa-trash-alt' },
-  'In Transit': { label: 'In Transit',   className: 'text-blue-600 bg-blue-100', icon: 'fa-truck' },
   Retired:      { label: 'Retired',      className: 'text-slate-500 bg-slate-200', icon: 'fa-power-off' },
-  Borrowed:     { label: 'Borrowed',     className: 'text-purple-300 bg-purple-500/20 border border-purple-500/30', icon: 'fa-hand-holding-box' },
 };
 
 // ============================================================
-// ASSET LOANS (Peminjaman & Unit Backup)
+// ASSET TRANSACTIONS
 // ============================================================
-export interface AssetLoan {
-  id: number;
-  loan_code: string;
-  site_alias: string;
-  category_name: string;
-  purpose: string;
-  duration_days: number;
-  requires_it_approval: boolean;
-  due_date: string;
-  shipping_method: 'Pick-up' | 'Delivery' | string;
-  tracking_number: string | null;
-  asset_id: number | null;
-  status: LoanStatus;
-  condition_on_return: 'Bagus' | 'Rusak' | 'Hilang' | string | null;
-  requested_by_id: number;
-  requested_by_name: string;
-  dispatched_by_name: string | null;
-  received_by_name: string | null;
-  created_at: string;
-  dispatched_at: string | null;
-  received_at: string | null;
-  returned_at: string | null;
-  closed_at: string | null;
-  notes: string | null;
-  // RBAC & State Machine Workflow
-  is_cross_region?: boolean;
-  target_source_region?: string | null;
-  approved_by_id?: number | null;
-  approved_by_name?: string | null;
-  approved_at?: string | null;
-  cancelled_by_id?: number | null;
-  cancelled_by_role?: string | null;
-  cancelled_at?: string | null;
-  cancellation_reason?: string | null;
-  force_cancelled_at?: string | null;
-  // Joined / Rich fields
-  asset_serial_number?: string;
-  asset_brand?: string | null;
-  asset_model_type?: string | null;
-  site_name?: string;
-  site_region?: string | null;
-}
 
-export const loanStatusConfig: Record<LoanStatus, { label: string; bg: string; text: string; icon: string }> = {
-  Requested:              { label: 'Request Baru',        bg: 'bg-amber-500/20 border border-amber-500/40',   text: 'text-amber-300',   icon: 'fa-clock' },
-  'Waiting Admin Approval': { label: 'Eskalasi Cross-Region', bg: 'bg-indigo-500/20 border border-indigo-500/40', text: 'text-indigo-300',  icon: 'fa-user-shield' },
-  Approved:               { label: 'Siap Alokasi',        bg: 'bg-teal-500/20 border border-teal-500/40',     text: 'text-teal-300',    icon: 'fa-check-circle' },
-  'In-Transit':           { label: 'Dalam Pengiriman',    bg: 'bg-blue-500/20 border border-blue-500/40',     text: 'text-blue-300',    icon: 'fa-truck' },
-  Borrowed:               { label: 'Aktif Dipinjam',      bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-box-open' },
-  'Return In-Transit':    { label: 'Proses Kembali',      bg: 'bg-purple-500/20 border border-purple-500/40',   text: 'text-purple-300',  icon: 'fa-reply' },
-  Closed:                 { label: 'Selesai (Closed)',    bg: 'bg-slate-700/50 border border-slate-600/50',   text: 'text-slate-400',   icon: 'fa-check-double' },
-  Rejected:               { label: 'Ditolak',             bg: 'bg-red-500/20 border border-red-500/40',       text: 'text-red-400',     icon: 'fa-times-circle' },
-  Cancelled:              { label: 'Dibatalkan',          bg: 'bg-slate-700/30 border border-slate-600/40',   text: 'text-slate-400',   icon: 'fa-ban' },
+export const transactionStatusConfig: Record<TransactionStatus, { label: string; bg: string; text: string; icon: string }> = {
+  Requested:    { label: 'Requested',   bg: 'bg-amber-500/20 border border-amber-500/40',   text: 'text-amber-300',   icon: 'fa-clock' },
+  Approved:     { label: 'Approved',    bg: 'bg-teal-500/20 border border-teal-500/40',     text: 'text-teal-300',    icon: 'fa-check-circle' },
+  'In Transit': { label: 'In Transit',  bg: 'bg-blue-500/20 border border-blue-500/40',     text: 'text-blue-300',    icon: 'fa-truck' },
+  'In Progress':{ label: 'In Progress', bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-tools' },
+  Completed:    { label: 'Completed',   bg: 'bg-slate-700/50 border border-slate-600/50',   text: 'text-slate-400',   icon: 'fa-check-double' },
+  Rejected:     { label: 'Rejected',    bg: 'bg-red-500/20 border border-red-500/40',       text: 'text-red-400',     icon: 'fa-times-circle' },
+  Cancelled:    { label: 'Cancelled',   bg: 'bg-slate-700/30 border border-slate-600/40',   text: 'text-slate-400',   icon: 'fa-ban' },
 };

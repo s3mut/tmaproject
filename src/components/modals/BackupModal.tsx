@@ -1,12 +1,12 @@
 import React from 'react';
-import type { AssetDetail, MutationDetail, Site, Category } from '../../types/inventory';
+import type { AssetDetail, TransactionDetail, Site, Category } from '../../types/inventory';
 import { ModalShell, Button } from '../ui';
 
 interface Props {
   isOpen:      boolean;
   onClose:     () => void;
   assets?:     AssetDetail[];
-  mutations?:  MutationDetail[];
+  transactions?: TransactionDetail[];
   sites?:      Site[];
   categories?: Category[];
   adminName?:  string;
@@ -39,7 +39,7 @@ const BackupModal: React.FC<Props> = ({
   isOpen,
   onClose,
   assets = [],
-  mutations = [],
+  transactions = [],
   sites = [],
   categories = [],
   adminName,
@@ -57,14 +57,14 @@ const BackupModal: React.FC<Props> = ({
           exported_by_admin: adminName || 'Administrator',
           record_counts: {
             assets: assets.length,
-            mutations: mutations.length,
+            transactions: transactions.length,
             sites: sites.length,
             categories: categories.length,
           },
         },
         data: {
           assets,
-          mutations,
+          transactions,
           sites,
           categories,
         },
@@ -130,34 +130,30 @@ const BackupModal: React.FC<Props> = ({
         'Ke Site (Kode)',
         'Ke Site (Nama)',
         'Status',
-        'Dibuat Oleh',
-        'Disetujui Oleh',
-        'Catatan',
-        'Tanggal Mutasi',
-      ].join(',');
-
-      const rows = mutations.map((m) =>
-        [
-          escapeCsv(m.id),
-          escapeCsv(m.asset_serial_number || ''),
-          escapeCsv(m.asset_brand || ''),
-          escapeCsv(m.asset_model_type || ''),
-          escapeCsv(m.from_site_name || m.from_site_code || ''),
-          escapeCsv(m.to_site_code || ''),
-          escapeCsv(m.to_site_name || ''),
-          escapeCsv(m.status),
-          escapeCsv(m.moved_by_name || ''),
-          escapeCsv(m.received_by_name || ''),
-          escapeCsv(m.notes || ''),
-          escapeCsv(m.mutation_date || ''),
-        ].join(',')
-      );
-
-      const csvContent = '\uFEFF' + [headers, ...rows].join('\r\n');
-      downloadFile(csvContent, `transittma-mutations-history-${dateStr}.csv`, 'text/csv;charset=utf-8;');
-      if (onShowToast) onShowToast('✅ CSV Riwayat Mutasi berhasil diunduh!', 'success');
-    } catch (e: any) {
-      if (onShowToast) onShowToast(`❌ Gagal export CSV: ${e.message}`, 'error');
+      if (transactions.length === 0) {
+        onShowToast?.('Data transaksi kosong, tidak ada yang diexport.', 'error');
+        return;
+      }
+      
+      const headers = ['ID', 'Asset Serial', 'Type', 'From Site', 'To Site', 'Status', 'Requested By', 'Requested At', 'Notes'];
+      const rows = transactions.map(t => [
+        t.id,
+        escapeCsv(t.asset_serial_number || ''),
+        escapeCsv(t.transaction_type),
+        escapeCsv(t.from_site_name || ''),
+        escapeCsv(t.to_site_name || ''),
+        escapeCsv(t.status),
+        escapeCsv(t.requested_by_name || ''),
+        escapeCsv(t.requested_at),
+        escapeCsv(t.notes || '')
+      ].join(','));
+      
+      const csv = [headers.join(','), ...rows].join('\n');
+      downloadFile(csv, `transactions_export_${dateStr}.csv`, 'text/csv;charset=utf-8;');
+      onShowToast?.('Export CSV Transaksi berhasil disiapkan!', 'success');
+    } catch (error) {
+      console.error(error);
+      onShowToast?.('Gagal melakukan export CSV Transaksi.', 'error');
     }
   };
 
@@ -186,8 +182,8 @@ const BackupModal: React.FC<Props> = ({
             <p className="text-base font-bold text-slate-50">{assets.length}</p>
           </div>
           <div className="glass rounded-xl p-3 border border-slate-700/60">
-            <p className="text-xs text-slate-400 mb-1">Log Mutasi</p>
-            <p className="text-base font-bold text-blue-400">{mutations.length}</p>
+            <p className="text-xs text-slate-400 mb-1">Log Transaksi</p>
+            <p className="text-base font-bold text-blue-400">{transactions.length}</p>
           </div>
           <div className="glass rounded-xl p-3 border border-slate-700/60">
             <p className="text-xs text-slate-400 mb-1">Lokasi Site</p>
@@ -229,15 +225,15 @@ const BackupModal: React.FC<Props> = ({
             </Button>
           </div>
 
-          {/* Option 3: Mutations CSV */}
+          {/* Option 3: Transactions CSV */}
           <div className="glass rounded-xl p-3.5 border border-slate-700/60 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
-                <i className="fas fa-history text-lg" />
+                <i className="fas fa-exchange-alt text-lg" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-50">Export Riwayat Mutasi</p>
-                <p className="text-xs text-slate-400">Format CSV (Audit trail & perpindahan barang)</p>
+                <p className="text-sm font-semibold text-slate-50">Export Riwayat Transaksi</p>
+                <p className="text-xs text-slate-400">Data riwayat transaksi, peminjaman & mutasi unit.</p>
               </div>
             </div>
             <Button variant="secondary" size="sm" icon="fa-download" onClick={handleExportMutationsCSV}>
