@@ -936,6 +936,7 @@ Kebutuhan:
 Implementasi:
   - Menghapus modal usang yang sudah digantikan oleh alur baru: `RequestLoanModal.tsx`, `DispatchLoanModal.tsx`, `ReturnCheckModal.tsx`.
   - Menghapus script Node.js lama: `docs/bot_webhook_handler.js`.
+  - Memperbarui `BulkDisposalModal.tsx` dengan menambahkan fitur **"Export Daftar Usulan (CSV Excel)"** agar tim IT bisa mengunduh daftar aset (draft usulan) sebelum mengeksekusi pemusnahan massal.
 
 ================================================================================
                                  END OF LOG

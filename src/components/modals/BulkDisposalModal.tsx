@@ -187,6 +187,40 @@ const BulkDisposalModal: React.FC<Props> = ({
     }
   };
 
+  const handleExportDraftCSV = () => {
+    if (selectedEntries.length === 0) {
+      if (onShowToast) onShowToast('⚠️ Pilih minimal 1 unit aset untuk diexport!', 'error');
+      return;
+    }
+    try {
+      const headers = ['No', 'Nomor Aktiva', 'Merk / Type', 'Serial Number', 'Alasan Usulan Pemusnahan', 'Lokasi'].join(',');
+      const rows = selectedEntries.map((e, idx) => [
+        idx + 1,
+        `"${e.asset.aktiva || ''}"`,
+        `"${e.asset.brand || ''} ${e.asset.model_type || ''}"`,
+        `"${e.asset.serial_number}"`,
+        `"${e.reason.trim() || globalReason}"`,
+        `"${e.asset.site_alias || e.asset.site_name || ''}"`
+      ].join(','));
+      
+      const csvContent = '\uFEFF' + [headers, ...rows].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Usulan-Pemusnahan-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      if (onShowToast) onShowToast('✅ CSV Usulan Pemusnahan berhasil diunduh!', 'success');
+    } catch (err: any) {
+      console.error('Export CSV Error:', err);
+      if (onShowToast) onShowToast(`❌ Gagal export CSV: ${err.message}`, 'error');
+    }
+  };
+
   return (
     <ModalShell
       isOpen={isOpen}
@@ -364,21 +398,34 @@ const BulkDisposalModal: React.FC<Props> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>
-            Batal
-          </Button>
-          <Button
-            type="button"
-            variant="danger"
-            fullWidth
-            loading={submitting}
-            disabled={selectedEntries.length === 0}
-            onClick={handleExecuteDisposal}
-            icon="fa-print"
-          >
-            Proses & Cetak BAST ({selectedEntries.length})
-          </Button>
+        <div className="flex flex-col gap-2 pt-2">
+          {selectedEntries.length > 0 && (
+            <Button
+              type="button"
+              variant="primary"
+              fullWidth
+              onClick={handleExportDraftCSV}
+              icon="fa-file-csv"
+            >
+              Export Daftar Usulan (CSV Excel)
+            </Button>
+          )}
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" fullWidth onClick={onClose}>
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              fullWidth
+              loading={submitting}
+              disabled={selectedEntries.length === 0}
+              onClick={handleExecuteDisposal}
+              icon="fa-print"
+            >
+              Proses & Cetak BAST ({selectedEntries.length})
+            </Button>
+          </div>
         </div>
       </div>
     </ModalShell>
