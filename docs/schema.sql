@@ -42,6 +42,7 @@ CREATE TABLE telegram_users (
     name VARCHAR(100) NOT NULL,
     username VARCHAR(100),
     role user_role DEFAULT 'guest',
+    assigned_region VARCHAR(50),
     is_active BOOLEAN DEFAULT TRUE,
     web_password TEXT DEFAULT NULL,
     has_web_access BOOLEAN DEFAULT FALSE,

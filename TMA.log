@@ -914,6 +914,29 @@ Implementasi:
   - `src/views/OpnameView.tsx`: Menerima props `lockedAssetIds` dan secara otomatis mengecualikan aset-aset terkunci tersebut dari daftar aset yang wajib di-scan.
   - `src/components/ItemCard.tsx`: Menambahkan prop `isLocked` untuk meredupkan tampilan aset (opacity) dan menampilkan lencana "🔒" kuning, serta meneruskannya melalui `ItemsView` & `DashboardView`.
 
+--------------------------------------------------------------------------------
+STEP 57: TELEGRAM BOT WEBHOOK (APPROVAL VIA CHAT) (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Mengizinkan tim IT Admin untuk menyetujui (Approve) atau menolak (Reject) request transaksi langsung melalui *chat* Telegram tanpa harus membuka aplikasi.
+  - Mempersingkat tulisan "Database Supabase (PostgreSQL)" menjadi "Database" pada halaman profil.
+
+Implementasi:
+  - `docs/schema.sql`: Memastikan penggunaan kolom `assigned_region` di tabel `telegram_users` agar notifikasi DM persetujuan bisa dikirimkan secara presisi kepada admin IT di wilayah tujuan transaksi (mendukung kata kunci "ALL" untuk Super Admin).
+  - `supabase/functions/telegram-bot/index.ts`: Membuat Supabase Edge Function yang berisi 2 endpoint (`/notify` untuk diklik dari React, dan `/webhook` untuk merespons klik Inline Keyboard Telegram).
+  - `src/services/transactionService.ts`: Memperbarui fungsi `createTransaction` agar secara otomatis memanggil endpoint Edge Function saat membuat transaksi baru.
+  - `src/views/ProfileView.tsx`: Mengubah label teks indikator database.
+
+--------------------------------------------------------------------------------
+STEP 58: CODEBASE CLEANUP (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Membersihkan file-file usang sisa perombakan fitur transaksi dan penambahan Edge Function yang sudah tidak terpakai lagi.
+
+Implementasi:
+  - Menghapus modal usang yang sudah digantikan oleh alur baru: `RequestLoanModal.tsx`, `DispatchLoanModal.tsx`, `ReturnCheckModal.tsx`.
+  - Menghapus script Node.js lama: `docs/bot_webhook_handler.js`.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

@@ -250,7 +250,7 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
             <i className="fas fa-database"></i>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-50">Database Supabase (PostgreSQL)</p>
+            <p className="text-xs font-medium text-slate-50">Database</p>
             <p className="text-xs text-slate-500">
               {isTelegramLogin ? 'Auto-Synced via Telegram SDK' : 'Login via Browser (Web Session)'}
             </p>

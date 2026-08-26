@@ -96,6 +96,39 @@ export async function createTransaction(
     .single();
 
   if (error) throw new Error(error.message);
+
+  // Trigger Telegram Bot Notification via Edge Function
+  try {
+    // Ambil detail aset, user, dan target site region secara paralel
+    const [assetRes, userRes, siteRes] = await Promise.all([
+      trx.asset_id ? supabase.from('master_assets').select('brand, model_type').eq('id', trx.asset_id).single() : { data: null },
+      supabase.from('telegram_users').select('name').eq('telegram_id', trx.requested_by).single(),
+      trx.to_site_code ? supabase.from('sites').select('region').eq('site_code', trx.to_site_code).single() : { data: null }
+    ]);
+    
+    const assetBrand = assetRes.data?.brand || '';
+    const assetModel = assetRes.data?.model_type || 'Unknown Asset';
+    const reqByName = userRes.data?.name || 'Unknown User';
+    const targetRegion = siteRes.data?.region || 'Tanpa Region';
+
+    // Memanggil Supabase Edge Function (telegram-bot)
+    await supabase.functions.invoke('telegram-bot/notify', {
+      body: {
+        transaction_id: data.id,
+        type: trx.transaction_type,
+        asset_brand: assetBrand,
+        asset_model: assetModel,
+        from_site: trx.from_site_code || 'Unknown',
+        to_site: trx.to_site_code || 'Unknown',
+        target_region: targetRegion,
+        requested_by_name: reqByName
+      }
+    });
+  } catch (err) {
+    console.error('Failed to invoke telegram-bot edge function:', err);
+    // Kita tidak men-throw error di sini agar proses pembuatan transaksi tetap sukses di UI meskipun notif gagal
+  }
+
   return data;
 }
 
