@@ -938,6 +938,19 @@ Implementasi:
   - Menghapus script Node.js lama: `docs/bot_webhook_handler.js`.
   - Memperbarui `BulkDisposalModal.tsx` dengan menambahkan fitur **"Export Daftar Usulan (CSV Excel)"** agar tim IT bisa mengunduh daftar aset (draft usulan) sebelum mengeksekusi pemusnahan massal.
 
+--------------------------------------------------------------------------------
+STEP 59: OVERDUE TRACKING & AUTO-REMINDER (2026-08-26)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Melacak peminjaman aset backup yang lewat dari batas waktu yang disepakati.
+  - Memberikan pengingat otomatis kepada Admin IT agar dapat menagih barang ke toko.
+
+Implementasi:
+  - `docs/overdue_reminder_migration.sql`: Menambahkan kolom `duration_days` dan `due_date` di `asset_transactions` serta memperbarui `view_overdue_loans`.
+  - `src/components/modals/TransactionModal.tsx`: Menambahkan input "Durasi Pinjam (Hari)" jika tipe transaksi adalah Peminjaman (Borrowing).
+  - `src/services/transactionService.ts`: Mengkalkulasi `due_date` otomatis (tanggal penerimaan + durasi pinjam) saat status berubah menjadi "In Progress".
+  - `supabase/functions/cron-overdue/index.ts`: Membuat *Edge Function* untuk dieksekusi via *cron job* yang akan menyeleksi barang *overdue* dan menembak notifikasi rekap harian ke Telegram Admin IT per *region*.
+
 ================================================================================
                                  END OF LOG
 ================================================================================

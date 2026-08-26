@@ -16,6 +16,7 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
   const [categoryId, setCategoryId] = useState<number | ''>(asset?.category_id || '');
   const [toSiteCode, setToSiteCode] = useState<string>('');
   const [purpose, setPurpose] = useState('');
+  const [durationDays, setDurationDays] = useState<number>(7);
 
   if (!isOpen) return null;
 
@@ -28,6 +29,7 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
       from_site_code: asset?.site_alias || null, // Simplified for demo
       to_site_code: toSiteCode,
       purpose,
+      duration_days: type === 'Borrowing' ? durationDays : null,
     });
     // Reset state
     setType('Borrowing');
@@ -82,6 +84,21 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
             ))}
           </select>
         </div>
+
+        {type === 'Borrowing' && (
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Durasi Pinjam (Hari)</label>
+            <input
+              type="number"
+              min="1"
+              max="90"
+              value={durationDays}
+              onChange={(e) => setDurationDays(Number(e.target.value))}
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              required
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-xs font-medium text-slate-400 mb-1">Tujuan / Catatan</label>

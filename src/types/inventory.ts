@@ -87,6 +87,9 @@ export interface AssetTransaction {
   dispatched_at: string | null;
   received_at: string | null;
   completed_at: string | null;
+  
+  duration_days?: number | null;
+  due_date?: string | null;
 }
 
 // ----- TABLE: stock_opname -----

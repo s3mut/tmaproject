@@ -159,6 +159,14 @@ export async function updateTransactionStatus(
   } else if (newStatus === 'In Progress') {
     updates.received_by = userId;
     updates.received_at = now;
+    
+    // Calculate due_date if borrowing
+    const { data: trxCheck } = await supabase.from('asset_transactions').select('transaction_type, duration_days').eq('id', transactionId).single();
+    if (trxCheck && trxCheck.transaction_type === 'Borrowing' && trxCheck.duration_days) {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + trxCheck.duration_days);
+      updates.due_date = dueDate.toISOString();
+    }
   } else if (newStatus === 'Completed') {
     updates.completed_at = now;
   }
