@@ -3,7 +3,6 @@ import type { AssetDetail, Category, TransactionDetail, Site } from '../types/in
 import { transactionStatusConfig } from '../types/inventory';
 import { SectionHeader, EmptyState, Select } from '../components/ui';
 import { SkeletonCard } from '../components/ui/Skeleton';
-import { MutationBadge } from '../components/ui/Badge';
 import ItemsView from './ItemsView';
 import { groupCategories } from '../utils/categoryGroups';
 
@@ -363,8 +362,8 @@ const DashboardView = ({
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${transactionStatusConfig[m.status as any]?.bg || 'bg-slate-700'} ${transactionStatusConfig[m.status as any]?.text || 'text-slate-300'}`}>
-                      {transactionStatusConfig[m.status as any]?.label || m.status}
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${transactionStatusConfig[m.status as keyof typeof transactionStatusConfig]?.bg || 'bg-slate-700'} ${transactionStatusConfig[m.status as keyof typeof transactionStatusConfig]?.text || 'text-slate-300'}`}>
+                      {transactionStatusConfig[m.status as keyof typeof transactionStatusConfig]?.label || m.status}
                     </span>
                     <p className="text-[10px] text-slate-500 mt-1 font-mono">
                       {formatTime7Days(m.mutation_date)}

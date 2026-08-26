@@ -119,10 +119,10 @@ export function parseCSVText(csvText: string, categories: Category[], sites: Sit
     }
 
     // Normalisasi status
-    let status: AssetStatus = 'Active';
-    if (rawStatus === 'Backup') status = 'Backup';
-    else if (rawStatus === 'Retired') status = 'Retired';
-    else if (rawStatus === 'Disposed') status = 'Disposed';
+    let matchedStatus: AssetStatus = 'Active';
+    if (rawStatus === 'Backup') matchedStatus = 'Backup';
+    else if (rawStatus === 'Retired') matchedStatus = 'Retired';
+    else if (rawStatus === 'Disposed') matchedStatus = 'Disposed';
 
     // Check category match
     const matchedCat = categoryMap.get(catInput.toUpperCase());

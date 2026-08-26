@@ -1,12 +1,14 @@
 import React from 'react';
-import type { AssetLoan } from '../../types/inventory';
 import { ModalShell, Button } from '../ui';
 import { printDocument } from '../../utils/printDocument';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AssetLoanCompat = any;
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  loan: AssetLoan | null;
+  loan: AssetLoanCompat | null;
   mode?: 'peminjaman' | 'pengembalian';
 }
 

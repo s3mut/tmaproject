@@ -3,13 +3,12 @@ import type { TabName } from './BottomNav';
 interface TabConfig { title: string; subtitle: string; }
 
 const tabTitles: Record<TabName, TabConfig> = {
-  dashboard: { title: 'Inventory IT',  subtitle: 'Kelola aset teknologi' },
-  transactions:   { title: 'Mutasi Aset',   subtitle: 'Riwayat perpindahan' },
-  loans:     { title: 'Pinjam Unit',   subtitle: 'Sirkulasi unit backup & RMA' },
-  sites:     { title: 'Daftar Site',   subtitle: 'Lokasi cabang & operasional' },
-  opname:    { title: 'Stock Opname',  subtitle: 'Audit fisik aset' },
-  profile:   { title: 'Profil',        subtitle: 'Pengaturan akun' },
-  report:    { title: 'Laporan & Analitik', subtitle: 'KPI, utilization & audit trail' },
+  dashboard:    { title: 'Inventory IT',         subtitle: 'Kelola aset teknologi' },
+  transactions: { title: 'Mutasi Aset',          subtitle: 'Riwayat perpindahan' },
+  sites:        { title: 'Daftar Site',          subtitle: 'Lokasi cabang & operasional' },
+  opname:       { title: 'Stock Opname',         subtitle: 'Audit fisik aset' },
+  profile:      { title: 'Profil',               subtitle: 'Pengaturan akun' },
+  report:       { title: 'Laporan & Analitik',   subtitle: 'KPI, utilization & audit trail' },
 };
 
 interface Props {

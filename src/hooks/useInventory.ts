@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import type { AssetDetail, MasterAsset, Site, Category, TransactionDetail, AssetTransaction } from '../types/inventory';
+import type { AssetDetail, MasterAsset, Site, Category, TransactionDetail } from '../types/inventory';
 import { getAssets, createAsset, updateAsset, deleteAsset, getCategories } from '../services/assetService';
 import { getSites } from '../services/siteService';
 import { getTransactions, createTransaction, updateTransactionStatus } from '../services/transactionService';

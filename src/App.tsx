@@ -332,13 +332,11 @@ function App() {
         {activeTab === 'transactions' && (
           <TransactionsView
             transactions={transactions}
-            assets={assets}
             sites={sites}
             categories={categories}
             loading={loading}
             userRole={currentUser?.role}
             currentUserId={currentUser?.telegram_id || 0}
-            currentUserName={currentUser?.name || 'User'}
             onRefresh={refresh}
             onUpdateStatus={async (id, status) => {
               try {
@@ -348,7 +346,6 @@ function App() {
                 showToast(e.message, 'error');
               }
             }}
-            onShowToast={showToast}
           />
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}

@@ -1,23 +1,20 @@
 import { useState } from 'react';
-import type { TransactionDetail, Site, Category, AssetDetail } from '../types/inventory';
+import type { TransactionDetail, Site, Category } from '../types/inventory';
 import { transactionStatusConfig } from '../types/inventory';
-import { Card, Button, Badge } from '../components/ui';
+import { Button } from '../components/ui';
 
 interface Props {
   transactions: TransactionDetail[];
-  assets: AssetDetail[];
   sites: Site[];
   categories: Category[];
   loading: boolean;
   userRole?: string;
   currentUserId: number;
-  currentUserName: string;
   onRefresh: () => void;
   onUpdateStatus: (transactionId: number, newStatus: string, notes?: string) => Promise<void>;
-  onShowToast: (msg: string, type?: 'success' | 'error') => void;
 }
 
-const TransactionsView = ({ transactions, assets, loading, userRole, currentUserId, currentUserName, onUpdateStatus, onShowToast }: Props) => {
+const TransactionsView = ({ transactions, loading, userRole, currentUserId, onUpdateStatus }: Props) => {
   const [filterType, setFilterType] = useState<string>('all');
   
   const filtered = transactions.filter(t => filterType === 'all' || t.transaction_type === filterType);
@@ -61,7 +58,7 @@ const TransactionsView = ({ transactions, assets, loading, userRole, currentUser
             const statusConfig = transactionStatusConfig[trx.status] || transactionStatusConfig.Requested;
             
             return (
-              <Card key={trx.id} className="p-4 border border-slate-700/50 hover:border-slate-600 transition-colors">
+              <div key={trx.id} className="p-4 glass rounded-2xl border border-slate-700/50 hover:border-slate-600 transition-colors">
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -105,7 +102,7 @@ const TransactionsView = ({ transactions, assets, loading, userRole, currentUser
                     <Button variant="danger" size="sm" onClick={() => onUpdateStatus(trx.id, 'Cancelled')}>Batalkan</Button>
                   )}
                 </div>
-              </Card>
+              </div>
             );
           })
         )}
