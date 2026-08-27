@@ -1022,5 +1022,17 @@ Implementasi:
                                  END OF LOG
 ================================================================================
 
-STEP XX: (27 Aug 2026) Documentation Update.
-- Created BRD_E1_TMA.md in docs folder with updated system specifications and transaction lifecycles.
+--------------------------------------------------------------------------------
+STEP 66: COMPLETE TRANSACTION LIFECYCLE, RETURNING PHASE, & REGION APPROVAL (2026-08-27)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Menyempurnakan alur (lifecycle) dari setiap peminjaman agar mencakup fase pengembalian (Returning).
+  - Menerapkan batasan persetujuan (Region Approval) agar Admin hanya dapat menyetujui transaksi yang berada di wilayahnya.
+  - Memperbarui dokumen Business Requirements Document (BRD) agar sejalan dengan kode terbaru.
+
+Implementasi:
+  - `docs/BRD_E1_TMA.md` & `docs/whole_siklus_pinjam`: Memperbarui dan menambahkan dokumentasi lengkap spesifikasi sistem serta alur siklus hidup transaksi.
+  - `src/services/transactionService.ts`: Memperbarui logika bisnis transaksi agar mendukung validasi wilayah tujuan dan fase Returning.
+  - `src/views/TransactionsView.tsx`: Menambahkan tombol aksi untuk "Kembalikan Unit" dan "Terima di Gudang", serta membatasi visibilitas tombol Approve berdasarkan `assigned_region` Admin.
+  - `supabase/functions/cron-overdue/index.ts`: Memperbaiki dan memperkuat Edge Function *cron-overdue* untuk melacak keterlambatan dengan lebih baik.
+
