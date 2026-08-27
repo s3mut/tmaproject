@@ -1018,10 +1018,6 @@ Implementasi:
   - Jika versi pengguna di bawah v6.4, Telegram secara otomatis akan diarahkan (*fallback*) menggunakan HTML5 Video Web Camera biasa (zxing-library) alih-alih mencoba menggunakan Native Scanner Telegram yang tidak disupport.
   - Menggunakan *optional chaining* `tgWebApp.closeScanQrPopup?.()` pada semua fase eksekusi dan *cleanup effect* agar tidak menimbulkan *unhandled promise rejection* atau crash di aplikasi versi lawas.
 
-================================================================================
-                                 END OF LOG
-================================================================================
-
 --------------------------------------------------------------------------------
 STEP 66: COMPLETE TRANSACTION LIFECYCLE, RETURNING PHASE, & REGION APPROVAL (2026-08-27)
 --------------------------------------------------------------------------------
@@ -1035,4 +1031,18 @@ Implementasi:
   - `src/services/transactionService.ts`: Memperbarui logika bisnis transaksi agar mendukung validasi wilayah tujuan dan fase Returning.
   - `src/views/TransactionsView.tsx`: Menambahkan tombol aksi untuk "Kembalikan Unit" dan "Terima di Gudang", serta membatasi visibilitas tombol Approve berdasarkan `assigned_region` Admin.
   - `supabase/functions/cron-overdue/index.ts`: Memperbaiki dan memperkuat Edge Function *cron-overdue* untuk melacak keterlambatan dengan lebih baik.
+
+--------------------------------------------------------------------------------
+STEP 67: STRICT TYPESCRIPT FIX — TRANSACTIONSVIEW PROPS (2026-08-27)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Mengatasi error build TypeScript `TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'` pada properti `currentUserRegion` di `src/App.tsx:340`.
+
+Implementasi:
+  - `src/views/TransactionsView.tsx`: Memperluas interface `Props` pada field `currentUserRegion` menjadi `string | null | undefined` agar sinkron dengan tipe `TelegramUser.assigned_region` (`string | null | undefined`).
+  - Verifikasi build `npm run build` dan `npx tsc --noEmit` berhasil 100% tanpa error.
+
+================================================================================
+                                 END OF LOG
+================================================================================
 

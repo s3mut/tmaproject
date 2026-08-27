@@ -10,7 +10,7 @@ interface Props {
   loading: boolean;
   userRole?: string;
   currentUserId: number;
-  currentUserRegion?: string;
+  currentUserRegion?: string | null;
   onCreateTransaction: () => void;
   onRefresh: () => void;
   onUpdateStatus: (transactionId: number, newStatus: string, notes?: string) => Promise<void>;

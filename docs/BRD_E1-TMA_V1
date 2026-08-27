@@ -1,0 +1,700 @@
+# Business Requirement Document (BRD)
+## E1-TMA — IT Asset Inventory Telegram Mini App
+
+---
+
+| **Informasi Dokumen** | |
+|---|---|
+| **Nama Dokumen** | Business Requirement Document (BRD) |
+| **Nama Proyek** | E1-TMA — IT Asset Inventory Telegram Mini App |
+| **Versi** | 1.0 |
+| **Tanggal Dibuat** | 24 Agustus 2026 |
+| **Status** | Final Draft |
+| **Dibuat Oleh** | Tim Pengembang E1-TMA |
+
+---
+
+## Daftar Isi
+
+1. [Pendahuluan](#1-pendahuluan)
+2. [Latar Belakang](#2-latar-belakang)
+3. [Tujuan Bisnis](#3-tujuan-bisnis)
+4. [Ruang Lingkup Sistem](#4-ruang-lingkup-sistem)
+5. [Pemangku Kepentingan](#5-pemangku-kepentingan)
+6. [Kebutuhan Bisnis](#6-kebutuhan-bisnis)
+7. [Kebutuhan Fungsional](#7-kebutuhan-fungsional)
+8. [Kebutuhan Non-Fungsional](#8-kebutuhan-non-fungsional)
+9. [Arsitektur Sistem](#9-arsitektur-sistem)
+10. [Model Data](#10-model-data)
+11. [Manajemen Pengguna & Hak Akses](#11-manajemen-pengguna--hak-akses)
+12. [Alur Proses Bisnis Utama](#12-alur-proses-bisnis-utama)
+13. [Batasan & Asumsi](#13-batasan--asumsi)
+14. [Kriteria Penerimaan](#14-kriteria-penerimaan)
+15. [Glosarium](#15-glosarium)
+
+---
+
+## 1. Pendahuluan
+
+Dokumen ini merupakan **Business Requirement Document (BRD)** untuk sistem **E1-TMA** (*IT Asset Inventory Telegram Mini App*). BRD ini mendeskripsikan seluruh kebutuhan bisnis, fungsional, dan teknis yang menjadi acuan pengembangan dan implementasi sistem.
+
+### 1.1 Tujuan Dokumen
+- Mendokumentasikan kebutuhan bisnis secara menyeluruh
+- Menjadi acuan bersama antara tim IT, manajemen, dan pemangku kepentingan
+- Menjadi dasar pengembangan, pengujian, dan penerimaan sistem
+
+### 1.2 Audiens Dokumen
+- Manajemen TI perusahaan
+- Tim Pengembang Aplikasi
+- Tim QA / Penguji
+- Pengguna Akhir (Tim IT Lapangan, Kepala Regional)
+
+---
+
+## 2. Latar Belakang
+
+### 2.1 Kondisi Saat Ini (As-Is)
+Pengelolaan aset TI perusahaan saat ini menghadapi berbagai tantangan operasional:
+
+- **Pencatatan manual / spreadsheet**: Data aset disimpan di file Excel yang terpisah-pisah per cabang, rentan terhadap kesalahan ketik, kehilangan data, dan inkonsistensi antar versi.
+- **Tidak ada visibilitas real-time**: Tim IT Pusat tidak dapat memantau kondisi dan lokasi aset secara langsung tanpa harus menghubungi setiap cabang.
+- **Proses mutasi tidak terlacak**: Perpindahan aset antar lokasi (cabang) tidak tercatat secara formal, sehingga aset seringkali "hilang" atau tidak diketahui keberadaannya.
+- **Audit fisik (Stock Opname) tidak terstruktur**: Proses penghitungan fisik aset dilakukan secara manual tanpa dukungan sistem, memakan waktu lama dan rawan kesalahan.
+- **Proses peminjaman unit backup tidak terkontrol**: Tidak ada sistem formal untuk melacak peminjaman unit backup dari gudang regional ke cabang yang mengalami kerusakan, sehingga unit sering terlambat dikembalikan.
+- **Skala operasional besar**: Perusahaan mengelola **6.000+ unit aset TI** yang tersebar di **2.000+ lokasi cabang** di seluruh Indonesia.
+
+### 2.2 Kebutuhan Perubahan (To-Be)
+Perusahaan memerlukan sistem terpusat berbasis digital yang dapat:
+- Mengelola inventaris aset TI secara real-time dari perangkat mobile
+- Diakses dengan mudah oleh tim IT di lapangan melalui platform yang sudah familiar (Telegram)
+- Menyediakan alur kerja terstruktur untuk mutasi, peminjaman, dan audit fisik
+- Memberikan laporan dan analitik untuk pengambilan keputusan manajemen
+
+---
+
+## 3. Tujuan Bisnis
+
+| No | Tujuan | Indikator Keberhasilan |
+|----|--------|----------------------|
+| 1 | Meningkatkan akurasi data inventaris aset TI | Tingkat error data < 1% |
+| 2 | Mempercepat proses pencatatan mutasi aset | Waktu pencatatan < 2 menit per transaksi |
+| 3 | Memberikan visibilitas real-time kondisi & lokasi aset | Dashboard dapat diakses kapan saja, data diperbarui < 5 detik |
+| 4 | Mengefisienkan proses audit fisik (Stock Opname) | Waktu audit berkurang minimal 50% dibanding manual |
+| 5 | Mengendalikan peminjaman unit backup & mencegah keterlambatan | Tidak ada unit backup overdue > 14 hari tanpa notifikasi |
+| 6 | Menyediakan laporan aset untuk kebutuhan manajemen & audit | Laporan siap cetak / export tersedia kapan saja |
+| 7 | Mengurangi kehilangan aset akibat tidak tercatat | Tingkat aset tidak diketahui keberadaannya < 0.5% |
+
+---
+
+## 4. Ruang Lingkup Sistem
+
+### 4.1 Dalam Lingkup (In Scope)
+
+- ✅ Manajemen master data aset TI (CRUD lengkap)
+- ✅ Manajemen data lokasi/cabang (Sites & Regions)
+- ✅ Pencatatan dan pelacakan mutasi/perpindahan aset antar lokasi
+- ✅ Sistem peminjaman unit backup dengan alur Maker-Checker
+- ✅ Audit fisik aset (Stock Opname) berbasis kamera/QR scanner
+- ✅ Dashboard statistik dan pelaporan analitik
+- ✅ Import data massal via CSV
+- ✅ Autentikasi dual-channel: Telegram Mini App & Web Browser
+- ✅ Notifikasi via Telegram Bot
+- ✅ Manajemen pengguna dan hak akses berbasis role
+- ✅ Dokumen BAST (Berita Acara Serah Terima) digital
+- ✅ Export data ke format Excel/CSV dan JSON (backup)
+
+### 4.2 Di Luar Lingkup (Out of Scope)
+
+- ❌ Integrasi dengan sistem ERP/SAP perusahaan (dapat dikembangkan di fase berikutnya)
+- ❌ Manajemen pengadaan/pembelian aset baru
+- ❌ Manajemen kontrak dan garansi aset
+- ❌ Manajemen lisensi perangkat lunak
+- ❌ Fitur akuntansi dan depresiasi aset
+
+---
+
+## 5. Pemangku Kepentingan
+
+| Peran | Deskripsi | Kepentingan |
+|-------|-----------|------------|
+| **Admin Global IT (HQ)** | Tim IT Pusat dengan akses penuh | Manajemen keseluruhan sistem, persetujuan alur lintas wilayah |
+| **Teknisi IT Regional** | Tim IT di tingkat regional/wilayah | Pengelolaan aset di wilayah kerja masing-masing |
+| **Teknisi IT Cabang** | Tim IT di tingkat cabang | Pencatatan aset dan pengajuan mutasi/peminjaman |
+| **Kepala IT / Manajer IT** | Pengambil keputusan | Laporan, analitik, dan monitoring kinerja aset |
+| **Toko / Cabang** | Pengguna akhir aset | Pengajuan peminjaman unit backup |
+| **Tim Pengembang** | Pengembang dan maintainer aplikasi | Pengembangan dan pemeliharaan sistem |
+
+---
+
+## 6. Kebutuhan Bisnis
+
+### BR-01: Sentralisasi Data Inventaris Aset
+**Deskripsi**: Seluruh data aset TI harus tersimpan dalam satu sistem terpusat yang dapat diakses oleh seluruh pemangku kepentingan sesuai hak aksesnya.
+
+**Justifikasi Bisnis**: Menghilangkan silo data antar cabang dan mencegah inkonsistensi data yang selama ini terjadi karena penggunaan spreadsheet terpisah.
+
+---
+
+### BR-02: Aksesibilitas via Telegram
+**Deskripsi**: Sistem harus dapat diakses melalui Telegram Mini App tanpa perlu instalasi aplikasi terpisah.
+
+**Justifikasi Bisnis**: Tim IT lapangan sudah menggunakan Telegram sebagai alat komunikasi utama. Mengintegrasikan sistem ke dalam platform yang sudah digunakan akan meningkatkan adopsi dan mengurangi hambatan penggunaan.
+
+---
+
+### BR-03: Pelacakan Siklus Hidup Aset
+**Deskripsi**: Sistem harus mampu melacak seluruh riwayat pergerakan dan perubahan status aset dari awal hingga disposal.
+
+**Justifikasi Bisnis**: Memberikan visibilitas penuh atas keberadaan dan kondisi setiap unit aset untuk keperluan audit internal maupun eksternal.
+
+---
+
+### BR-04: Pengendalian Peminjaman Unit Backup
+**Deskripsi**: Sistem harus menyediakan mekanisme formal untuk peminjaman unit backup dengan alur persetujuan, batas waktu, dan notifikasi keterlambatan.
+
+**Justifikasi Bisnis**: Mencegah hilangnya unit backup karena peminjaman tidak terlacak dan meningkatkan efisiensi operasional saat terjadi kerusakan di cabang.
+
+---
+
+### BR-05: Audit Fisik Terstruktur
+**Deskripsi**: Sistem harus mendukung proses stock opname berbasis QR code/barcode scanner untuk verifikasi keberadaan fisik aset.
+
+**Justifikasi Bisnis**: Mengurangi waktu dan biaya audit fisik yang selama ini dilakukan secara manual, serta meningkatkan akurasi hasil audit.
+
+---
+
+### BR-06: Pelaporan & Analitik Manajemen
+**Deskripsi**: Sistem harus menyediakan dashboard laporan dengan visualisasi data yang dapat digunakan manajemen untuk pengambilan keputusan.
+
+**Justifikasi Bisnis**: Manajemen memerlukan informasi agregat mengenai distribusi, utilisasi, dan kondisi aset untuk perencanaan anggaran dan perawatan.
+
+---
+
+## 7. Kebutuhan Fungsional
+
+### 7.1 Modul Manajemen Aset
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-MA-01 | Sistem dapat menampilkan daftar seluruh aset dengan pengelompokan per region/wilayah dalam format collapsible accordion | Tinggi |
+| F-MA-02 | Sistem menyediakan fitur pencarian aset berdasarkan serial number, nama, merek, model, dan lokasi | Tinggi |
+| F-MA-03 | Sistem menyediakan filter aset berdasarkan kategori, status, dan region | Tinggi |
+| F-MA-04 | Pengguna dengan role user/admin dapat menambahkan aset baru dengan form validasi lengkap | Tinggi |
+| F-MA-05 | Pengguna dengan role user/admin dapat mengubah data aset yang sudah ada | Tinggi |
+| F-MA-06 | Pengguna dengan role admin dapat melakukan soft delete aset (field `deleted_at`) | Tinggi |
+| F-MA-07 | Sistem mendukung pencarian dan pemindaian aset via QR Code / Barcode scanner kamera | Tinggi |
+| F-MA-08 | Sistem dapat menampilkan detail lengkap aset termasuk riwayat mutasi dan audit trail | Sedang |
+| F-MA-09 | Status aset terdiri dari: Active, Backup, Repair, Disposed, In Transit, Retired | Tinggi |
+| F-MA-10 | Sistem mampu memuat 6.000+ unit aset menggunakan paginated auto-fetch tanpa batasan 1.000 baris | Tinggi |
+| F-MA-11 | Setiap aset memiliki field: serial_number (unik), aktiva, kategori, merek, model, computer_name, site, status, external_id, deskripsi | Tinggi |
+
+### 7.2 Modul Kategori Aset
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-KT-01 | Sistem memiliki 37 kategori aset standar (ID 44-80) yang telah terdefinisi | Tinggi |
+| F-KT-02 | Database dilindungi trigger validasi kategori yang menolak nama kategori tidak terdaftar | Tinggi |
+| F-KT-03 | Admin dapat menambahkan kategori baru jika diperlukan | Sedang |
+| F-KT-04 | Setiap kategori memiliki ikon dan warna visual untuk identifikasi cepat di UI | Sedang |
+
+> **Daftar Kategori Aset Standar**: ACCESS POINT, Customer Display, HUB, MONITOR, MONITOR KASIR WINCOR, PC WINDOWS, PC All in one, PDT DATALOGIC, PRINTER DOT MATRIX, PRINTER KASIR WINCOR, PRINTER LASERJET, POS KASIR WINCOR, SCALE DIGI, SCANNER, SERVER, UPS VEKTOR, PDT SYMBOL, SCALE METLER, MONITOR SERVER, UPS SOCOMEC, UPS ICA, PRINTER BARCODE, PDT ZEBRA, UPS EMERSON, UPS GAMMA, PC, POS KASIR AIO WINTEC, PRINTER KASIR WINTEC, PRINTER KASIR STAR, POS KASIR AIO DIEBOLD, PDT UROVO, UPS ARUBA, Printer, POS SCO DIEBOLD, POS SCO WINTEC, PRINTER KASIR SCO WINTEC, SCALE
+
+### 7.3 Modul Manajemen Lokasi (Sites)
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-ST-01 | Sistem mengelola data lokasi dengan field: site_code, site_name, site_alias, region, site_address | Tinggi |
+| F-ST-02 | Setiap lokasi dikelompokkan dalam region/wilayah untuk navigasi dan pelaporan | Tinggi |
+| F-ST-03 | Sistem mendukung 2.000+ lokasi dengan fitur pencarian auto-complete yang cepat dan ringan | Tinggi |
+| F-ST-04 | Pengguna dapat melihat daftar aset per lokasi/site | Sedang |
+
+### 7.4 Modul Mutasi / Perpindahan Aset
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-MT-01 | Pengguna dapat mencatat perpindahan aset dari satu site ke site lain | Tinggi |
+| F-MT-02 | Setiap mutasi mencatat: aset, site asal, site tujuan, pencatat, catatan, dan status | Tinggi |
+| F-MT-03 | Status mutasi terdiri dari: Pending, Completed, Rejected | Tinggi |
+| F-MT-04 | Sistem menampilkan riwayat mutasi dengan filter berdasarkan status dan pencarian real-time | Tinggi |
+| F-MT-05 | Aset dapat ditemukan dan dipilih menggunakan QR/Barcode scanner saat pengisian form mutasi | Sedang |
+| F-MT-06 | Dashboard menampilkan aset yang dipindah dalam 7 hari terakhir | Sedang |
+
+### 7.5 Modul Peminjaman Unit Backup (Loan Management)
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-LN-01 | Toko/Cabang dapat mengajukan peminjaman unit backup melalui sistem | Tinggi |
+| F-LN-02 | Nomor tiket peminjaman dibuat otomatis dengan format `LOAN-[SITE]-[YYMM]-[4_DIGIT_SEQ]` | Tinggi |
+| F-LN-03 | Sistem mencari ketersediaan unit backup di hub regional terdekat sebelum lintas region | Tinggi |
+| F-LN-04 | Sistem menampilkan preview kartu alokasi unit backup yang tersedia (merek, model, S/N) | Tinggi |
+| F-LN-05 | Tim IT dapat melihat, mengalokasikan, dan memindai barcode unit backup yang akan dikirim | Tinggi |
+| F-LN-06 | Teknisi IT cabang dapat mengkonfirmasi penerimaan unit di lokasi tujuan (1-klik) | Tinggi |
+| F-LN-07 | Toko dapat memulai proses pengembalian unit backup melalui sistem | Tinggi |
+| F-LN-08 | Tim IT dapat verifikasi kondisi unit yang dikembalikan: Bagus (→ Backup), Rusak (→ Repair), atau Hilang (→ Disposed) | Tinggi |
+| F-LN-09 | Sistem memberikan peringatan H-3 (3 hari sebelum jatuh tempo) dan status OVERDUE (melewati 14 hari) | Tinggi |
+| F-LN-10 | Pengaju atau Admin dapat membatalkan tiket peminjaman sebelum barang dialokasikan | Sedang |
+| F-LN-11 | Admin dapat melakukan Force Cancel untuk penarikan paksa unit yang mereset status ke Backup | Sedang |
+| F-LN-12 | Pembatalan dan penolakan tiket wajib disertai alasan terstruktur | Sedang |
+| F-LN-13 | Jika stok unit backup habis di region toko, sistem mengalihkan ke alur lintas region dengan status **Waiting Admin Approval** | Tinggi |
+| F-LN-14 | Teknisi IT regional hanya dapat mengelola peminjaman di wilayah kerjanya | Tinggi |
+| F-LN-15 | Sistem menghasilkan dokumen BAST digital yang siap cetak/simpan PDF | Tinggi |
+| F-LN-16 | Sistem menghasilkan label pengiriman (Shipping Label) yang siap cetak | Sedang |
+
+### 7.6 Modul Stock Opname (Audit Fisik)
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-OP-01 | Tim IT dapat membuat sesi audit fisik berdasarkan lokasi | Tinggi |
+| F-OP-02 | Sistem memisahkan tampilan aset yang sudah di-scan dengan yang belum diverifikasi | Tinggi |
+| F-OP-03 | Setiap aset yang di-scan diberi status: Ditemukan, Hilang, atau Nyasar | Tinggi |
+| F-OP-04 | Sistem menampilkan progress bar visual selama proses audit | Tinggi |
+| F-OP-05 | Sistem menggunakan kamera device untuk scan QR/barcode secara real-time | Tinggi |
+| F-OP-06 | Sesi audit dapat memiliki tanggal mulai dan tanggal selesai | Sedang |
+
+### 7.7 Modul Dashboard & Pelaporan
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-RP-01 | Dashboard menampilkan ringkasan statistik: total aset, per status, dan per kategori | Tinggi |
+| F-RP-02 | Laporan menampilkan Area Chart trend mutasi 12 bulan terakhir | Sedang |
+| F-RP-03 | Laporan menampilkan Donut/Pie Chart distribusi status aset | Sedang |
+| F-RP-04 | Laporan menampilkan Horizontal Bar Chart utilisasi peminjaman tertinggi per cabang | Sedang |
+| F-RP-05 | Sistem menyediakan audit trail per unit aset (timeline siklus hidup) | Tinggi |
+| F-RP-06 | Laporan overdue peminjaman dapat diekspor ke CSV | Sedang |
+| F-RP-07 | Admin dapat men-trigger notifikasi peringatan overdue ke Telegram Bot | Sedang |
+| F-RP-08 | Admin dapat mengunduh backup lengkap database dalam format JSON | Rendah |
+| F-RP-09 | Admin dapat mengekspor tabel master aset dan riwayat mutasi ke Excel CSV (UTF-8 BOM) | Sedang |
+
+### 7.8 Modul Import Data CSV (Khusus Admin)
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-IM-01 | Admin dapat mengimpor data aset secara massal melalui file CSV | Tinggi |
+| F-IM-02 | Sistem memvalidasi nama kategori di CSV terhadap master_categories sebelum import | Tinggi |
+| F-IM-03 | Admin dapat menghubungkan nama kategori yang typo ke kategori resmi yang sesuai | Tinggi |
+| F-IM-04 | Admin dapat membuat kategori baru dari nama kategori yang belum terdaftar di CSV | Sedang |
+| F-IM-05 | Admin dapat mengabaikan/skip baris tertentu dalam CSV yang tidak valid | Sedang |
+| F-IM-06 | Import menggunakan mekanisme UPSERT berdasarkan serial_number (aman untuk upload ulang) | Tinggi |
+| F-IM-07 | Proses upload dibagi dalam batch 250 unit per request untuk mencegah timeout | Tinggi |
+| F-IM-08 | Sistem menampilkan progress bar selama proses import berlangsung | Sedang |
+
+### 7.9 Modul Autentikasi & Keamanan
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-AU-01 | Pengguna yang membuka via Telegram Mini App otomatis login menggunakan Telegram ID | Tinggi |
+| F-AU-02 | Pengguna dapat login via browser web menggunakan Telegram @Username atau ID + Password | Tinggi |
+| F-AU-03 | Password web disimpan sebagai bcrypt hash, tidak pernah dikirim ke client | Tinggi |
+| F-AU-04 | Pengguna dengan role Guest dapat mengajukan akses Tim IT melalui sistem | Tinggi |
+| F-AU-05 | Telegram Bot mengirimkan notifikasi persetujuan akses ke Grup Admin IT dengan tombol inline 1-klik | Tinggi |
+| F-AU-06 | Admin di Telegram dapat menyetujui/menolak akses dengan 1-klik (Guest→User atau Guest→Admin) | Tinggi |
+| F-AU-07 | Pengguna dapat mengatur dan mengubah password akses web dari menu Profil | Sedang |
+| F-AU-08 | Sesi web menggunakan sessionStorage (logout otomatis saat browser ditutup) | Sedang |
+
+### 7.10 Modul Manajemen Pengguna (Khusus Admin)
+
+| Kode | Kebutuhan | Prioritas |
+|------|-----------|-----------|
+| F-UP-01 | Admin dapat melihat daftar seluruh pengguna terdaftar | Tinggi |
+| F-UP-02 | Admin dapat mengubah role pengguna: guest, user, admin | Tinggi |
+| F-UP-03 | Admin dapat menetapkan wilayah kerja (assigned_region) untuk teknisi IT | Tinggi |
+| F-UP-04 | Admin dapat mengaktifkan/menonaktifkan akun pengguna | Sedang |
+| F-UP-05 | Profil pengguna Telegram (nama & username) disinkronkan ke Supabase secara real-time saat login | Sedang |
+
+---
+
+## 8. Kebutuhan Non-Fungsional
+
+### 8.1 Performa
+| Kode | Kebutuhan |
+|------|-----------|
+| NF-PF-01 | Halaman dashboard harus termuat dalam < 3 detik pada koneksi 4G |
+| NF-PF-02 | Daftar aset (6.000+ item) harus dapat ditampilkan tanpa lag dengan teknik pagination dan lazy loading |
+| NF-PF-03 | Fitur auto-complete pencarian site harus merespons dalam < 200ms untuk 2.000+ data |
+| NF-PF-04 | Proses import CSV 6.000+ baris harus selesai dalam < 5 menit dengan feedback progress yang jelas |
+
+### 8.2 Ketersediaan & Keandalan
+| Kode | Kebutuhan |
+|------|-----------|
+| NF-AV-01 | Sistem menggunakan Supabase sebagai backend dengan SLA uptime 99.9% |
+| NF-AV-02 | Sistem harus tetap menampilkan data yang sudah dimuat meski koneksi terputus sementara |
+| NF-AV-03 | Seluruh operasi database yang gagal harus menampilkan pesan error yang informatif kepada pengguna |
+
+### 8.3 Keamanan
+| Kode | Kebutuhan |
+|------|-----------|
+| NF-SC-01 | Seluruh tabel database dilindungi Row Level Security (RLS) PostgreSQL |
+| NF-SC-02 | Password web disimpan dalam format bcrypt hash, tidak pernah tersimpan dalam plaintext |
+| NF-SC-03 | File credential (.env) tidak boleh masuk ke sistem version control (Git) |
+| NF-SC-04 | Operasi sensitif (delete, import massal) hanya dapat dilakukan oleh role admin |
+| NF-SC-05 | Trigger database menolak nama kategori yang tidak terdaftar untuk mencegah data kotor |
+| NF-SC-06 | Soft delete (`deleted_at`) digunakan sebagai ganti penghapusan permanen untuk menjaga riwayat |
+
+### 8.4 Skalabilitas
+| Kode | Kebutuhan |
+|------|-----------|
+| NF-SK-01 | Sistem harus mampu mengelola minimal 10.000 unit aset tanpa degradasi performa |
+| NF-SK-02 | Sistem harus mendukung minimal 2.000 lokasi site |
+| NF-SK-03 | Arsitektur layanan menggunakan service layer terpisah untuk memudahkan pengembangan fitur baru |
+
+### 8.5 Kompatibilitas & Aksesibilitas
+| Kode | Kebutuhan |
+|------|-----------|
+| NF-CP-01 | Aplikasi harus berjalan di Telegram Mini App (iOS & Android) |
+| NF-CP-02 | Versi web harus kompatibel dengan browser Chrome, Firefox, dan Safari versi terbaru |
+| NF-CP-03 | UI harus responsif dan mendukung layar mobile (minimal 320px lebar) |
+| NF-CP-04 | Aplikasi mendukung Light Mode dan Dark Mode sesuai preferensi OS pengguna |
+
+### 8.6 Pemeliharaan & Operasional
+| Kode | Kebutuhan |
+|------|-----------|
+| NF-MT-01 | Seluruh perubahan sistem harus didokumentasikan dalam TMA.log dengan format STEP berurutan |
+| NF-MT-02 | Kode harus melalui TypeScript type checking (`npx tsc --noEmit`) sebelum di-deploy |
+| NF-MT-03 | Pesan Git commit harus menggunakan format konvensional: `feat:`, `fix:`, `docs:`, dll. |
+
+---
+
+## 9. Arsitektur Sistem
+
+### 9.1 Technology Stack
+
+| Layer | Teknologi |
+|-------|-----------|
+| **Frontend** | React 19, TypeScript, Vite 8, Tailwind CSS 3 |
+| **UI Komponen** | Atomic Design System (Atoms & Molecules), FontAwesome 6 Icons |
+| **Grafik & Visualisasi** | Recharts |
+| **Scanner** | html5-qrcode (QR Code, Code 128, Code 39, EAN-13) |
+| **Backend & Database** | Supabase PostgreSQL (PostgREST API) |
+| **Autentikasi** | Telegram WebApp SDK + Supabase RPC (web login) |
+| **Notifikasi** | Telegram Bot API |
+| **Build Tool** | Vite |
+| **Platform** | Telegram Mini App (TMA) + Web Browser |
+
+### 9.2 Diagram Arsitektur
+
+```
+┌─────────────────────────────────────────────────┐
+│                   CLIENT LAYER                   │
+│                                                  │
+│  ┌──────────────────┐    ┌──────────────────┐   │
+│  │  Telegram Mini   │    │   Web Browser    │   │
+│  │  App (TMA)       │    │   (Login Form)   │   │
+│  └────────┬─────────┘    └────────┬─────────┘   │
+│           │                       │              │
+│           └──────────┬────────────┘              │
+│                      ▼                           │
+│         ┌────────────────────────┐               │
+│         │   React + TypeScript   │               │
+│         │   (Vite, Tailwind)     │               │
+│         │                        │               │
+│         │  Views & Components    │               │
+│         │  Service Layer (API)   │               │
+│         └───────────┬────────────┘               │
+└─────────────────────┼───────────────────────────┘
+                      │ HTTPS / PostgREST API
+┌─────────────────────┼───────────────────────────┐
+│                BACKEND LAYER                     │
+│                      ▼                           │
+│         ┌────────────────────────┐               │
+│         │   Supabase Platform    │               │
+│         │                        │               │
+│         │  ┌──────────────────┐  │               │
+│         │  │  PostgreSQL DB   │  │               │
+│         │  │  + Row Level     │  │               │
+│         │  │    Security      │  │               │
+│         │  └──────────────────┘  │               │
+│         │  ┌──────────────────┐  │               │
+│         │  │  PostgREST API   │  │               │
+│         │  └──────────────────┘  │               │
+│         │  ┌──────────────────┐  │               │
+│         │  │  RPC Functions   │  │               │
+│         │  │  (SECURITY DEF.) │  │               │
+│         │  └──────────────────┘  │               │
+│         └───────────┬────────────┘               │
+└─────────────────────┼───────────────────────────┘
+                      │
+         ┌────────────┴────────────┐
+         │   Telegram Bot API      │
+         │   (Notifikasi & Approval)│
+         └─────────────────────────┘
+```
+
+---
+
+## 10. Model Data
+
+### 10.1 Entitas Utama
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    SITES                                 │
+│  site_code (PK) | site_name | site_alias | region       │
+│  site_address | created_at                              │
+└───────────────────────┬─────────────────────────────────┘
+                        │ FK
+┌───────────────────────▼─────────────────────────────────┐
+│                 MASTER_ASSETS                            │
+│  id (PK) | serial_number (UNIQUE) | aktiva              │
+│  category_id (FK) | brand | model_type | computer_name  │
+│  site_alias (FK) | status | external_id | description   │
+│  created_at | updated_at | deleted_at (soft delete)      │
+└───────────────────────┬─────────────────────────────────┘
+                        │ FK
+        ┌───────────────┼───────────────┐
+        ▼               ▼               ▼
+┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+│ ASSET_        │ │ STOCK_OPNAME  │ │ ASSET_LOANS   │
+│ MUTATIONS     │ │ _DETAILS      │ │               │
+└───────────────┘ └───────────────┘ └───────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│              MASTER_CATEGORIES                           │
+│  id (PK) | name | icon | color_text | color_bg          │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│              TELEGRAM_USERS                              │
+│  telegram_id (PK) | name | username | role              │
+│  is_active | web_password | has_web_access              │
+│  assigned_region | notes | created_at                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 10.2 Status Aset
+
+| Status | Deskripsi |
+|--------|-----------|
+| `Active` | Aset aktif digunakan di lokasi |
+| `Backup` | Aset tersedia sebagai cadangan di gudang regional |
+| `Repair` | Aset sedang dalam perbaikan |
+| `Disposed` | Aset telah dimusnahkan/dihapus dari inventaris |
+| `In Transit` | Aset sedang dalam perjalanan mutasi |
+| `Retired` | Aset pensiun, tidak digunakan lagi |
+
+### 10.3 Status Mutasi
+
+| Status | Deskripsi |
+|--------|-----------|
+| `Pending` | Mutasi diajukan, menunggu konfirmasi penerima |
+| `Completed` | Mutasi selesai, aset sudah diterima |
+| `Rejected` | Mutasi ditolak |
+
+### 10.4 Status Peminjaman (Loan)
+
+| Status | Deskripsi |
+|--------|-----------|
+| `Requested` | Pengajuan peminjaman masuk |
+| `Waiting Admin Approval` | Perlu persetujuan admin global (lintas region) |
+| `Dispatched` | Unit backup sudah dialokasikan dan dikirim |
+| `Borrowed` | Unit sudah diterima di lokasi peminjam |
+| `Returned` | Unit sudah dikembalikan dan diverifikasi |
+| `Cancelled` | Peminjaman dibatalkan |
+| `Rejected` | Peminjaman ditolak |
+
+---
+
+## 11. Manajemen Pengguna & Hak Akses
+
+### 11.1 Matriks Hak Akses
+
+| Fitur | Guest | User | Admin |
+|-------|:-----:|:----:|:-----:|
+| Lihat daftar aset | ✅ | ✅ | ✅ |
+| Lihat detail aset | ✅ | ✅ | ✅ |
+| Cari aset | ✅ | ✅ | ✅ |
+| Tambah aset | ❌ | ✅ | ✅ |
+| Edit aset | ❌ | ✅ | ✅ |
+| Hapus aset (soft delete) | ❌ | ❌ | ✅ |
+| Catat mutasi aset | ❌ | ✅ | ✅ |
+| Ajukan peminjaman | ❌ | ✅ | ✅ |
+| Alokasi unit backup | ❌ | ✅* | ✅ |
+| Verifikasi pengembalian | ❌ | ✅ | ✅ |
+| Force Cancel peminjaman | ❌ | ❌ | ✅ |
+| Lakukan stock opname | ❌ | ✅ | ✅ |
+| Import CSV massal | ❌ | ❌ | ✅ |
+| Export data (CSV/JSON) | ❌ | ❌ | ✅ |
+| Kelola pengguna | ❌ | ❌ | ✅ |
+| Lihat laporan & analitik | ❌ | ✅ | ✅ |
+| Setujui akses Guest via Bot | ❌ | ❌ | ✅ |
+
+> *User dengan assigned_region hanya dapat mengelola peminjaman di wilayah kerjanya.
+
+### 11.2 Alur Registrasi & Persetujuan Akses
+
+```
+Pengguna Baru via Telegram
+        │
+        ▼
+  [Role: Guest]
+        │
+        │ Klik "Request Akses Tim IT"
+        ▼
+  Telegram Bot mengirim notifikasi
+  ke Grup Admin IT + tombol:
+  ✅ Setujui User | 👑 Setujui Admin | ❌ Tolak
+        │
+        │ Admin klik tombol
+        ▼
+  Supabase update role secara real-time
+        │
+        ▼
+  Notifikasi konfirmasi ke pengguna
+```
+
+---
+
+## 12. Alur Proses Bisnis Utama
+
+### 12.1 Alur Mutasi Aset
+
+```
+Teknisi IT mengidentifikasi kebutuhan
+pemindahan aset (via QR scan / manual)
+        │
+        ▼
+Buka Form Mutasi → Pilih aset & site tujuan
+        │
+        ▼
+Submit → Status: Pending
+        │
+        ▼
+Penerima di site tujuan mengkonfirmasi
+        │
+        ▼
+Status: Completed → Lokasi aset diperbarui
+```
+
+### 12.2 Alur Peminjaman Unit Backup (5-Phase)
+
+```
+[FASE 1] PENGAJUAN
+Toko membuka Form Peminjaman
+→ Pilih kategori, site, estimasi durasi
+→ Sistem cek stok di region terdekat
+→ Preview kartu alokasi ditampilkan
+→ Submit → Nomor tiket dibuat otomatis
+        │
+        ▼
+[FASE 2] ALOKASI (DISPATCH)
+Tim IT melihat tiket masuk
+→ Inspeksi spesifikasi kandidat unit
+→ Pindai barcode unit terpilih
+→ Submit Dispatch → Status: Dispatched
+→ Status fisik unit: In Transit
+        │
+        ▼
+[FASE 3] PENERIMAAN (RECEIVING)
+Toko mengkonfirmasi unit tiba
+→ Klik "Konfirmasi Terima"
+→ Status: Borrowed
+→ Status fisik unit: Borrowed (di site toko)
+        │
+        ▼
+[FASE 4] MONITORING
+Sistem memantau durasi peminjaman
+→ H-3 jatuh tempo: Peringatan kuning
+→ Lewat 14 hari: Status OVERDUE merah
+        │
+        ▼
+[FASE 5] PENGEMBALIAN (RETURN)
+Toko klik "Kembalikan Unit"
+→ Tim IT verifikasi kondisi unit:
+   ✅ Bagus → Status unit: Backup
+   🛠️ Rusak → Status unit: Repair
+   ❌ Hilang → Status unit: Disposed
+→ Status tiket: Returned
+```
+
+### 12.3 Alur Stock Opname
+
+```
+Tim IT pilih Site untuk di-audit
+        │
+        ▼
+Buat sesi Stock Opname baru
+        │
+        ▼
+Pindai QR/Barcode setiap unit fisik
+        │
+        ├─ Aset ditemukan & sesuai lokasi → Status: Ditemukan
+        ├─ Aset ada tapi lokasi salah → Status: Nyasar
+        └─ Aset tidak ada secara fisik → Status: Hilang
+        │
+        ▼
+Progress bar diperbarui real-time
+        │
+        ▼
+Sesi ditutup → Laporan opname tersimpan
+```
+
+---
+
+## 13. Batasan & Asumsi
+
+### 13.1 Batasan Teknis
+- Sistem bergantung pada ketersediaan koneksi internet untuk sinkronisasi data ke Supabase
+- Fitur QR/Barcode scanner memerlukan izin akses kamera dari pengguna
+- Versi Telegram Mini App minimum yang didukung adalah Telegram versi terbaru dengan dukungan WebApp API
+- Ukuran file CSV untuk import massal dibatasi oleh ukuran maksimal yang diizinkan browser (~50MB)
+
+### 13.2 Asumsi
+- Setiap unit aset memiliki label QR Code atau barcode yang dapat dipindai
+- Data master lokasi (sites) sudah tersedia dan dapat diimport sebelum sistem digunakan
+- Pengguna memiliki akun Telegram yang aktif
+- Tim IT di cabang memiliki smartphone dengan kamera yang berfungsi untuk scan
+- Infrastruktur Supabase sudah dikonfigurasi sebelum go-live
+- Telegram Bot sudah didaftarkan dan mendapatkan token yang valid
+
+---
+
+## 14. Kriteria Penerimaan
+
+### 14.1 Kriteria Wajib (Must Have)
+- [ ] Pengguna dapat login via Telegram Mini App dan Web dengan autentikasi yang benar
+- [ ] Sistem menampilkan daftar aset 6.000+ item dengan benar dan tanpa lag
+- [ ] Pengguna dapat menambah, mengubah, dan mencari aset
+- [ ] Sistem mencatat mutasi aset antar site dan menampilkan riwayatnya
+- [ ] Alur peminjaman 5-fase berjalan end-to-end tanpa error
+- [ ] Import CSV 1.000+ baris berjalan dengan validasi kategori yang benar
+- [ ] Admin dapat mengelola role dan wilayah kerja pengguna
+- [ ] Notifikasi Telegram Bot terkirim saat ada permintaan akses atau overdue
+- [ ] Stock Opname dapat dilakukan dengan QR scanner kamera nyata
+- [ ] Dokumen BAST dapat digenerate dan siap cetak
+
+### 14.2 Kriteria Tambahan (Nice to Have)
+- [ ] Laporan analitik dengan grafik Recharts ditampilkan dengan benar
+- [ ] Export data CSV/JSON untuk backup
+- [ ] Light/Dark Mode berfungsi sesuai preferensi OS
+- [ ] Peringatan H-3 dan OVERDUE ditampilkan dengan visual yang jelas
+
+---
+
+## 15. Glosarium
+
+| Istilah | Definisi |
+|---------|----------|
+| **TMA** | Telegram Mini App — aplikasi web yang berjalan di dalam Telegram |
+| **Aset TI** | Perangkat keras teknologi informasi (PC, printer, scanner, UPS, dll.) |
+| **Mutasi** | Proses perpindahan/pemindahan aset dari satu lokasi ke lokasi lain |
+| **Stock Opname** | Proses audit fisik untuk memverifikasi keberadaan aset di suatu lokasi |
+| **Site** | Lokasi operasional perusahaan (kantor pusat, cabang, gudang regional) |
+| **Region** | Pengelompokan beberapa site dalam satu wilayah geografis |
+| **BAST** | Berita Acara Serah Terima — dokumen formal perpindahan kepemilikan/tanggung jawab aset |
+| **Unit Backup** | Unit aset cadangan di gudang regional yang dapat dipinjamkan sementara ke cabang |
+| **Maker-Checker** | Alur kerja di mana satu pihak membuat transaksi dan pihak lain memverifikasinya |
+| **Soft Delete** | Penghapusan data secara logis (menandai field `deleted_at`) tanpa menghapus rekaman dari database |
+| **UPSERT** | Operasi database yang melakukan INSERT jika data belum ada, atau UPDATE jika sudah ada |
+| **RLS** | Row Level Security — mekanisme keamanan PostgreSQL untuk membatasi akses data per baris |
+| **RBAC** | Role-Based Access Control — sistem kontrol akses berdasarkan peran pengguna |
+| **RPC** | Remote Procedure Call — fungsi yang dipanggil dari client ke server database |
+| **bcrypt** | Algoritma hashing password yang aman dan tahan terhadap serangan brute-force |
+| **PDT** | Portable Data Terminal — perangkat genggam untuk scan barcode di gudang |
+| **POS** | Point of Sale — sistem kasir di toko |
+| **UPS** | Uninterruptible Power Supply — perangkat proteksi daya listrik |
+| **SCO** | Self-Checkout — mesin kasir mandiri untuk pelanggan |
+| **SLA** | Service Level Agreement — perjanjian tingkat layanan yang menjamin ketersediaan sistem |
+
+---
+
+*Dokumen ini dipersiapkan berdasarkan implementasi aktual sistem E1-TMA per Agustus 2026.*  
+*Untuk pertanyaan atau klarifikasi, hubungi Tim Pengembang E1-TMA.*
