@@ -1,0 +1,58 @@
+# Rencana Implementasi (Life Cycle & Approval Improvement)
+
+Berdasarkan permintaan Anda, kita akan menyempurnakan alur *Approval* (Persetujuan) dan melengkapi *Life Cycle* (Siklus Hidup) peminjaman sehingga pengembalian aset tercatat secara presisi (Toko mengembalikan → IT menerima).
+
+## ⚠️ User Review Required
+
+Mohon tinjau rencana perubahan arsitektur di bawah ini. Perubahan ini akan membatasi siapa yang bisa melakukan *Approve* (hanya admin di region terkait) dan mengubah tata cara pengembalian aset dari Toko ke IT.
+
+Apakah Anda setuju dengan alur dan tombol baru ini?
+
+## 1. Perbaikan *Approval* (Validasi Region Admin)
+
+**Masalah Saat Ini:**
+Semua pengguna dengan *role* `admin` dapat menekan tombol **"Setujui"** pada semua pengajuan, meskipun pengajuan tersebut berada di luar wilayah (*region*) tanggung jawab mereka.
+
+**Solusi yang Diusulkan:**
+- **Backend (`transactionService.ts`)**: Memperbarui *query* riwayat transaksi untuk mengikutsertakan kolom `region` dari `to_site_code` (lokasi tujuan).
+- **Frontend (`TransactionsView.tsx`)**: Tombol **"Setujui"** dan **"Tolak"** hanya akan muncul jika:
+  1. Pengguna adalah `admin`.
+  2. `assigned_region` milik admin tersebut **sama dengan** `region` lokasi tujuan transaksi, ATAU admin tersebut adalah *Super Admin* (`assigned_region === 'ALL'`).
+
+## 2. Penambahan Fase *Returning* (Pengembalian Unit)
+
+**Masalah Saat Ini:**
+Siklus saat ini berhenti di `In Progress` (Sedang Dipinjam). Tombol penyelesaian transaksi langsung melompat ke `Completed`, yang artinya tidak ada fase perantara ketika barang sedang dikirim balik (retur) dari Toko ke Gudang IT.
+
+**Solusi yang Diusulkan:**
+Kita akan menambahkan status baru yaitu **`Returning`** (Dalam Pengembalian). Siklus peminjaman akan berubah menjadi:
+
+`Requested` ➡️ `Approved` ➡️ `In Transit` ➡️ `In Progress` ➡️ **`Returning`** ➡️ **`Completed`**
+
+**Perubahan UI / Tombol (Action Buttons):**
+1. **Saat status `In Progress`**:
+   - Muncul tombol **"Kembalikan Unit (Return)"** untuk Peminjam/Toko.
+   - Mengubah status menjadi `Returning` (Mengartikan barang sudah dipaketkan/dikirim balik ke IT).
+2. **Saat status `Returning`**:
+   - Muncul tombol **"Terima di Gudang (Completed)"** *hanya* untuk Admin IT.
+   - Saat Admin menekan ini, barulah sistem mengubah status menjadi `Completed` dan memicu pemindahan lokasi fisik (`site_alias` di `master_assets`) kembali ke gudang asal.
+
+## Proposed Changes (Detail File)
+
+### `src/types/inventory.ts`
+- Menambahkan `'Returning'` ke dalam `TransactionStatus` type.
+- Menambahkan konfigurasi warna dan ikon untuk `Returning` pada `transactionStatusConfig`.
+
+### `src/services/transactionService.ts`
+- Memodifikasi `getTransactions()` untuk mengambil kolom `region` dari tabel `sites` (untuk lokasi tujuan) guna keperluan validasi *Approval*.
+- Menambahkan penanganan (logging/notifikasi) khusus jika status diperbarui menjadi `Returning`.
+
+### `src/views/TransactionsView.tsx`
+- Membutuhkan penambahan *props* `currentUserRegion` (dari *AuthContext*).
+- Menyembunyikan tombol *Approve* jika region Admin tidak sesuai.
+- Menambahkan logika tombol:
+  - `In Progress` + *Current User* = Tampilkan tombol **"Kembalikan Unit (Return)"**.
+  - `Returning` + *Admin* = Tampilkan tombol **"Terima di Gudang (Completed)"**.
+
+---
+Jika Anda setuju dengan desain alur ini, silakan tekan **Proceed/Approve** agar saya dapat langsung mengimplementasikan kodenya.

@@ -337,6 +337,8 @@ function App() {
             loading={loading}
             userRole={currentUser?.role}
             currentUserId={currentUser?.telegram_id || 0}
+            currentUserRegion={currentUser?.assigned_region}
+            onCreateTransaction={() => { setDetailItem(null); setTransactionOpen(true); }}
             onRefresh={refresh}
             onUpdateStatus={async (id, status) => {
               try {

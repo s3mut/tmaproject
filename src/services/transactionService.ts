@@ -48,7 +48,7 @@ export async function getTransactions(type?: 'Mutation' | 'Borrowing' | 'Repair'
       ? supabase.from('master_assets').select('id, serial_number, category_id, brand, model_type').in('id', assetIds)
       : { data: [] },
     siteCodes.length > 0
-      ? supabase.from('sites').select('site_code, site_name, site_alias').in('site_code', siteCodes)
+      ? supabase.from('sites').select('site_code, site_name, site_alias, region').in('site_code', siteCodes)
       : { data: [] },
     userIds.length > 0
       ? supabase.from('telegram_users').select('telegram_id, name').in('telegram_id', userIds)
@@ -57,7 +57,7 @@ export async function getTransactions(type?: 'Mutation' | 'Borrowing' | 'Repair'
   ]);
 
   const assetMap = new Map((assetRes.data ?? []).map((a: any) => [a.id, a]));
-  const siteMap = new Map((siteRes.data ?? []).map((s: any) => [s.site_code, s.site_name]));
+  const siteMap = new Map((siteRes.data ?? []).map((s: any) => [s.site_code, s]));
   const userMap = new Map((userRes.data ?? []).map((u: any) => [u.telegram_id, u.name]));
   const catMap = new Map((catRes.data ?? []).map((c: any) => [c.id, c.name]));
 
@@ -69,8 +69,9 @@ export async function getTransactions(type?: 'Mutation' | 'Borrowing' | 'Repair'
       asset_category_name: asset?.category_id ? (catMap.get(asset.category_id) ?? (row.category_id ? catMap.get(row.category_id) : '-')) : (row.category_id ? catMap.get(row.category_id) : '-'),
       asset_brand: asset?.brand ?? null,
       asset_model_type: asset?.model_type ?? null,
-      from_site_name: row.from_site_code ? (siteMap.get(row.from_site_code) ?? null) : null,
-      to_site_name: row.to_site_code ? (siteMap.get(row.to_site_code) ?? '-') : null,
+      from_site_name: row.from_site_code ? (siteMap.get(row.from_site_code)?.site_name ?? null) : null,
+      to_site_name: row.to_site_code ? (siteMap.get(row.to_site_code)?.site_name ?? '-') : null,
+      to_site_region: row.to_site_code ? (siteMap.get(row.to_site_code)?.region ?? null) : null,
       requested_by_name: userMap.get(row.requested_by) ?? 'Unknown',
       approved_by_name: row.approved_by ? (userMap.get(row.approved_by) ?? 'Unknown') : null,
       dispatched_by_name: row.dispatched_by ? (userMap.get(row.dispatched_by) ?? 'Unknown') : null,
@@ -167,6 +168,8 @@ export async function updateTransactionStatus(
       dueDate.setDate(dueDate.getDate() + trxCheck.duration_days);
       updates.due_date = dueDate.toISOString();
     }
+  } else if (newStatus === 'Returning') {
+    // Hanya perbarui status (tidak ada kolom timestamp terpisah untuk retur)
   } else if (newStatus === 'Completed') {
     updates.completed_at = now;
   }

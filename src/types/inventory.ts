@@ -6,7 +6,7 @@
 export type AssetStatus = 'Active' | 'Backup' | 'Disposed' | 'Retired';
 export type UserRole = 'admin' | 'user' | 'guest';
 export type TransactionType = 'Mutation' | 'Borrowing' | 'Repair';
-export type TransactionStatus = 'Requested' | 'Approved' | 'In Transit' | 'In Progress' | 'Completed' | 'Rejected' | 'Cancelled';
+export type TransactionStatus = 'Requested' | 'Approved' | 'In Transit' | 'In Progress' | 'Returning' | 'Completed' | 'Rejected' | 'Cancelled';
 export type OpnameStatus = 'Ditemukan' | 'Hilang' | 'Nyasar';
 
 // ----- TABLE: sites -----
@@ -132,6 +132,7 @@ export interface TransactionDetail extends AssetTransaction {
   asset_model_type?: string | null;
   from_site_name?: string | null;
   to_site_name?: string | null;
+  to_site_region?: string | null;
   requested_by_name: string;
   approved_by_name?: string | null;
   dispatched_by_name?: string | null;
@@ -158,6 +159,7 @@ export const transactionStatusConfig: Record<TransactionStatus, { label: string;
   Approved:     { label: 'Approved',    bg: 'bg-teal-500/20 border border-teal-500/40',     text: 'text-teal-300',    icon: 'fa-check-circle' },
   'In Transit': { label: 'In Transit',  bg: 'bg-blue-500/20 border border-blue-500/40',     text: 'text-blue-300',    icon: 'fa-truck' },
   'In Progress':{ label: 'In Progress', bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-tools' },
+  Returning:    { label: 'Returning',   bg: 'bg-purple-500/20 border border-purple-500/40', text: 'text-purple-300',  icon: 'fa-box-open' },
   Completed:    { label: 'Completed',   bg: 'bg-slate-700/50 border border-slate-600/50',   text: 'text-slate-400',   icon: 'fa-check-double' },
   Rejected:     { label: 'Rejected',    bg: 'bg-red-500/20 border border-red-500/40',       text: 'text-red-400',     icon: 'fa-times-circle' },
   Cancelled:    { label: 'Cancelled',   bg: 'bg-slate-700/30 border border-slate-600/40',   text: 'text-slate-400',   icon: 'fa-ban' },

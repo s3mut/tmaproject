@@ -10,11 +10,13 @@ interface Props {
   loading: boolean;
   userRole?: string;
   currentUserId: number;
+  currentUserRegion?: string;
+  onCreateTransaction: () => void;
   onRefresh: () => void;
   onUpdateStatus: (transactionId: number, newStatus: string, notes?: string) => Promise<void>;
 }
 
-const TransactionsView = ({ transactions, loading, userRole, currentUserId, onUpdateStatus }: Props) => {
+const TransactionsView = ({ transactions, loading, userRole, currentUserId, currentUserRegion, onCreateTransaction, onUpdateStatus }: Props) => {
   const [filterType, setFilterType] = useState<string>('all');
   
   const filtered = transactions.filter(t => filterType === 'all' || t.transaction_type === filterType);
@@ -27,6 +29,9 @@ const TransactionsView = ({ transactions, loading, userRole, currentUserId, onUp
     <div className="space-y-4 pb-20">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-slate-50">Transaksi Aset</h2>
+        <Button variant="primary" size="sm" onClick={onCreateTransaction} className="shadow-lg shadow-blue-500/20">
+          <i className="fas fa-plus mr-1"></i> Ajukan Transaksi
+        </Button>
       </div>
 
       {/* Filter Chips */}
@@ -86,7 +91,7 @@ const TransactionsView = ({ transactions, loading, userRole, currentUserId, onUp
 
                 {/* Actions based on Status & Role */}
                 <div className="flex gap-2 mt-3 pt-3 border-t border-slate-700/50">
-                  {trx.status === 'Requested' && userRole === 'admin' && (
+                  {trx.status === 'Requested' && userRole === 'admin' && (!currentUserRegion || currentUserRegion === 'ALL' || currentUserRegion === trx.to_site_region) && (
                     <>
                       <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Approved')}>Setujui</Button>
                       <Button variant="danger" size="sm" onClick={() => onUpdateStatus(trx.id, 'Rejected')}>Tolak</Button>
@@ -95,8 +100,17 @@ const TransactionsView = ({ transactions, loading, userRole, currentUserId, onUp
                   {trx.status === 'Approved' && userRole === 'admin' && (
                     <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'In Transit')}>Kirim Unit (In Transit)</Button>
                   )}
-                  {trx.status === 'In Transit' && (
-                    <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Completed')}>Terima (Completed)</Button>
+                  {trx.status === 'In Transit' && trx.transaction_type === 'Mutation' && (
+                    <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Completed')}>Terima Unit (Completed)</Button>
+                  )}
+                  {trx.status === 'In Transit' && trx.transaction_type !== 'Mutation' && (
+                    <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'In Progress')}>Terima Unit (In Progress)</Button>
+                  )}
+                  {trx.status === 'In Progress' && (trx.transaction_type === 'Borrowing' || trx.transaction_type === 'Repair') && trx.requested_by === currentUserId && (
+                    <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Returning')}>Kembalikan Unit (Return)</Button>
+                  )}
+                  {trx.status === 'Returning' && userRole === 'admin' && (
+                    <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Completed')}>Terima di Gudang (Completed)</Button>
                   )}
                   {trx.status === 'Requested' && trx.requested_by === currentUserId && (
                     <Button variant="danger" size="sm" onClick={() => onUpdateStatus(trx.id, 'Cancelled')}>Batalkan</Button>
