@@ -1,13 +1,14 @@
 # Business Requirement Document (BRD)
-## E1-TMA — IT Asset Inventory Telegram Mini App
+## E1-TMA — Field Asset Management Companion for Odoo ERP
+### (Telegram Mini App untuk Pengelolaan Aset Cadangan & Inventaris Lapangan)
 
 ---
 
 | **Informasi Dokumen** | **Detail** |
 |---|---|
 | **Nama Dokumen** | Business Requirement Document (BRD) |
-| **Nama Proyek** | E1-TMA — Enterprise IT Asset Inventory Telegram Mini App |
-| **Versi Dokumen** | 1.1 (Updated Post-Refactoring & Lifecycle Enhancement) |
+| **Nama Proyek** | E1-TMA — Field Operational Companion for Odoo Asset Inventory |
+| **Versi Dokumen** | 2.0 (Comprehensive Enterprise & Odoo Synchronization Architecture) |
 | **Tanggal Pembaruan** | 27 Agustus 2026 |
 | **Status** | Approved / Production Baseline |
 | **Penyusun** | Tim Pengembang E1-TMA |
@@ -16,504 +17,381 @@
 
 ## Daftar Isi
 
-1. [Pendahuluan](#1-pendahuluan)
-2. [Latar Belakang & Masalah Bisnis](#2-latar-belakang--masalah-bisnis)
-3. [Tujuan Bisnis](#3-tujuan-bisnis)
-4. [Ruang Lingkup Sistem (Scope)](#4-ruang-lingkup-sistem-scope)
-5. [Pemangku Kepentingan (Stakeholders)](#5-pemangku-kepentingan-stakeholders)
-6. [Kebutuhan Bisnis Utama (Business Requirements)](#6-kebutuhan-bisnis-utama-business-requirements)
+1. [Eksekutif & Konsep Dasar Sistem](#1-eksekutif--konsep-dasar-sistem)
+2. [Latar Belakang: Mengapa E1-TMA Dibangun?](#2-latar-belakang-mengapa-e1-tma-dibangun)
+   - 2.1 [Kondisi Awal: Keterbatasan Odoo di Operasional Lapangan](#21-kondisi-awal-keterbatasan-odoo-di-operasional-lapangan)
+   - 2.2 [Peran E1-TMA: Tangan Panjang Odoo di Garis Depan](#22-peran-e1-tma-tangan-panjang-odoo-di-garis-depan)
+3. [Tujuan Bisnis & Sasaran Proyek](#3-tujuan-bisnis--sasaran-proyek)
+4. [Ruang Lingkup Sistem (Scope of System)](#4-ruang-lingkup-sistem-scope-of-system)
+   - 4.1 [Dalam Lingkup (In-Scope)](#41-dalam-lingkup-in-scope)
+   - 4.2 [Di Luar Lingkup (Out-of-Scope)](#42-di-luar-lingkup-out-of-scope)
+5. [Analisis Kesenjangan: Odoo ERP vs. E1-TMA](#5-analisis-kesenjangan-odoo-erp-vs-e1-tma)
+6. [Kelemahan Sistem & Titik Kritis Rekonsiliasi (The Synchronization Gap)](#6-kelemahan-sistem--titik-kritis-rekonsiliasi-the-synchronization-gap)
+   - 6.1 [Sumber Kerancuan Data (Status Mismatch)](#61-sumber-kerancuan-data-status-mismatch)
+   - 6.2 [Standar Prosedur Operasional (SOP) Rekonsiliasi Ekspor-Impor](#62-standar-prosedur-operasional-sop-rekonsiliasi-ekspor-impor)
+   - 6.3 [Peta Jalan Integrasi Masa Depan (Phase 2 Roadmap)](#63-peta-jalan-integrasi-masa-depan-phase-2-roadmap)
 7. [Kebutuhan Fungsional (Functional Requirements)](#7-kebutuhan-fungsional-functional-requirements)
-   - 7.1 [Modul Master Data & Inventaris Aset](#71-modul-master-data--inventaris-aset)
-   - 7.2 [Modul Transaksi Terpadu (Peminjaman, Mutasi, Perbaikan)](#72-modul-transaksi-terpadu-peminjaman-mutasi-perbaikan)
-   - 7.3 [Modul Persetujuan Wilayah & Bot Webhook](#73-modul-persetujuan-wilayah--bot-webhook)
-   - 7.4 [Modul Stock Opname (Audit Fisik Hybrid)](#74-modul-stock-opname-audit-fisik-hybrid)
-   - 7.5 [Modul Pemusnahan Aset & Usulan Afkir (Bulk Disposal)](#75-modul-pemusnahan-aset--usulan-afkir-bulk-disposal)
-   - 7.6 [Modul Pelaporan, Analitik & Generator BAST](#76-modul-pelaporan-analitik--generator-bast)
-   - 7.7 [Modul Impor Massal CSV & Validasi Strict](#77-modul-impor-massal-csv--validasi-strict)
-   - 7.8 [Modul Autentikasi Ganda & Manajemen Pengguna (RBAC)](#78-modul-autentikasi-ganda--manajemen-pengguna-rbac)
+   - 7.1 [Modul Sinkronisasi Staging Data Odoo (CSV Import/Export)](#71-modul-sinkronisasi-staging-data-odoo-csv-importexport)
+   - 7.2 [Modul Transaksi Khusus Peminjaman Unit Backup (6-Phase Loan Lifecycle)](#72-modul-transaksi-khusus-peminjaman-unit-backup-6-phase-loan-lifecycle)
+   - 7.3 [Modul Persetujuan Interaktif Wilayah & Bot Webhook](#73-modul-persetujuan-interaktif-wilayah--bot-webhook)
+   - 7.4 [Modul Stock Opname Lapangan (Mobile Camera QR/Barcode Scanner)](#74-modul-stock-opname-lapangan-mobile-camera-qrbarcode-scanner)
+   - 7.5 [Modul Pemusnahan Aset & Usulan Afkir (Bulk Disposal Draft)](#75-modul-pemusnahan-aset--usulan-afkir-bulk-disposal-draft)
+   - 7.6 [Modul Pelaporan Administrasi Odoo & Generator BAST](#76-modul-pelaporan-administrasi-odoo--generator-bast)
+   - 7.7 [Modul Autentikasi Ganda & Manajemen Role Lapangan](#77-modul-autentikasi-ganda--manajemen-role-lapangan)
 8. [Kebutuhan Non-Fungsional (Non-Functional Requirements)](#8-kebutuhan-non-fungsional-non-functional-requirements)
-9. [Arsitektur Sistem & Integrasi](#9-arsitektur-sistem--integrasi)
-10. [Model Data & State Machine Transaksi](#10-model-data--state-machine-transaksi)
-11. [Matriks Peran & Hak Akses (RBAC Matrix)](#11-matriks-peran--hak-akses-rbac-matrix)
-12. [Alur Proses Bisnis Utama (Workflow)](#12-alur-proses-bisnis-utama-workflow)
+9. [Arsitektur Aliran Data: Odoo ⮂ E1-TMA](#9-arsitektur-aliran-data-odoo--e1-tma)
+10. [Model Data & Siklus Status Aset](#10-model-data--siklus-status-aset)
+11. [Matriks Hak Akses (RBAC Matrix)](#11-matriks-hak-akses-rbac-matrix)
+12. [Alur Operasional Lapangan (Business Workflows)](#12-alur-operasional-lapangan-business-workflows)
 13. [Batasan, Asumsi & Dependensi](#13-batasan-asumsi--dependensi)
-14. [Kriteria Penerimaan Sistem (Acceptance Criteria)](#14-kriteria-penerimaan-sistem-acceptance-criteria)
-15. [Glosarium Istilah](#15-glosarium-istilah)
+14. [Kriteria Keberhasilan & Penerimaan (Acceptance Criteria)](#14-kriteria-keberhasilan--penerimaan-acceptance-criteria)
+15. [Glosarium](#15-glosarium)
 
 ---
 
-## 1. Pendahuluan
+## 1. Eksekutif & Konsep Dasar Sistem
 
-Dokumen ini merupakan **Business Requirement Document (BRD) Versi 1.1** untuk sistem **E1-TMA** (*Enterprise IT Asset Inventory Telegram Mini App*). Dokumen ini merinci secara komprehensif seluruh kebutuhan fungsional, non-fungsional, arsitektur teknis, aturan bisnis (*business rules*), serta alur kerja (*workflows*) transaksi aset yang telah diimplementasikan dan disempurnakan pada sistem per **27 Agustus 2026**.
+Sistem **E1-TMA** (*Enterprise IT Asset Inventory Telegram Mini App*) dirancang dan dibangun sebagai **aplikasi pendamping operasional lapangan (*Field Operational Companion*)** bagi sistem ERP utama perusahaan, yaitu **Odoo ERP**.
 
-### 1.1 Tujuan Dokumen
-- Mendokumentasikan spesifikasi fungsional dan teknis aplikasi terkini secara menyeluruh.
-- Menjadi standar acuan (*baseline*) untuk pengujian (*Quality Assurance*), audit kepatuhan IT, dan serah terima sistem.
-- Menjadi panduan operasional bagi Tim IT Pusat (HQ), Admin Regional, dan Tim Lapangan (Toko/Cabang).
+Dalam arsitektur tata kelola teknologi informasi perusahaan:
+1. **Odoo ERP** diposisikan sebagai **System of Record (Pusat Pembukuan & Master Induk)** untuk kepatuhan akuntansi, aset finansial, dan audit korporasi pusat.
+2. **E1-TMA** diposisikan sebagai **System of Engagement (Aplikasi Eksekusi Lapangan)** yang memberikan antarmuka ultra-ringan, interaktif, dan *mobile-first* bagi tim teknisi gudang regional serta staf toko/cabang yang tersebar di 2.000+ lokasi.
 
-### 1.2 Audiens Dokumen
-- Direksi & Manajemen Teknologi Informasi
-- IT Asset Manager & IT Regional Coordinator
-- Tim Pengembang Perangkat Lunak (Software Engineering Team)
-- Tim QA & Auditor Internal IT
-- Tim Helpdesk & Teknisi IT Lapangan
+E1-TMA mengatasi jurang pemisah (*gap*) antara antarmuka Odoo yang berorientasi *desktop/back-office* dengan kebutuhan nyata di lapangan yang menuntut kecepatan pemindaian barcode dengan kamera ponsel, persetujuan cepat melalui obrolan Telegram, serta pemantauan ketat atas sirkulasi unit cadangan (*backup unit loan lifecycle*).
 
 ---
 
-## 2. Latar Belakang & Masalah Bisnis
+## 2. Latar Belakang: Mengapa E1-TMA Dibangun?
 
-### 2.1 Kondisi Sebelum Sistem (As-Is)
-Pengelolaan aset TI perusahaan menghadapi kendala operasional yang kritis:
-- **Pencatatan Terfragmentasi (Silo Spreadsheet):** Setiap regional dan cabang mencatat data aset secara manual di file Excel terpisah, memicu ketidaksinkronan data, duplikasi nomor seri, dan potensi *human error*.
-- **Ketidakpastian Lokasi Unit Backup:** Mesin/perangkat cadangan (*backup unit*) yang dipinjamkan ke toko seringkali tidak terlacak kepulangannya, berujung pada hilangnya aset (*untracked missing assets*).
-- **Proses Persetujuan Lambat:** Persetujuan pemindahan barang membutuhkan koordinasi chat/email manual yang tidak memiliki jejak audit formal.
-- **Audit Fisik (Stock Opname) Tidak Efisien:** Pemeriksaan manual membutuhkan waktu berhari-hari, rentan salah hitung, dan sulit membedakan unit resmi dengan unit nyasar antar cabang.
-- **Skala Operasional Luas:** Perusahaan mengelola lebih dari **6.000+ unit aset TI** yang tersebar di **2.000+ lokasi cabang/toko** di seluruh wilayah Indonesia.
+### 2.1 Kondisi Awal: Keterbatasan Odoo di Operasional Lapangan
+Pada awalnya, seluruh pendataan inventaris aset TI mengandalkan sistem **Odoo**. Meskipun Odoo sangat kuat untuk pencatatan tingkat korporat, tim lapangan menghadapi berbagai hambatan praktis:
+- **Kurang *Mobile-Friendly* untuk Staf Toko:** Mengakses Odoo melalui browser smartphone di toko sangat tidak praktis, membutuhkan login yang kompleks, memuat halaman yang berat, dan memiliki kurva pembelajaran (*learning curve*) yang tinggi bagi staf cabang.
+- **Ketiadaan Pemindai Barcode Kamera Bawaan yang Praktis:** Odoo membutuhkan perangkat keras pemindai (*barcode scanner*) fisik atau terminal industri khusus (PDT) yang mahal. Tidak memungkinkan menyediakan alat scanner fisik di ribuan toko hanya untuk kebutuhan insidental.
+- **Ketiadaan Alur Khusus Sirkulasi Mesin *Backup*:** Odoo mencatat perpindahan stok secara generik, namun tidak memiliki *workflow* terpandu untuk pinjam-pakai darurat unit backup (seperti: masa tenggang 14 hari, hitung mundur jatuh tempo, peringatan otomatis H-3, eskalasi visual *OVERDUE*, dan verifikasi kondisi fisik saat retur).
+- **Komunikasi Persetujuan yang Lambat:** Notifikasi persetujuan mutasi di Odoo berbasis email atau harus membuka modul web Odoo, sehingga respon Admin IT lambat saat toko mengalami keadaan darurat mesin kasir/PC mati.
 
-### 2.2 Kondisi yang Dituju (To-Be)
-E1-TMA menghadirkan platform inventaris aset terpadu berbasis **Telegram Mini App (TMA)** yang memungkinkan:
-- Akses cepat tanpa instalasi aplikasi tambahan bagi staf cabang dan teknisi via Telegram.
-- Siklus hidup transaksi terstruktur (*Requested ➡️ Approved ➡️ In Transit ➡️ In Progress ➡️ Returning ➡️ Completed*).
-- Notifikasi dan persetujuan 1-klik via Telegram Bot Webhook secara instan.
-- Audit fisik berbasis *hybrid scanner* (Kamera QR/Barcode + Input Manual S/N).
-- Laporan analitik dan dokumen formal (BAST & Label Pengiriman) yang siap cetak.
+### 2.2 Peran E1-TMA: Tangan Panjang Odoo di Garis Depan
+Untuk mengatasi kendala di atas tanpa membongkar struktur Odoo yang sudah berjalan, dibangunlah **E1-TMA** sebagai jembatan:
+1. Data master aset dari Odoo diekspor ke dalam bentuk file spreadsheet/CSV.
+2. Data tersebut diimpor dan diolah ke dalam E1-TMA yang didesain ringan berbasis **Telegram Mini App (TMA)**.
+3. Seluruh pengguna lapangan (Teknisi IT Regional & Toko) berinteraksi harian melalui Telegram untuk scan barcode dengan kamera HP, mengajukan pinjaman unit, memantau pengiriman, dan melakukan audit fisik (*Stock Opname*).
+4. Hasil transaksi operasional di E1-TMA kemudian diekspor kembali menjadi laporan data yang siap diimpor ulang ke Odoo guna memperbarui status resmi di pembukuan pusat.
 
 ---
 
-## 3. Tujuan Bisnis
+## 3. Tujuan Bisnis & Sasaran Proyek
 
-| No | Sasaran Strategis | Indikator Kinerja Utama (KPI) |
-|----|-------------------|-------------------------------|
-| 1 | **Akurasi Data Inventaris** | Tingkat integritas dan validitas data aset mencapai **≥ 99.5%** tanpa duplikasi serial number. |
-| 2 | **Kecepatan Persetujuan Transaksi** | Waktu respon persetujuan mutasi/peminjaman terpangkas dari rata-rata 1-2 hari menjadi **< 15 menit** via Telegram Bot Approval. |
-| 3 | **Eliminasi Keterlambatan Pengembalian** | Mengurangi angka aset cadangan yang tertahan di toko (*overdue*) hingga **0 kasus** tanpa notifikasi peringatan harian. |
-| 4 | **Efisiensi Audit Fisik Cabang** | Mempercepat durasi Stock Opname per cabang hingga **≥ 60%** melalui pemindaian kamera dan pencocokan otomatis. |
-| 5 | **Jejak Audit & Akuntabilitas** | 100% pergerakan unit fisik memiliki catatan log kronologis (*Audit Trail*), lengkap dengan pencatat, tanggal, dan dokumen BAST digital. |
+| No | Sasaran Bisnis | Indikator Keberhasilan (KPI) |
+|----|----------------|------------------------------|
+| 1 | **Adopsi Lapangan Maksimal** | 100% toko dan teknisi dapat melakukan transaksi aset langsung dari Telegram tanpa perlu instalasi aplikasi baru. |
+| 2 | **Pemanfaatan Kamera Smartphone** | Eliminasi kebutuhan pembelian alat scanner eksternal di toko; pemindaian barcode/QR 100% memanfaatkan kamera ponsel. |
+| 3 | **Visibilitas Unit Cadangan (*Backup*)** | Mengurangi kasus mesin cadangan yang tertahan atau hilang di toko menjadi **0 kasus** melalui *tracking lifecycle* dan pengingat harian Telegram. |
+| 4 | **Kecepatan Respon Darurat Toko** | Waktu respon persetujuan pengiriman mesin cadangan dari regional ke toko turun dari 1-2 hari menjadi **< 15 menit** via persetujuan 1-klik di Bot Telegram. |
+| 5 | **Standardisasi Data untuk Rekonsiliasi Odoo** | Format data hasil operasional E1-TMA terstandarisasi penuh (UTF-8 BOM CSV / Excel) agar siap diimpor kembali ke Odoo secara presisi. |
 
 ---
 
-## 4. Ruang Lingkup Sistem (Scope)
+## 4. Ruang Lingkup Sistem (Scope of System)
 
-### 4.1 Termasuk dalam Lingkup (In-Scope)
-- **Master Data Management:** Pengelolaan Master Kategori (37 kategori standar), Master Site (2.000+ lokasi beserta pemetaan wilayah), dan Master Pengguna.
-- **Manajemen Inventaris Aset:** CRUD aset lengkap dengan atribut Serial Number, No. Aktiva/BTA, Merek, Model, Computer Name, Status (`Active`, `Backup`, `Disposed`, `Retired`), dan Site Alias.
-- **Transaksi Terpadu (Unified Transactions):**
-  - **Peminjaman (Borrowing):** Siklus 6 fase dengan input durasi wajib, auto-kalkulasi jatuh tempo, dan restorasi lokasi otomatis saat selesai.
-  - **Mutasi (Mutation):** Perpindahan kepemilikan dan lokasi aset fisik antar cabang secara permanen.
-  - **Perbaikan (Repair):** Pelacakan servis perangkat rusak ke vendor/workshop IT.
-- **Otorisasi Berbasis Wilayah (Regional Approval):** Validasi wilayah ketat untuk Admin Regional dan bypass Super Admin (`assigned_region = 'ALL'`).
-- **Integrasi Telegram Bot & Serverless Webhook:**
-  - Notifikasi permohonan baru dengan tombol *Inline Keyboard* (`✅ Setujui` / `❌ Tolak`).
-  - Cron job otomatis harian untuk mendeteksi *Overdue Loans* dan *Stuck In Transit (> 3 hari)*.
-- **Audit Fisik (Stock Opname Hybrid):** Kamera pemindai QR/Barcode bawaan + Input manual S/N dengan status `Ditemukan`, `Nyasar`, dan `Hilang`.
-- **Modul Pemusnahan Aset (Bulk Disposal):** Eksekusi pemusnahan massal dan fitur unduh **Daftar Usulan Afkir (Draft CSV)** untuk otorisasi atasan fisik.
-- **Dokumentasi & Generator Berkas:** BAST Serah Terima, BAST Pemusnahan, Label Pengiriman (*Shipping Label*), dan Ekspor ke Google Sheets / CSV Excel (UTF-8 BOM).
-- **Import Massal CSV:** Chunking 250 baris per batch dengan validasi ketat kategori via PostgreSQL Trigger.
-- **Autentikasi Ganda:** Auto-login via Telegram WebApp SDK dan Login Web Form via username/ID + password terenkripsi bcrypt.
+### 4.1 Dalam Lingkup (In-Scope)
+- **Ekstensi Operasional Lapangan Odoo:** Staging data aset hasil ekspor Odoo dengan validasi ketat nama kategori dan kode site.
+- **Manajemen Peminjaman Unit Backup (6-Phase Loan Lifecycle):**
+  1. *Requested* (Pengajuan toko dengan durasi hari wajib)
+  2. *Approved* (Persetujuan Admin Regional via Web/Bot)
+  3. *In Transit* (Pengiriman unit backup dari gudang)
+  4. *In Progress* (Penerimaan toko & penguncian otomatis *Due Date*)
+  5. *Returning* (Pengembalian fisik unit oleh toko ke IT)
+  6. *Completed* (Penerimaan di gudang & **restorasi otomatis lokasi aset kembali ke gudang asal**).
+- **Mutasi Aset Permanen (Mutation):** Pencatatan pemindahan lokasi aset antar cabang secara permanen.
+- **Stock Opname Hybrid:** Audit fisik aset di toko/gudang menggunakan kamera HP (QR/Barcode) dengan opsi *fallback* ketik manual nomor seri.
+- **Bot Approval & Overdue Cron:** Notifikasi persetujuan interaktif via *Inline Keyboard* Telegram dan pengecekan otomatis harian untuk pinjaman yang jatuh tempo.
+- **Manajemen Usulan Pemusnahan (Bulk Disposal Draft):** Fasilitas memilih aset rusak dan mengekspor daftarnya ke Excel untuk ditandatangani manajemen sebelum eksekusi sistem.
+- **Generator Dokumen Legal:** Pembuatan BAST Digital, Label Pengiriman (*Shipping Label*), dan Berkas Rekapitulasi Sinkronisasi Odoo.
 
 ### 4.2 Di Luar Lingkup (Out-of-Scope)
-- Modul Akuntansi Finansial (Perhitungan nilai depresiasi/penyusutan buku fiskal).
-- Modul Pengadaan/Purchasing Order (PO) pembelian barang baru ke vendor.
-- Manajemen Lisensi Perangkat Lunak (*Software Licensing Management*).
+- Modul Keuangan & Jurnal Akuntansi (sepenuhnya tetap ditangani di Odoo).
+- Pengadaan Aset Baru (*Purchase Order*) dan Pembayaran Vendor (tetap di Odoo).
+- Sinkronisasi API dua arah *Real-Time Full Duplex* (pada fase 1 ini integrasi dilakukan secara terstruktur melalui mekanisme *Batch Staging Export-Import CSV*).
 
 ---
 
-## 5. Pemangku Kepentingan (Stakeholders)
+## 5. Analisis Kesenjangan: Odoo ERP vs. E1-TMA
 
-| Peran | Deskripsi | Tanggung Jawab & Kepentingan |
+Berikut perbandingan peran fungsional antara Odoo ERP dengan E1-TMA:
+
+| Fitur / Parameter | Odoo ERP (Sistem Induk) | E1-TMA (Tangan Panjang Lapangan) |
 |---|---|---|
-| **Super Admin (IT HQ)** | Administrator IT Pusat (`assigned_region = 'ALL'`) | Memiliki akses global ke seluruh region, menyetujui transaksi lintas wilayah, melakukan impor massal, manajemen user, dan pengawasan sistem. |
-| **Admin Regional** | Staf IT / Gudang Regional (`assigned_region = 'Region X'`) | Mengelola aset gudang regional, menyetujui peminjaman/mutasi di wilayahnya, melakukan *dispatch* unit, dan menerima unit retur. |
-| **User (Toko / Cabang)** | Kepala Toko / Staf Operasional Cabang | Mengajukan peminjaman unit backup, mengonfirmasi penerimaan barang, dan menginisiasi retur (*Returning*) unit selesai pakai. |
-| **Guest** | Pengguna Telegram baru yang belum diverifikasi | Mengajukan permohonan aktivasi akun Tim IT melalui tombol *Request Access*. |
-| **Manajemen / Eksekutif IT** | Head of IT, General Manager IT | Memantau KPI kesehatan aset, laporan utilisasi, tren mutasi, dan menyetujui berkas usulan pemusnahan barang afkir. |
+| **Fokus Utama** | Pembukuan akuntansi, kepatuhan audit korporasi, master aset resmi. | Operasional harian lapangan, mobilitas, kemudahan input pengguna toko. |
+| **Akses Platform** | Web Desktop / ERP Portal (memerlukan bandwidth stabil & login ERP). | **Telegram Mini App (TMA)** langsung di smartphone (akses cepat via Telegram). |
+| **Metode Scanner** | Memerlukan hardware scanner USB/Bluetooth eksternal atau PDT mahal. | **Kamera HP bawaan** (HTML5 QR/Barcode Scanner) langsung di aplikasi. |
+| **Alur Peminjaman Backup** | Pencatatan mutasi stok internal standar, tidak ada siklus pinjam khusus. | **Siklus 6-Fase Khusus:** Request ➡️ Approve ➡️ Transit ➡️ Pinjam ➡️ Retur ➡️ Restorasi Otomatis. |
+| **Pengingat Jatuh Tempo** | Terbatas pada notifikasi internal/email sistem yang jarang dibuka toko. | **Notifikasi Bot Telegram Harian** (Peringatan H-3 dan alarm *OVERDUE* merah). |
+| **Mekanisme Approval** | Login ke portal Odoo ➡️ Buka modul inventaris ➡️ Validasi. | **1-Klik di Chat Telegram** (Tombol *Inline Keyboard* `✅ Setujui` / `❌ Tolak`). |
+| **Audit Fisik (Opname)** | Input daftar opname via tabel desktop atau scanner terhubung. | Pemindaian visual di lapangan dengan klasifikasi instan: `Ditemukan`, `Nyasar`, `Hilang`. |
 
 ---
 
-## 6. Kebutuhan Bisnis Utama (Business Requirements)
+## 6. Kelemahan Sistem & Titik Kritis Rekonsiliasi (The Synchronization Gap)
 
-* **BR-01 (Single Source of Truth):** Seluruh data aset TI wajib terpusat pada satu pangkalan data relasional Supabase PostgreSQL dengan pengamanan Row Level Security (RLS).
-* **BR-02 (Seamless Mobile Operations):** Aplikasi harus dapat diakses langsung dari Telegram tanpa perlu instalasi aplikasi terpisah melalui Telegram Mini App.
-* **BR-03 (Controlled Backup Lifecycle):** Unit cadangan (*backup*) tidak boleh dipinjamkan tanpa batas waktu; durasi harus ditentukan di awal dan status keterlambatan harus dipantau otomatis.
-* **BR-04 (Regional Governance):** Persetujuan transaksi harus terisolasi sesuai wilayah wewenang masing-masing Admin Regional guna mencegah intervensi antar wilayah.
-* **BR-05 (Audit Trail & Legal Compliance):** Setiap perpindahan fisik wajib menghasilkan Berita Acara Serah Terima (BAST) dan tercatat dalam linimasa audit yang tidak dapat dimanipulasi.
-* **BR-06 (Disposal Governance):** Pemusnahan aset afkir wajib melalui tahap verifikasi usulan tertulis sebelum status aset diubah menjadi `Disposed` di sistem.
+### 6.1 Sumber Kerancuan Data (Status Mismatch)
+Karena E1-TMA berposisi sebagai tangan panjang yang menjembatani operasional lapangan ke Odoo melalui mekanisme **Ekspor-Impor Berkas (File-based Batch Sync)**, sistem ini memiliki titik kritis (*trade-off*) yang harus dipahami oleh seluruh pemangku kepentingan:
+
+```
+┌─────────────────┐       (1) Export CSV Master        ┌─────────────────┐
+│                 ├───────────────────────────────────►│                 │
+│    ODOO ERP     │                                    │     E1-TMA      │
+│ (Core Database) │◄───────────────────────────────────┤ (Lapangan/TMA)  │
+└─────────────────┘       (2) Import Rekap Hasil       └─────────────────┘
+                                   Operasional
+                                        ▲
+                                        │
+                         ⚠️ TITIK RANCU / GAP STATUS:
+               Terjadi jeda waktu (Data Latency) antara saat
+               barang sudah berpindah/selesai di lapangan (E1-TMA)
+               dengan saat data diimpor kembali ke Odoo.
+```
+
+**Penyebab Kerancuan Status:**
+1. **Jeda Waktu Sinkronisasi (*Data Latency*):** Aset yang sudah disetujui, dipinjam, atau dikembalikan di E1-TMA secara *real-time* status fisiknya sudah berubah di lapangan, namun di Odoo statusnya masih status lama hingga Admin IT melakukan ekspor rekap dari E1-TMA dan mengimpornya ke Odoo.
+2. **Ketergantungan pada Disiplin Admin:** Kecepatan pembaruan Odoo sangat bergantung pada jadwal rutin Admin IT dalam melakukan ekspor-impor data.
+3. **Potensi Perubahan Paralel:** Jika ada staf yang mengubah data aset langsung di Odoo tanpa melalui E1-TMA, maka akan terjadi benturan data saat ekspor CSV berikutnya ditimpa ke E1-TMA.
+
+### 6.2 Standar Prosedur Operasional (SOP) Rekonsiliasi Ekspor-Impor
+Untuk mengatasi kerancuan di atas, ditetapkan aturan bisnis berikut:
+- **Aturan Tunggal Operasional:** Seluruh pergerakan fisik unit backup, mutasi, dan stock opname **WAJIB dicatat melalui E1-TMA**, bukan diinput manual langsung ke Odoo.
+- **Jadwal Rekonsiliasi Rutin (Batch Closing):**
+  - **Harian / Mingguan:** Admin IT mengekspor laporan transaksi dari E1-TMA (`Export CSV/Excel`) dan mengunggahnya ke modul penyesuaian Odoo untuk menyinkronkan status aset.
+  - **Bulanan (Pasca Opname):** Hasil Stock Opname dan Berita Acara Pemusnahan (BAST Disposal) diekspor dari E1-TMA sebagai lampiran penyesuaian stok (*Inventory Adjustment*) resmi di Odoo.
+- **UPSERT & Strict Trigger:** Pengunggahan master dari Odoo ke E1-TMA selalu menggunakan proteksi `UPSERT` berbasis `serial_number` dan trigger validasi kategori guna memastikan data yang masuk ke E1-TMA tidak korup/typo.
+
+### 6.3 Peta Jalan Integrasi Masa Depan (Phase 2 Roadmap)
+Sebagai solusi jangka panjang untuk meniadakan proses manual ekspor-impor:
+- **Pengembangan REST API / Webhook Connector:** Membangun konektor langsung antara Supabase Edge Functions dan Odoo External API (XML-RPC / JSON-RPC), sehingga saat transaksi di E1-TMA berstatus `Completed`, sistem secara otomatis memicu pembaruan status lokasi aset di Odoo secara *real-time* tanpa intervensi file CSV.
 
 ---
 
 ## 7. Kebutuhan Fungsional (Functional Requirements)
 
-### 7.1 Modul Master Data & Inventaris Aset
+### 7.1 Modul Sinkronisasi Staging Data Odoo (CSV Import/Export)
 
 | ID Kebutuhan | Deskripsi Fungsional | Prioritas |
 |---|---|:---:|
-| **FR-AST-01** | Sistem mampu mengelola data master aset dengan atribut: Serial Number (unik), No. Aktiva/BTA, Kategori ID, Merek, Model, Computer Name, Status, Site Alias, External ID, dan Deskripsi. | **High** |
-| **FR-AST-02** | Master status aset terdiri dari 4 nilai resmi: `Active`, `Backup`, `Disposed`, dan `Retired`. | **High** |
-| **FR-AST-03** | Sistem menyajikan daftar aset yang dikelompokkan per Region dalam format *collapsible accordion* yang responsif. | **High** |
-| **FR-AST-04** | Sistem mendukung mekanisme *Paginated Auto-Fetch* untuk memuat 6.000+ baris data tanpa terhalang batas limit 1.000 baris Supabase/PostgREST. | **High** |
-| **FR-AST-05** | Sistem menyediakan fitur pencarian instan multisumbu (S/N, Merek, Model, Site, No. Aktiva) serta filter berbasis kategori dan status. | **High** |
-| **FR-AST-06** | Sistem mendukung penghapusan logis (*Soft Delete*) via kolom `deleted_at` untuk menjamin integritas riwayat aset. | **High** |
+| **FR-OD-01** | Sistem mampu mengimpor data inventaris aset hasil ekspor dari Odoo (mencakup field: S/N, No. Aktiva, Kategori, Merek, Model, Computer Name, Site/Cabang, dan Status). | **High** |
+| **FR-OD-02** | Sistem menerapkan **Strict Category Validation Trigger** PostgreSQL (`handle_asset_category_strict_sync`) saat import data Odoo untuk mencegah anomali nama kategori yang tidak sesuai standar. | **High** |
+| **FR-OD-03** | Sistem memproses unggahan file CSV besar dari Odoo (ribuan baris) menggunakan teknik **Batch Chunking (250 baris per batch)** untuk menghindari kegagalan request browser. | **High** |
+| **FR-OD-04** | Import data Odoo menggunakan metode **UPSERT** berbasis `serial_number` sehingga aman dijalankan berulang kali untuk memperbarui master data tanpa menduplikasi catatan. | **High** |
+| **FR-OD-05** | Sistem menyediakan fitur **Export Rekap Transaksi & Penyesuaian Status** ke dalam format Excel CSV (UTF-8 BOM) yang terstruktur rapi agar siap diimpor kembali ke modul Odoo. | **High** |
 
-### 7.2 Modul Transaksi Terpadu (Peminjaman, Mutasi, Perbaikan)
-
-| ID Kebutuhan | Deskripsi Fungsional | Prioritas |
-|---|---|:---:|
-| **FR-TX-01** | Sistem menyediakan tabel transaksi terpadu (`asset_transactions`) yang mendukung tipe: `Borrowing`, `Mutation`, dan `Repair`. | **High** |
-| **FR-TX-02** | Penomoran kode transaksi dibuat otomatis dengan format unik berbasis tipe, kode site, tahun/bulan, dan nomor urut. | **High** |
-| **FR-TX-03** | Pada transaksi **Peminjaman (Borrowing)**, pengguna wajib menginput **Durasi Pinjam (Hari)** saat pembuatan tiket. | **High** |
-| **FR-TX-04** | Sistem secara otomatis menghitung **Tanggal Jatuh Tempo (`due_date`)** saat transaksi berpindah ke status `In Progress`. | **High** |
-| **FR-TX-05** | Sistem mendukung transisi status lengkap: `Requested` ➡️ `Approved` ➡️ `In Transit` ➡️ `In Progress` ➡️ `Returning` ➡️ `Completed` (serta `Rejected` dan `Cancelled`). | **High** |
-| **FR-TX-06** | **Logika Restorasi Lokasi Peminjaman:** Saat transaksi `Borrowing` diselesaikan (`Completed` oleh Admin IT), sistem **secara otomatis mengembalikan `site_alias` fisik aset ke gudang asal (`from_site_code`)**. | **High** |
-| **FR-TX-07** | **Logika Mutasi:** Saat transaksi `Mutation` diselesaikan, sistem memindahkan `site_alias` fisik aset secara permanen ke lokasi tujuan (`to_site_code`). | **High** |
-| **FR-TX-08** | Pengguna Toko/Peminjam dapat menekan tombol **"Kembalikan Unit (Return)"** pada status `In Progress` yang mengubah status menjadi `Returning`. | **High** |
-| **FR-TX-09** | Admin IT melihat tombol **"Terima di Gudang"** pada status `Returning` untuk menyelesaikan transaksi dan memeriksa fisik unit. | **High** |
-
-### 7.3 Modul Persetujuan Wilayah & Bot Webhook
+### 7.2 Modul Transaksi Khusus Peminjaman Unit Backup (6-Phase Loan Lifecycle)
 
 | ID Kebutuhan | Deskripsi Fungsional | Prioritas |
 |---|---|:---:|
-| **FR-APV-01** | Tombol persetujuan (**"Setujui"** & **"Tolak"**) pada antarmuka web hanya dapat dieksekusi oleh Admin yang memiliki `assigned_region` sama dengan region lokasi tujuan (`to_site_region`). | **High** |
-| **FR-APV-02** | Pengguna dengan role **Super Admin** (`assigned_region = 'ALL'`) memiliki hak akses untuk menyetujui transaksi dari/ke wilayah manapun. | **High** |
-| **FR-APV-03** | **Interactive Telegram Bot Approval:** Sistem (via Edge Function `telegram-bot`) mengirimkan pesan notifikasi transaksi ke grup/chat Admin IT lengkap dengan tombol interaktif (*Inline Keyboard*). | **High** |
-| **FR-APV-04** | Admin IT dapat menyetujui (`Approve`) atau menolak (`Reject`) transaksi langsung dari Telegram chat tanpa harus membuka aplikasi web. | **High** |
-| **FR-APV-05** | **Automated Overdue Cron:** Sistem (via Edge Function `cron-overdue`) mengecek harian seluruh transaksi pinjam yang melewati `due_date` dan transaksi `In Transit` > 3 hari, lalu mengirimkan rekap peringatan ke Admin Region terkait. | **High** |
+| **FR-LN-01** | Toko dapat mengajukan permohonan peminjaman unit backup darurat dengan memilih kategori perangkat dan wajib mengisi **Durasi Pinjam (Hari)**. | **High** |
+| **FR-LN-02** | Penomoran tiket transaksi dibuat otomatis dengan format unik (`LOAN-[SITE]-[YYMM]-[SEQ]`). | **High** |
+| **FR-LN-03** | Sistem mendukung siklus hidup 6 fase peminjaman: `Requested` ➡️ `Approved` ➡️ `In Transit` ➡️ `In Progress` ➡️ `Returning` ➡️ `Completed`. | **High** |
+| **FR-LN-04** | Sistem secara otomatis mengunci **Tanggal Jatuh Tempo (`due_date`)** tepat saat toko menekan tombol *"Terima Unit"* (transisi ke status `In Progress`). | **High** |
+| **FR-LN-05** | Toko dapat menekan tombol **"Kembalikan Unit (Return)"** yang mengubah status menjadi `Returning` saat unit dikirim balik ke gudang IT. | **High** |
+| **FR-LN-06** | **Otomasi Restorasi Lokasi Fisik:** Saat Admin IT menekan tombol *"Terima di Gudang"* (`Completed`), sistem **secara otomatis mengembalikan `site_alias` aset fisik ke gudang asal (`from_site_code`)**. | **High** |
+| **FR-LN-07** | Pada transaksi mutasi permanen (*Mutation*), saat status `Completed`, sistem memindahkan lokasi aset secara permanen ke `to_site_code`. | **High** |
 
-### 7.4 Modul Stock Opname (Audit Fisik Hybrid)
-
-| ID Kebutuhan | Deskripsi Fungsional | Prioritas |
-|---|---|:---:|
-| **FR-OPN-01** | Sistem memfasilitasi pembuatan sesi audit fisik (*Stock Opname*) berbasis lokasi (Site). | **High** |
-| **FR-OPN-02** | Sistem menyediakan fitur **Pemindai Kamera QR/Barcode** bawaan untuk mencocokkan aset secara cepat. | **High** |
-| **FR-OPN-03** | **Manual S/N Fallback:** Sistem menyediakan kolom input teks pencarian Serial Number manual (+ tombol Enter) untuk menangani stiker barcode yang rusak/terkelupas di lapangan. | **High** |
-| **FR-OPN-04** | Setiap aset dalam sesi opname diklasifikasikan ke dalam salah satu status: `Ditemukan`, `Nyasar` (ada di site tapi terdaftar di site lain), atau `Hilang` (terdaftar tapi tidak ditemukan). | **High** |
-| **FR-OPN-05** | Sistem menyajikan *progress bar* visual real-time yang memisahkan jumlah aset terverifikasi vs belum terverifikasi. | **Medium** |
-| **FR-OPN-06** | Kompatibilitas scanner memiliki *fallback* otomatis ke kamera video HTML5 (zxing) jika versi SDK Telegram di bawah v6.4. | **Medium** |
-
-### 7.5 Modul Pemusnahan Aset & Usulan Afkir (Bulk Disposal)
+### 7.3 Modul Persetujuan Interaktif Wilayah & Bot Webhook
 
 | ID Kebutuhan | Deskripsi Fungsional | Prioritas |
 |---|---|:---:|
-| **FR-DSP-01** | Sistem menyediakan modul pemusnahan massal (*Bulk Disposal*) khusus role Super Admin / Admin IT untuk mengubah status aset menjadi `Disposed`. | **High** |
-| **FR-DSP-02** | **Export Daftar Usulan (Draft CSV):** Sistem menyediakan fitur untuk memilih daftar aset rusak/afkir dan mengekspor daftarnya ke format Excel/CSV tanpa mengeksekusi perubahan status di database. | **High** |
-| **FR-DSP-03** | Draft usulan digunakan sebagai lampiran formal pengajuan tanda tangan persetujuan fisik kepada manajemen atasan sebelum eksekusi sistem. | **High** |
-| **FR-DSP-04** | Sistem secara otomatis mencetak berkas BAST Pemusnahan Aset digital saat eksekusi disposal dijalankan. | **Medium** |
+| **FR-BOT-01** | Notifikasi pengajuan pinjaman/mutasi dikirimkan seketika oleh Edge Function `telegram-bot` ke grup/chat Telegram Admin IT Regional terkait. | **High** |
+| **FR-BOT-02** | Pesan notifikasi dilengkapi tombol interaktif (*Inline Keyboard*) yang memungkinkan Admin IT menyetujui (`✅ Setujui`) atau menolak (`❌ Tolak`) langsung dari aplikasi Telegram tanpa perlu login ke web. | **High** |
+| **FR-BOT-03** | Pembatasan wewenang persetujuan di web: Admin Regional hanya berhak menyetujui transaksi dengan lokasi tujuan (`to_site_region`) di bawah wilayahnya, sedangkan Super Admin (`assigned_region = 'ALL'`) dapat menyetujui seluruh wilayah. | **High** |
+| **FR-BOT-04** | **Cron Job Pengingat Overdue:** Edge Function `cron-overdue` berjalan otomatis setiap hari untuk memeriksa transaksi yang melewati batas `due_date` atau paket *In Transit* > 3 hari, lalu mengirimkan rekap peringatan ke Telegram Admin Region. | **High** |
 
-### 7.6 Modul Pelaporan, Analitik & Generator BAST
-
-| ID Kebutuhan | Deskripsi Fungsional | Prioritas |
-|---|---|:---:|
-| **FR-REP-01** | Dashboard analitik menampilkan Area Chart tren mutasi 12 bulan terakhir, Donut Chart proporsi status aset, dan Bar Chart peringkat utilisasi peminjaman cabang. | **High** |
-| **FR-REP-02** | Sistem menyediakan **Generator BAST Digital** yang terformat rapi, dilengkapi spesifikasi lengkap unit, identitas para pihak, dan slot tanda tangan digital siap cetak/simpan PDF. | **High** |
-| **FR-REP-03** | Sistem menyediakan **Generator Label Pengiriman (Shipping Label)** siap cetak untuk ditempel pada koli pengiriman unit backup. | **Medium** |
-| **FR-REP-04** | Sistem mendukung fitur **Export ke Google Sheets** dan unduh file CSV Excel dengan format UTF-8 BOM untuk kompatibilitas karakter sempurna di Microsoft Excel. | **Medium** |
-| **FR-REP-05** | Sistem menyediakan fitur **Disaster Recovery & Backup** bagi Super Admin untuk mengunduh snapshot database lengkap dalam format JSON. | **Low** |
-
-### 7.7 Modul Impor Massal CSV & Validasi Strict
+### 7.4 Modul Stock Opname Lapangan (Mobile Camera QR/Barcode Scanner)
 
 | ID Kebutuhan | Deskripsi Fungsional | Prioritas |
 |---|---|:---:|
-| **FR-IMP-01** | Khusus Admin, sistem menyediakan fasilitas unggah massal inventaris aset melalui berkas CSV. | **High** |
-| **FR-IMP-02** | Sistem menerapkan **Strict Validation** terhadap kolom kategori dan site alias yang diproteksi langsung oleh Trigger PostgreSQL (`handle_asset_category_strict_sync`). | **High** |
-| **FR-IMP-03** | UI uploader menyediakan antarmuka pemetaan interaktif jika ditemukan ketidakcocokan nama kategori (opsi: hubungkan ke kategori resmi, buat kategori baru, atau lewati/skip). | **High** |
-| **FR-IMP-04** | Operasi database menggunakan metode **UPSERT** berbasis `serial_number` sehingga aman dari duplikasi saat pengunggahan ulang berkas yang sama. | **High** |
-| **FR-IMP-05** | Pengunggahan berkas besar diproses menggunakan teknik **Batch Chunking (250 baris per request)** guna mencegah timeout jaringan dan error payload limit. | **High** |
+| **FR-SCN-01** | Pengguna dapat melakukan audit fisik aset langsung di toko/gudang menggunakan **kamera smartphone** melalui modul Stock Opname di Telegram Mini App. | **High** |
+| **FR-SCN-02** | Mendukung pembacaan berbagai format barcode standar operasional (Code 128, Code 39, EAN-13, dan QR Code). | **High** |
+| **FR-SCN-03** | **Fallback Input Manual S/N:** Tersedia kolom pencarian nomor seri manual (+ Enter) untuk memverifikasi aset jika stiker fisik barcode di toko rusak, kotor, atau robek. | **High** |
+| **FR-SCN-04** | Sistem mengklasifikasikan aset hasil opname secara instan menjadi: `Ditemukan` (sesuai lokasi), `Nyasar` (terdaftar di toko lain), atau `Hilang` (tercatat di sistem tapi tidak ada fisiknya). | **High** |
 
-### 7.8 Modul Autentikasi Ganda & Manajemen Pengguna (RBAC)
+### 7.5 Modul Pemusnahan Aset & Usulan Afkir (Bulk Disposal Draft)
 
 | ID Kebutuhan | Deskripsi Fungsional | Prioritas |
 |---|---|:---:|
-| **FR-AUT-01** | **Telegram Auto-Login:** Pengguna yang membuka aplikasi dari Telegram Mini App otomatis terotentikasi berdasarkan Telegram ID tanpa perlu memasukkan password. | **High** |
-| **FR-AUT-02** | **Web Browser Login:** Pengguna di browser desktop dapat login menggunakan `@username` atau Telegram ID + Password yang diverifikasi via RPC PostgreSQL `SECURITY DEFINER` dengan hash bcrypt. | **High** |
-| **FR-AUT-03** | Pengguna berstatus `Guest` dapat menekan tombol **"Request Akses Tim IT"** pada menu profil untuk mengajukan peningkatan akun. | **High** |
-| **FR-AUT-04** | Bot Telegram mengirimkan notifikasi permintaan akses ke grup Admin dengan tombol 1-klik (`✅ Setujui User`, `👑 Setujui Admin`, `❌ Tolak`). | **High** |
-| **FR-AUT-05** | Admin dapat menetapkan role (`guest`, `user`, `admin`) dan pemetaan wilayah kerja (`assigned_region`) pada panel Manajemen User. | **High** |
+| **FR-DSP-01** | Admin IT dapat memfilter unit-unit rusak (`Retired`) dan memilih beberapa unit sekaligus untuk proses pemusnahan massal (*Bulk Disposal*). | **High** |
+| **FR-DSP-02** | **Export Draft Usulan Afkir:** Sistem menyediakan tombol untuk mengunduh daftar aset yang dipilih ke dalam berkas Excel/CSV guna meminta persetujuan tanda tangan pimpinan manajemen sebelum status diubah di sistem. | **High** |
+| **FR-DSP-03** | Setelah persetujuan fisik didapat, Super Admin mengeksekusi pemusnahan di sistem yang mengubah status aset menjadi `Disposed` dan otomatis menghasilkan BAST Pemusnahan digital. | **High** |
+
+### 7.6 Modul Pelaporan Administrasi Odoo & Generator BAST
+
+| ID Kebutuhan | Deskripsi Fungsional | Prioritas |
+|---|---|:---:|
+| **FR-DOC-01** | Sistem menghasilkan dokumen **Berita Acara Serah Terima (BAST)** resmi dengan format standar korporasi, rincian spesifikasi unit, dan kolom tanda tangan digital para pihak yang siap cetak / simpan PDF. | **High** |
+| **FR-DOC-02** | Sistem menghasilkan **Label Pengiriman (Shipping Label)** siap cetak untuk ditempelkan pada fisik koli pengiriman unit backup ke toko. | **Medium** |
+| **FR-DOC-03** | Dashboard analitik menyediakan visualisasi Recharts untuk tren pergerakan aset 12 bulan terakhir, sebaran status unit, dan ranking utilisasi peminjaman cabang. | **Medium** |
+| **FR-DOC-04** | Fasilitas ekspor data langsung ke **Google Sheets** dan unduh cadangan database lengkap dalam format JSON. | **Low** |
+
+### 7.7 Modul Autentikasi Ganda & Manajemen Role Lapangan
+
+| ID Kebutuhan | Deskripsi Fungsional | Prioritas |
+|---|---|:---:|
+| **FR-AUTH-01**| **Seamless Telegram Login:** Pengguna di lapangan otomatis login berbasis identitas Telegram ID dari Telegram WebApp SDK tanpa perlu input username/password. | **High** |
+| **FR-AUTH-02**| **Web Browser Login:** Akses melalui browser PC desktop menggunakan verifikasi username/ID dan password terenkripsi hash bcrypt via RPC `SECURITY DEFINER`. | **High** |
+| **FR-AUTH-03**| Pengguna baru (Guest) dapat mengajukan kenaikan hak akses Tim IT via tombol *"Request Access"* yang diteruskan ke grup Admin untuk persetujuan 1-klik di bot Telegram. | **High** |
 
 ---
 
 ## 8. Kebutuhan Non-Fungsional (Non-Functional Requirements)
 
-### 8.1 Performa & Keandalan (Performance & Reliability)
-- **NFR-PF-01:** Waktu muat awal aplikasi (*Initial Page Load*) harus tercapai dalam **< 2.5 detik** pada koneksi internet seluler 4G standar.
-- **NFR-PF-02:** Komponen auto-complete pencarian lokasi (`SiteSearchInput`) harus merespons dalam **< 150 ms** untuk volume 2.000+ data site tanpa lag antarmuka.
-- **NFR-PF-03:** Proses batch import 6.000+ baris data CSV harus diselesaikan dalam waktu **< 3 menit** dengan visual feedback progress bar yang akurat.
-
-### 8.2 Keamanan & Integritas Data (Security & Data Integrity)
-- **NFR-SC-01:** Seluruh tabel database dilindungi oleh kebijakan **Row Level Security (RLS)** PostgreSQL.
-- **NFR-SC-02:** Password akses web wajib disimpan dalam format **hash bcrypt** (salt rounds 10+) dan tidak boleh dapat dibaca dalam bentuk plaintext oleh siapapun termasuk admin database.
-- **NFR-SC-03:** Kredensial rahasia (`.env`, service role key, bot token) dilarang keras di-commit ke repositori publik/version control.
-- **NFR-SC-04:** Trigger PostgreSQL wajib memblokir setiap transaksi penulisan aset yang mereferensikan kategori tidak terdaftar (`RAISE EXCEPTION`).
-
-### 8.3 Skalabilitas (Scalability)
-- **NFR-SK-01:** Pangkalan data dan backend Supabase dirancang mampu menampung hingga **50.000+ aset** dan **100.000+ riwayat transaksi** tanpa penurunan performa indeks query.
-- **NFR-SK-02:** Arsitektur frontend modular berbasis Atomic Design System memudahkan penambahan jenis transaksi atau modul baru di masa mendatang.
-
-### 8.4 Aksesibilitas & Kompatibilitas UI/UX
-- **NFR-UX-01:** Antarmuka mendukung **Mode Gelap (Dark Mode)** dan **Mode Terang (Light Mode)** otomatis mengikuti tema perangkat pengguna atau saklar manual.
-- **NFR-UX-02:** Layout aplikasi sepenuhnya responsif (*mobile-first*) dengan batas minimum viewport 320px (perangkat smartphone kecil).
-- **NFR-UX-03:** Kompatibel dengan klien Telegram iOS, Android, Desktop, serta browser modern (Chrome, Safari, Firefox, Edge).
+- **NFR-PF-01 (Kecepatan Muat Mobile):** Halaman awal aplikasi harus terbuka dalam **< 2.5 detik** pada koneksi seluler 4G melalui Telegram Mini App.
+- **NFR-PF-02 (Pencarian Ringan):** Komponen pencarian lokasi (`SiteSearchInput`) harus mampu memfilter 2.000+ lokasi dalam waktu **< 150 ms** tanpa kendala lag rendering.
+- **NFR-SC-01 (Keamanan Data):** Seluruh data aset dilindungi kebijakan **Row Level Security (RLS)** PostgreSQL. Password web di-hash menggunakan algoritma **bcrypt** (salt round 10+).
+- **NFR-SC-02 (Integritas Master Data):** Trigger database PostgreSQL memblokir penyimpanan data aset jika kategori tidak terdaftar pada tabel master (`RAISE EXCEPTION`).
+- **NFR-UX-01 (Aksesibilitas Visual):** Antarmuka mendukung **Mode Gelap (Dark Mode)** dan **Mode Terang (Light Mode)** secara otomatis sesuai pengaturan perangkat.
+- **NFR-UX-02 (Zero-Installation):** Aplikasi tidak memerlukan instalasi file APK/IPA tambahan; cukup dijalankan dari aplikasi Telegram yang sudah ada di smartphone staf.
 
 ---
 
-## 9. Arsitektur Sistem & Integrasi
+## 9. Arsitektur Aliran Data: Odoo ⮂ E1-TMA
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           CLIENT ACCESS LAYER                           │
+│                        ODOO ERP (SYSTEM OF RECORD)                      │
+│   - Master Asset Inventory & Accounting                                 │
+│   - Periodic Inventory Adjustment & Final Audit Trail                   │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                    (A) Ekspor Data Master Aset (CSV)
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     E1-TMA OPERATIONAL PLATFORM                         │
 │                                                                         │
 │   ┌───────────────────────────────┐   ┌─────────────────────────────┐   │
-│   │   Telegram Mini App (TMA)     │   │   Web Browser (PC/Desktop)  │   │
-│   │   (Auto-Login via SDK ID)     │   │   (Username + bcrypt Pass)  │   │
-│   └───────────────┬───────────────┘   └──────────────┬──────────────┘   │
+│   │   Supabase PostgreSQL DB      │   │  Serverless Edge Functions  │   │
+│   │  - Strict Category Trigger    │   │  - telegram-bot (Webhook)   │   │
+│   │  - Unified asset_transactions │   │  - cron-overdue (Scheduled) │   │
+│   └───────────────▲───────────────┘   └──────────────┬──────────────┘   │
 │                   │                                  │                  │
-│                   └────────────────┬─────────────────┘                  │
-│                                    ▼                                    │
-│                    ┌───────────────────────────────┐                    │
-│                    │    React 19 + TypeScript UI   │                    │
-│                    │  (Vite + Tailwind CSS + UI)   │                    │
-│                    └───────────────┬───────────────┘                    │
-└────────────────────────────────────┼────────────────────────────────────┘
-                                     │ HTTPS / REST (PostgREST)
-┌────────────────────────────────────┼────────────────────────────────────┐
-│                        SUPABASE BACKEND LAYER                           │
-│                                    ▼                                    │
-│   ┌─────────────────────────────────────────────────────────────────┐   │
-│   │                      PostgreSQL Database                        │   │
-│   │  - Row Level Security (RLS) Policies                            │   │
-│   │  - Master Tables: assets, sites, categories, users              │   │
-│   │  - Transaction Table: asset_transactions                        │   │
-│   │  - Audit Tables: stock_opname, stock_opname_details             │   │
-│   │  - Strict Sync Triggers: handle_asset_category_strict_sync      │   │
-│   │  - RPC Auth & View Layer: view_assets_detail, web_auth_rpc      │   │
-│   └────────────────────────────────┬────────────────────────────────┘   │
-│                                    │                                    │
-│   ┌────────────────────────────────┴────────────────────────────────┐   │
-│   │                    Serverless Edge Functions                    │   │
-│   │  - `telegram-bot`: Notification & Inline Webhook Approval       │   │
-│   │  - `cron-overdue`: Daily Scheduled Job (Overdue & In-Transit)   │   │
-│   └────────────────────────────────┬────────────────────────────────┘   │
-└────────────────────────────────────┼────────────────────────────────────┘
-                                     │ Telegram Bot API
-┌────────────────────────────────────┼────────────────────────────────────┐
-│                       EXTERNAL INTEGRATIONS                             │
-│                                    ▼                                    │
-│   ┌─────────────────────────────────────────────────────────────────┐   │
-│   │                      Telegram Bot Platform                      │   │
-│   │  - Notifikasi Pengajuan Transaksi ke Grup Admin IT              │   │
-│   │  - Tombol Persetujuan 1-Klik (Inline Keyboard Callback)         │   │
-│   │  - Notifikasi Peringatan Keterlambatan Pengembalian (Overdue)   │   │
-│   │  - Notifikasi Persetujuan Hak Akses User Baru (Guest ➡️ User)   │   │
-│   └─────────────────────────────────────────────────────────────────┘   │
+│                   │ REST API / PostgREST             │ Telegram Bot API │
+│                   ▼                                  ▼                  │
+│   ┌───────────────────────────────┐   ┌─────────────────────────────┐   │
+│   │  Telegram Mini App (React 19) │   │ Telegram Bot Chat / Group   │   │
+│   │  - Camera Barcode Scanner     │   │ - 1-Click Interactive       │   │
+│   │  - 6-Phase Loan Lifecycle     │   │   Approval Buttons          │   │
+│   │  - Hybrid Stock Opname        │   │ - Daily Overdue Broadcasts  │   │
+│   └───────────────────────────────┘   └─────────────────────────────┘   │
+│                                                                         │
+│   Operasional Harian: Teknisi Regional & Staf Toko (2.000+ Cabang)      │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                    (B) Ekspor Rekap Hasil Transaksi (CSV)
+                        (Penyesuaian Mutasi, Retur & Disposal)
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        ODOO ERP (UPDATE STATUS)                         │
+│   Admin IT mengimpor berkas penyesuaian untuk update status resmi Odoo  │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 10. Model Data & State Machine Transaksi
+## 10. Model Data & Siklus Status Aset
 
-### 10.1 Skema Data Entitas Utama
+### 10.1 Master Status Aset Fisik
+* **`Active`**: Aset sedang aktif digunakan untuk operasional di toko/cabang.
+* **`Backup`**: Aset cadangan dalam kondisi baik, tersimpan di gudang regional, dan siap dipinjamkan.
+* **`Retired`**: Aset dalam kondisi rusak/afkir, ditarik dari operasional, dan menunggu usulan pemusnahan (*Disposal*).
+* **`Disposed`**: Aset telah resmi dimusnahkan dan dihapus dari buku operasional fisik.
 
-```
-                     ┌──────────────────┐
-                     │      SITES       │
-                     │──────────────────│
-                     │ site_code (PK)   │
-                     │ site_name        │
-                     │ site_alias (UQ)  │
-                     │ region           │
-                     │ site_address     │
-                     └────────┬─────────┘
-                              │ 1
-                              │
-                              │ N (via site_alias)
-┌──────────────────┐ 1      N ┌┴─────────────────┐ 1      N ┌────────────────────────┐
-│MASTER_CATEGORIES │──────────┤  MASTER_ASSETS   ├──────────┤   ASSET_TRANSACTIONS   │
-│──────────────────│          │──────────────────│          │────────────────────────│
-│ id (PK)          │          │ id (PK)          │          │ id (PK)                │
-│ name (UQ)        │          │ serial_number(UQ)│          │ transaction_code       │
-│ icon             │          │ aktiva           │          │ transaction_type       │
-│ color_text       │          │ category_id (FK) │          │ status                 │
-│ color_bg         │          │ brand, model     │          │ asset_id (FK)          │
-└──────────────────┘          │ computer_name    │          │ from_site_code (FK)    │
-                              │ site_alias (FK)  │          │ to_site_code (FK)      │
-                              │ status           │          │ requested_by (FK)      │
-                              │ deleted_at       │          │ duration_days          │
-                              └──────────────────┘          │ due_date               │
-                                                            │ requested_at ...       │
-                                                            └────────────────────────┘
-```
-
-### 10.2 State Machine Transaksi Peminjaman (Borrowing Lifecycle)
+### 10.2 Siklus Hidup Transaksi Peminjaman Unit Backup (*6-Phase Loan*)
 
 ```
- [User / Toko]
-   Membuat Permohonan Pinjam (Isi Site & Durasi Hari)
-         │
-         ▼
-    ┌───────────┐
-    │ Requested │ ◄── [User / Admin dapat Cancel]
-    └─────┬─────┘
-          │
-          │ Admin Region / Super Admin (via Web / Telegram Inline Button)
-          ▼
-    ┌───────────┐
-    │ Approved  │ ◄── [Admin tetapkan S/N Unit Backup]
-    └─────┬─────┘
-          │
-          │ Admin IT Kirim Barang (Input Resi / Ekspedisi)
-          ▼
-    ┌────────────┐
-    │ In Transit │
-    └─────┬──────┘
-          │
-          │ Toko Klik "Terima Unit" (Sistem otomatis hitung Due Date)
-          ▼
-    ┌─────────────┐
-    │ In Progress │ ◄── [Status fisik unit: Borrowed di Toko]
-    └─────┬───────┘     [Cron memantau H-3 & Overdue harian]
-          │
-          │ Toko Klik "Kembalikan Unit" (Barang dipaketkan balik ke IT)
-          ▼
-    ┌───────────┐
-    │ Returning │
-    └─────┬─────┘
-          │
-          │ Admin IT Cek Fisik di Gudang & Klik "Terima di Gudang"
-          ▼
-    ┌───────────┐
-    │ Completed │ ◄── [Sistem OTOMATIS reset lokasi fisik ke GUDANG ASAL]
-    └───────────┘
-```
-
-### 10.3 State Machine Transaksi Mutasi (Mutation Lifecycle)
-
-```
- [Teknisi IT]
-   Pilih Aset & Lokasi Tujuan Baru
-         │
-         ▼
-    ┌───────────┐
-    │ Requested │
-    └─────┬─────┘
-          │
-          │ Admin Region Tujuan Approve
-          ▼
-    ┌───────────┐
-    │ Approved  │
-    └─────┬─────┘
-          │
-          │ Pengiriman Fisik
-          ▼
-    ┌────────────┐
-    │ In Transit │
-    └─────┬──────┘
-          │
-          │ Penerima di Site Tujuan Konfirmasi Terima
-          ▼
-    ┌───────────┐
-    │ Completed │ ◄── [Sistem memindahkan site_alias PERMANEN ke Site Tujuan]
-    └───────────┘
+[1. REQUESTED]   : Toko input pengajuan pinjam di TMA (Wajib isi Durasi Hari).
+       │
+       ▼
+[2. APPROVED]    : Admin Region menyetujui via Web / 1-Klik Bot Telegram.
+       │
+       ▼
+[3. IN TRANSIT]  : Admin IT kirim fisik barang & input nomor resi ekspedisi.
+       │
+       ▼
+[4. IN PROGRESS] : Toko klik "Terima Unit". Sistem OTOMATIS mengunci Tanggal Jatuh Tempo.
+       │           (Cron memantau H-3 & peringatan OVERDUE harian).
+       ▼
+[5. RETURNING]   : Mesin utama toko selesai diservis. Toko klik "Kembalikan Unit" & kirim balik.
+       │
+       ▼
+[6. COMPLETED]   : Admin IT cek fisik di gudang & klik "Terima di Gudang".
+                   Sistem OTOMATIS mengembalikan lokasi aset ke GUDANG ASAL.
 ```
 
 ---
 
-## 11. Matriks Peran & Hak Akses (RBAC Matrix)
+## 11. Matriks Hak Akses (RBAC Matrix)
 
-| Modul & Fitur | Guest | User (Toko) | Admin Regional | Super Admin (HQ) |
+| Modul / Tindakan | Guest | User (Toko) | Admin Regional | Super Admin (HQ) |
 |---|:---:|:---:|:---:|:---:|
-| Melihat Daftar & Detail Aset | ✅ | ✅ | ✅ | ✅ |
-| Tambah & Edit Aset | ❌ | ❌ | ✅ (Regionnya) | ✅ (Semua) |
-| Soft Delete Aset | ❌ | ❌ | ❌ | ✅ |
-| Import Massal CSV Aset | ❌ | ❌ | ❌ | ✅ |
-| Mengajukan Peminjaman Unit | ✅ | ✅ | ✅ | ✅ |
-| Mengajukan Mutasi Aset | ❌ | ✅ | ✅ | ✅ |
-| Menyetujui Transaksi (Web & Bot) | ❌ | ❌ | ✅ (Region Tujuan) | ✅ (Bypass Semua) |
-| Konfirmasi Terima Barang (`In Progress`) | ❌ | ✅ (Toko Terkait) | ✅ | ✅ |
-| Menginisiasi Retur (`Returning`) | ❌ | ✅ (Toko Terkait) | ✅ | ✅ |
-| Menyelesaikan Transaksi Retur (`Completed`) | ❌ | ❌ | ✅ (Gudang Asal) | ✅ |
+| Melihat Daftar & Status Aset | ✅ | ✅ | ✅ | ✅ |
+| Scan Barcode via Kamera HP | ✅ | ✅ | ✅ | ✅ |
+| Mengajukan Pinjaman Unit Backup | ✅ | ✅ | ✅ | ✅ |
+| Menyetujui Pinjaman via Bot/Web | ❌ | ❌ | ✅ (Regionnya) | ✅ (Semua Region) |
+| Konfirmasi Terima Unit (`In Progress`) | ❌ | ✅ (Toko Terkait) | ✅ | ✅ |
+| Inisiasi Retur Barang (`Returning`) | ❌ | ✅ (Toko Terkait) | ✅ | ✅ |
+| Closing Penerimaan Retur (`Completed`) | ❌ | ❌ | ✅ (Gudang Asal) | ✅ |
+| Melakukan Audit Stock Opname | ❌ | ❌ | ✅ (Regionnya) | ✅ (Semua Region) |
 | Ekspor Usulan Afkir (Draft CSV) | ❌ | ❌ | ✅ | ✅ |
-| Eksekusi Pemusnahan Aset (`Disposed`) | ❌ | ❌ | ❌ | ✅ |
-| Melakukan Audit Stock Opname | ❌ | ❌ | ✅ (Regionnya) | ✅ (Semua) |
-| Cetak Dokumen BAST & Label Pengiriman | ❌ | ✅ | ✅ | ✅ |
-| Akses Dashboard & Laporan Analitik | ❌ | ✅ (Terbatas) | ✅ | ✅ |
-| Manajemen User & Penugasan Wilayah | ❌ | ❌ | ❌ | ✅ |
-| Unduh Database Backup JSON | ❌ | ❌ | ❌ | ✅ |
+| Eksekusi Pemusnahan (`Disposed`) | ❌ | ❌ | ❌ | ✅ |
+| Impor Master Data CSV dari Odoo | ❌ | ❌ | ❌ | ✅ |
+| Ekspor Rekap Sinkronisasi ke Odoo | ❌ | ❌ | ✅ | ✅ |
+| Manajemen Role User & Wilayah | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
-## 12. Alur Proses Bisnis Utama (Workflow)
+## 12. Alur Operasional Lapangan (Business Workflows)
 
-### 12.1 SOP Peminjaman Unit Backup Toko (End-to-End)
-1. **Pengajuan (Request):** Cabang/Toko mengalami kerusakan hardware kasir/PC. Staf membuka E1-TMA ➡️ Pilih Form Transaksi ➡️ Pilih Kategori Barang ➡️ Masukkan Estimasi Durasi Pinjam (misal: 7 hari) ➡️ Submit.
-2. **Notifikasi Bot:** Bot Telegram mengirim alert ke Grup IT Regional bersangkutan dengan ringkasan permohonan.
-3. **Persetujuan & Alokasi (Approve & Dispatch):** Admin IT membuka notifikasi di Telegram (atau aplikasi web) ➡️ Memilih serial number unit backup yang siap ➡️ Klik "Setujui" ➡️ Mengirim barang fisik via kurir/logistik internal (status: `In Transit`).
-4. **Penerimaan Toko (Receive):** Barang tiba di toko ➡️ Staf toko membuka menu transaksi ➡️ Klik **"Terima Unit"** ➡️ Status berubah `In Progress`, sistem mengunci `due_date = hari_ini + durasi`.
-5. **Monitoring & Alerting:** Setiap pukul 08.00 pagi, cron job mengecek durasi pinjam. Jika `hari_ini >= due_date - 3`, sistem mengirim reminder H-3. Jika melewati batas, kartu transaksi berkedip merah (*OVERDUE*) dan mengirim broadcast bot.
-6. **Pengembalian (Return):** Mesin utama toko selesai diservis. Staf toko mengemas unit backup ➡️ Membuka transaksi ➡️ Klik **"Kembalikan Unit"** (status: `Returning`).
-7. **Penerimaan Gudang & Restorasi (Closing):** Unit tiba di gudang IT. Admin IT mengecek kelengkapan fisik ➡️ Klik **"Terima di Gudang"** ➡️ Transaksi `Completed`. Sistem **secara otomatis mereset lokasi aset fisik kembali ke kode site gudang**.
-
-### 12.2 SOP Pemusnahan Aset Rusak (Bulk Disposal)
-1. Admin Regional memfilter aset-aset berstatus rusak/afkir (`Retired`) di gudang.
-2. Membuka modal **Bulk Disposal** ➡️ Menandai aset yang akan dimusnahkan ➡️ Klik tombol **"Export Daftar Usulan (CSV Excel)"**.
-3. File CSV di-print sebagai lampiran surat usulan pemusnahan resmi untuk meminta persetujuan dan tanda tangan basah General Manager / Direksi.
-4. Setelah persetujuan fisik terbit, Super Admin membuka kembali sistem ➡️ Memilih aset sesuai lembar persetujuan ➡️ Klik **"Eksekusi Pemusnahan (Disposed)"**.
-5. Sistem mengubah status aset menjadi `Disposed`, mencetak BAST Pemusnahan digital, dan mencatat eksekutor dalam audit trail.
+### 12.1 Alur Penggantian Mesin Rusak Toko dengan Unit Backup
+1. **Insiden di Toko:** Mesin kasir toko rusak. Staf toko membuka E1-TMA di Telegram ➡️ Mengajukan pinjaman unit backup dengan durasi 7 hari.
+2. **Persetujuan Instan:** Notifikasi masuk ke Telegram Admin IT Regional. Admin menekan tombol `✅ Setujui` langsung dari gelembung chat Telegram.
+3. **Pengiriman & Serah Terima:** Admin IT mengalokasikan unit backup dan mengirimkannya. Saat barang tiba, toko membuka E1-TMA dan mengklik **"Terima Unit"** (Status menjadi `In Progress`, sistem mulai menghitung jatuh tempo).
+4. **Monitoring:** Jika peminjaman mendekati H-3 atau melewati batas 7 hari, bot otomatis mengirim alarm peringatan ke grup IT Regional.
+5. **Pengembalian & Tutup Tiket:** Toko mengembalikan barang setelah mesin utama selesai diservis dengan menekan **"Kembalikan Unit"**. Admin IT menerima fisik unit di gudang dan menekan **"Terima di Gudang"** (Lokasi aset otomatis direset ke gudang asal).
+6. **Sinkronisasi Odoo:** Setiap akhir pekan, Admin IT mengunduh rekap mutasi dari E1-TMA dan mengimpornya ke Odoo untuk memperbarui catatan pembukuan pusat.
 
 ---
 
 ## 13. Batasan, Asumsi & Dependensi
 
-### 13.1 Batasan Sistem (Constraints)
-- Aplikasi bergantung pada konektivitas jaringan internet untuk sinkronisasi ke Supabase Cloud.
-- Pemindaian kamera membutuhkan izin akses perangkat kamera pada Telegram Mini App / browser.
-- Eksekusi background cron job bergantung pada ketersediaan resource Supabase Edge Functions & pg_cron.
-
-### 13.2 Asumsi Bisnis (Assumptions)
-- Seluruh unit aset fisik memiliki label fisik berupa barcode (Code 128 / Code 39) atau QR Code yang dapat dibaca pemindai.
-- Setiap pengguna operasional toko memiliki akun Telegram aktif yang terdaftar di sistem.
-- Master data cabang/toko (Sites) telah terpetakan dengan benar ke dalam Region masing-masing sebelum transaksi dijalankan.
-
-### 13.3 Dependensi Eksternal (Dependencies)
-- **Telegram Bot API & WebApp SDK:** Untuk platform client, webhook callback, dan pengiriman notifikasi.
-- **Supabase Platform:** Penyedia layanan PostgreSQL, Auth, PostgREST API, dan Serverless Deno Edge Functions.
+- **Batasan (Constraints):** Sinkronisasi antara E1-TMA dan Odoo pada fase ini masih bersifat berkala (*batch-oriented via CSV Export-Import*). Perbedaan status sementara dapat terjadi sebelum rekonsiliasi berkala dieksekusi.
+- **Asumsi (Assumptions):** Setiap unit fisik aset di lapangan memiliki label barcode/QR yang terbaca kamera. Staf cabang memiliki akses ke aplikasi Telegram pada smartphone operasional.
+- **Dependensi (Dependencies):** Koneksi internet aktif, ketersediaan layanan Supabase Platform (PostgreSQL & Edge Functions), serta operasional Telegram Bot API.
 
 ---
 
-## 14. Kriteria Penerimaan Sistem (Acceptance Criteria)
+## 14. Kriteria Keberhasilan & Penerimaan (Acceptance Criteria)
 
-- [x] Pengguna dapat login otomatis via Telegram Mini App serta login form di web browser dengan verifikasi hash bcrypt.
-- [x] Sistem mampu memuat dan menampilkan 6.000+ data aset tanpa kendala limit kuota 1.000 baris.
-- [x] Transaksi peminjaman berjalan mulus melalui 6 fase (`Requested` ➡️ `Approved` ➡️ `In Transit` ➡️ `In Progress` ➡️ `Returning` ➡️ `Completed`).
-- [x] Lokasi aset otomatis kembali ke gudang asal saat peminjaman berstatus `Completed`.
-- [x] Admin Region hanya dapat menyetujui transaksi pada wilayahnya, sementara Super Admin dapat menyetujui seluruh wilayah.
-- [x] Tombol persetujuan 1-klik di pesan Telegram Bot berfungsi mengupdate status transaksi secara real-time.
-- [x] Background cron function mendeteksi dan mengirim laporan harian transaksi overdue dan in-transit tertahan.
-- [x] Fitur Stock Opname dapat memindai barcode via kamera serta menyediakan input teks manual nomor seri.
-- [x] Fitur Export Usulan Afkir (Draft CSV) menghasilkan file Excel yang rapi sebelum eksekusi pemusnahan massal.
-- [x] Import CSV massal memvalidasi kategori secara ketat melalui trigger database dan memproses data dengan batch chunking 250 unit.
-- [x] Dokumen BAST digital dan Shipping Label ter-generate dengan format siap cetak.
+- [x] Antarmuka Telegram Mini App dapat diakses mulus oleh staf cabang tanpa instalasi aplikasi tambahan.
+- [x] Pemindaian barcode aset dapat dilakukan langsung menggunakan kamera HP bawaan serta mendukung fallback input nomor seri manual.
+- [x] Alur peminjaman unit backup berjalan lengkap melalui 6 fase dengan perhitungan jatuh tempo otomatis dan restorasi lokasi gudang asal saat selesai.
+- [x] Notifikasi dan persetujuan 1-klik di obrolan Telegram Bot berfungsi secara real-time.
+- [x] Sistem mampu menghasilkan file ekspor CSV/Excel terformat yang valid untuk diimpor kembali ke Odoo.
+- [x] Berkas BAST Serah Terima dan BAST Pemusnahan terbuat secara digital dan siap dicetak/disimpan dalam format PDF.
 
 ---
 
-## 15. Glosarium Istilah
+## 15. Glosarium
 
 | Istilah | Definisi |
 |---|---|
-| **TMA** | *Telegram Mini App* — Aplikasi web modern yang berjalan terintegrasi di dalam aplikasi Telegram. |
-| **Unit Backup** | Perangkat IT cadangan operasional yang disimpan di gudang regional untuk menggantikan unit toko yang rusak sementara waktu. |
-| **Aktiva / BTA** | Nomor Bukti Tambah Aktiva — Kode identifikasi pembukuan aset perusahaan. |
-| **Site / Toko** | Entitas lokasi fisik operasional cabang atau kantor perusahaan. |
-| **Region** | Wilayah teritori administratif yang membawahi sejumlah site/cabang. |
-| **Due Date** | Batas tanggal akhir masa pinjam aset sebelum dinyatakan terlambat (*Overdue*). |
-| **Overdue** | Kondisi di mana masa peminjaman unit backup telah melewati batas waktu yang disepakati tanpa pengembalian. |
-| **Returning** | Status penyerahan di mana unit telah dikemas dan dikirimkan oleh toko menuju gudang IT. |
-| **Disposed** | Status aset yang telah resmi dimusnahkan, diafkirkan, atau dikeluarkan dari buku aset aktif. |
-| **BAST** | Berita Acara Serah Terima — Dokumen resmi legalitas serah terima perpindahan tanggung jawab aset. |
-| **RLS** | *Row Level Security* — Fitur keamanan PostgreSQL yang mengisolasi akses data pada level baris. |
-| **UPSERT** | Operasi database gabungan *Update* jika data sudah ada, atau *Insert* jika data belum tercatat. |
-| **Edge Function** | Fungsi komputasi serverless yang dieksekusi di edge network dengan latensi rendah. |
-| **Inline Keyboard** | Tombol interaktif yang disematkan langsung pada gelembung obrolan bot Telegram. |
+| **Odoo ERP** | Sistem Enterprise Resource Planning induk yang berfungsi sebagai *System of Record* inventaris korporasi. |
+| **E1-TMA** | Telegram Mini App pendamping operasional lapangan (*System of Engagement*) untuk manajemen aset bergerak. |
+| **Unit Backup** | Perangkat cadangan operasional yang disimpan di gudang regional untuk menggantikan sementara unit toko yang rusak. |
+| **Data Latency** | Jeda waktu antara pencatatan riil transaksi di lapangan (E1-TMA) dengan pembaruan status di sistem induk (Odoo). |
+| **Status Mismatch** | Kondisi perbedaan status aset sementara antara E1-TMA dan Odoo sebelum proses rekonsiliasi file CSV dijalankan. |
+| **Due Date** | Tanggal batas akhir peminjaman unit backup sebelum dinyatakan berstatus *Overdue*. |
+| **BAST** | Berita Acara Serah Terima — Dokumen legalitas formal penyerahan dan pemindahan tanggung jawab aset. |
+| **UPSERT** | Operasi database untuk melakukan *Update* jika data sudah ada, atau *Insert* jika data baru. |
 
 ---
 
-*Dokumen ini merupakan spesifikasi kebutuhan bisnis resmi untuk sistem E1-TMA per tanggal 27 Agustus 2026.*  
+*Dokumen ini merupakan spesifikasi kebutuhan bisnis resmi (BRD Versi 2.0) yang merefleksikan posisi arsitektur E1-TMA sebagai tangan panjang Odoo ERP per 27 Agustus 2026.*  
 *Diterbitkan dan disahkan oleh Tim Pengembang E1-TMA.*

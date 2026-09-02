@@ -164,9 +164,6 @@ Root Cause & Solusi:
     - Dibuat file sekunder `docs/diagnostic_web_auth.sql` untuk membantu inspeksi dan pengujian verifikasi kata
       sandi dummy user secara mandiri di SQL Editor Supabase.
 
-================================================================================
-                                 END OF LOG
-================================================================================
 
 --------------------------------------------------------------------------------
 STEP 7: DEPLOYMENT FIXES & ERROR BOUNDARY (2026-07-26)
@@ -1041,6 +1038,43 @@ Kebutuhan:
 Implementasi:
   - `src/views/TransactionsView.tsx`: Memperluas interface `Props` pada field `currentUserRegion` menjadi `string | null | undefined` agar sinkron dengan tipe `TelegramUser.assigned_region` (`string | null | undefined`).
   - Verifikasi build `npm run build` dan `npx tsc --noEmit` berhasil 100% tanpa error.
+--------------------------------------------------------------------------------
+STEP 68: FIX BARCODE SCANNING — ADAPTIVE QRBOX & MODE TOGGLE (2026-09-01)
+--------------------------------------------------------------------------------
+Bug: Scanner hanya dapat membaca QR Code, tidak bisa membaca Barcode linear
+     (CODE-128, EAN-13, dll).
+
+Root Cause (3 masalah):
+  1. qrbox: { width: 240, height: 240 } — Kotak persegi tidak cocok untuk
+     barcode linear yang membutuhkan area scan HORIZONTAL (landscape rectangle).
+  2. Telegram Native API showScanQrPopup() secara desain hanya mendukung
+     QR Code, bukan barcode. Sebelumnya selalu digunakan tanpa fallback.
+  3. scannerRef.current tidak di-reset (null) setelah stop(), menyebabkan
+     instance stale pada re-open modal.
+
+Fix (src/components/modals/QRScannerModal.tsx):
+  - Tambah type ScanMode = 'qr' | 'barcode' dan state scanMode.
+  - startScanner() kini menerima parameter mode dan membuat instance Html5Qrcode
+    BARU setiap kali (scannerRef.current = null setelah stopScanner()).
+  - Adaptive qrbox:
+      * Mode QR     → { width: 220, height: 220 } + aspectRatio 1.0
+      * Mode Barcode → { width: 300, height: 100 } + aspectRatio 1.7
+  - Adaptive formats:
+      * Mode QR     → QR_CODE, DATA_MATRIX
+      * Mode Barcode → CODE_128, CODE_39, EAN_13, EAN_8, UPC_A, UPC_E, ITF, CODABAR
+  - UI Mode Toggle (pill segmented control): tombol "QR Code" (biru) / "Barcode"
+    (amber), restart scanner otomatis saat ganti mode.
+  - handleSwitchMode(): Jika Telegram Native sedang aktif & mode barcode dipilih,
+    closeScanQrPopup() lalu fallback ke html5-qrcode (bypass TG QR-only API).
+  - ScanFrame component adaptive: frame kotak biru (QR) / frame landscape amber (Barcode).
+  - Scanline animation: scanline (QR vertikal) / scanline-h (barcode horizontal).
+  - Hint text kontekstual per mode di bawah controls.
+  - Status indicator warna amber saat mode barcode aktif.
+  - Eliminasi catch (e) → catch saja (strict TypeScript zero-any).
+  - err: any → err: unknown dengan type guard (err instanceof Error).
+
+Verifikasi:
+  - npx tsc --noEmit → exit code 0, zero error TypeScript.
 
 ================================================================================
                                  END OF LOG
