@@ -1080,3 +1080,21 @@ Verifikasi:
                                  END OF LOG
 ================================================================================
 
+
+---
+## STEP 1 — [2026-09-02] Audit & Refactoring: Standarisasi Input/Display Site/Lokasi
+
+### Tujuan
+Menyeragamkan 100% semua form input pemilihan cabang/lokasi menggunakan komponen atomic SiteSearchInput, standar label/placeholder, dan format display yang konsisten di seluruh modul.
+
+### Perubahan
+1. **src/components/ui/SiteSearchInput.tsx** — Update default label → "Lokasi Cabang (Site Alias)", placeholder → "Ketik kode atau alias site..."
+2. **src/components/modals/TransactionModal.tsx** — Full refactor: ganti semua native <select>, <input>, <textarea> dengan design system components (Select, Input, Textarea); site picker pakai SiteSearchInput. State 	oSiteCode sekarang diisi dari matched.site_code (FK yang benar ke tabel sites).
+3. **src/components/modals/ItemFormModal.tsx** — Update label & placeholder SiteSearchInput ke standar baru.
+4. **src/views/OpnameView.tsx** — Update label SiteSearchInput ke standar baru.
+5. **src/components/modals/BASTDocumentModal.tsx** — Update format display lokasi: {site_alias} — {site_code || site_name} (Region: {site_region}) pada preview JSX dan print HTML template.
+6. **src/views/TransactionsView.tsx** — Tambah **Guest Gate Screen**: user dengan role guest harus memilih site via SiteSearchInput sebelum melihat daftar transaksi; transaksi difilter berdasarkan rom_site_code atau 	o_site_code yang cocok dengan site terpilih; tambah tombol "Ganti Site" di header.
+
+### Hasil TypeScript Check
+
+px tsc --noEmit → **0 errors** ✅

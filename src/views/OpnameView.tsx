@@ -94,14 +94,14 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), onBulkStatusCha
         {/* Input Manual Site Alias */}
         <div className="mb-4">
           <SiteSearchInput
-            label="Lokasi Audit (Ketik Site Alias)"
+            label="Lokasi Cabang (Site Alias)"
             sites={sites}
             value={siteInput}
             onChange={(val) => {
               setSiteInput(val);
               resetSession();
             }}
-            placeholder="Ketik Site Alias (contoh: CGK-01)..."
+            placeholder="Ketik kode atau alias site..."
             disabled={scannerOpen}
             customInfoText={(val) => `Mengaudit aset dengan Site Alias: ${val} (${totalAssets} aset ditemukan)`}
           />
@@ -344,3 +344,4 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), onBulkStatusCha
 };
 
 export default OpnameView;
+

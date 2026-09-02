@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ModalShell, Button } from '../ui';
 import { printDocument } from '../../utils/printDocument';
 
@@ -68,7 +68,7 @@ const BASTDocumentModal: React.FC<Props> = ({
           Pihak 2 (Toko / Peminjam):
         </span>
         <p style="font-size: 14px; font-weight: 800; color: #111827;">${loan.requested_by_name} (${loan.site_alias})</p>
-        <p style="font-size: 11px; color: #4b5563; margin-top: 2px;">Lokasi: ${loan.site_name || loan.site_alias} (${loan.site_region || 'Indonesia'})</p>
+        <p style="font-size: 11px; color: #4b5563; margin-top: 2px;">Lokasi: ${loan.site_alias} — ${loan.site_code || loan.site_name} (Region: ${loan.site_region || 'Indonesia'})</p>
         <p style="font-size: 11px; color: #6b7280; margin-top: 2px;">Resi/Tracking: ${loan.tracking_number || '—'}</p>
       </div>
     </div>
@@ -197,7 +197,7 @@ const BASTDocumentModal: React.FC<Props> = ({
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl">
               <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Pihak 2 (Toko / Peminjam):</span>
               <p className="text-sm font-bold text-gray-900">{loan.requested_by_name} ({loan.site_alias})</p>
-              <p className="text-gray-500 mt-0.5">Lokasi: {loan.site_name || loan.site_alias} ({loan.site_region || 'Indonesia'})</p>
+              <p className="text-gray-500 mt-0.5">Lokasi: {loan.site_alias} — {loan.site_code || loan.site_name} (Region: {loan.site_region || 'Indonesia'})</p>
               <p className="text-gray-400 text-[11px]">Resi/Tracking: {loan.tracking_number || '—'}</p>
             </div>
           </div>

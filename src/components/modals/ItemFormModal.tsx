@@ -167,11 +167,11 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
           value={form.computer_name} onChange={e => set('computer_name', e.target.value)} />
 
         <SiteSearchInput
-          label="Site / Lokasi (Ketik Alias / Kode)"
+          label="Lokasi Cabang (Site Alias)"
           sites={sites}
           value={form.site_alias}
           onChange={val => set('site_alias', val)}
-          placeholder="Ketik Site Alias (contoh: CGK-01)..."
+          placeholder="Ketik kode atau alias site..."
         />
 
         <Textarea label="Deskripsi" placeholder="Catatan tambahan..."
@@ -194,4 +194,5 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
 };
 
 export default ItemFormModal;
+
 
