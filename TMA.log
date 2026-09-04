@@ -1341,3 +1341,7 @@ Verifikasi:
 - **Removed Dependency Bug:** Removed scanMode from startScanner's dependency array. This prevents a React hook cascading effect where changing modes on Web caused a second Html5Qrcode instance to spawn on top of the first one.
 
 - **Cleaned Scan Frame UI:** Removed qrbox configuration so html5-qrcode scans the full screen and stops drawing its built-in white corner brackets, preventing them from stacking awkwardly with our custom CSS ScanFrame.
+
+### STEP 79: Revert QRScannerModal to User Baseline
+
+- Mengembalikan keseluruhan isi kode QRScannerModal.tsx ke versi *baseline* yang diberikan oleh pengguna untuk mengatur ulang status fitur scanner ke titik stabil sebelumnya.
