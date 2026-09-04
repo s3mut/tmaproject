@@ -39,6 +39,19 @@ export interface TelegramUser {
   created_at: string;
   role?: UserRole | string;
   assigned_region?: string | null;
+  has_web_access?: boolean;
+}
+
+export interface UpsertUserData {
+  telegram_id: number;
+  name: string;
+  username?: string | null;
+  role: UserRole;
+  assigned_region?: string | null;
+  is_active?: boolean;
+  has_web_access?: boolean;
+  web_password?: string | null;
+  notes?: string | null;
 }
 
 // ----- TABLE: master_assets -----

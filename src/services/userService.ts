@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { TelegramUser, UserRole } from '../types/inventory';
+import type { TelegramUser, UserRole, UpsertUserData } from '../types/inventory';
 
 export interface TelegramSDKUser {
   id: number;
@@ -369,4 +369,182 @@ export async function getPendingUsersCount(): Promise<number> {
   }
   return count || 0;
 }
+
+/**
+ * Tambah atau Edit Pengguna beserta Hak Akses (Admin)
+ * Menggunakan RPC admin_upsert_user (SECURITY DEFINER) dengan fallback direct upsert.
+ */
+export async function adminUpsertUser(userData: UpsertUserData): Promise<TelegramUser> {
+  const cleanUsername = userData.username ? userData.username.replace('@', '').trim().toLowerCase() : null;
+  const cleanRegion = (userData.role === 'admin' || userData.assigned_region === 'GLOBAL_ALL') ? null : (userData.assigned_region || null);
+
+  // 1. Coba via RPC admin_upsert_user
+  try {
+    const { data, error } = await supabase.rpc('admin_upsert_user', {
+      p_telegram_id: userData.telegram_id,
+      p_name: userData.name.trim(),
+      p_username: cleanUsername,
+      p_role: userData.role,
+      p_assigned_region: cleanRegion,
+      p_is_active: userData.is_active ?? true,
+      p_has_web_access: userData.has_web_access ?? false,
+      p_web_password: userData.web_password || null,
+      p_notes: userData.notes || null,
+    });
+
+    if (!error && data && data.length > 0) {
+      const row = data[0];
+      return {
+        telegram_id: row.telegram_id,
+        name: row.name,
+        username: row.username,
+        role: row.role as UserRole,
+        assigned_region: row.assigned_region,
+        is_active: row.is_active,
+        has_web_access: row.has_web_access,
+        notes: row.notes,
+        created_at: row.created_at,
+      };
+    }
+  } catch (rpcErr) {
+    console.warn('[UserService] RPC admin_upsert_user error, fallback to direct query:', rpcErr);
+  }
+
+  // 2. Fallback direct upsert
+  const payload: Record<string, any> = {
+    telegram_id: userData.telegram_id,
+    name: userData.name.trim(),
+    username: cleanUsername,
+    role: userData.role,
+    assigned_region: cleanRegion,
+    is_active: userData.is_active ?? true,
+    has_web_access: userData.has_web_access ?? false,
+    notes: userData.notes || null,
+  };
+
+  const { data: upsertData, error: upsertErr } = await supabase
+    .from('telegram_users')
+    .upsert(payload, { onConflict: 'telegram_id' })
+    .select()
+    .single();
+
+  if (upsertErr) {
+    throw new Error(`Gagal menyimpan data pengguna: ${upsertErr.message}`);
+  }
+
+  // Jika web_password diisi dan akses web aktif, panggil RPC set_web_password
+  if (userData.has_web_access && userData.web_password && userData.web_password.length >= 8) {
+    try {
+      await supabase.rpc('set_web_password', {
+        p_telegram_id: userData.telegram_id,
+        p_new_password: userData.web_password,
+      });
+    } catch (pwErr) {
+      console.warn('[UserService] Gagal set web password via RPC:', pwErr);
+    }
+  } else if (!userData.has_web_access) {
+    try {
+      await supabase.rpc('remove_web_access', {
+        p_telegram_id: userData.telegram_id,
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  return upsertData as TelegramUser;
+}
+
+/**
+ * Hapus pengguna dari database.
+ * Jika memiliki relasi transaksi/opname, otomatis dialihkan ke soft-delete (is_active = false).
+ */
+export async function deleteUser(
+  telegramId: number
+): Promise<{ success: boolean; soft_deleted: boolean; message: string }> {
+  // 1. Coba via RPC admin_delete_user
+  try {
+    const { data, error } = await supabase.rpc('admin_delete_user', {
+      p_telegram_id: telegramId,
+    });
+
+    if (!error && data) {
+      return data;
+    }
+  } catch (rpcErr) {
+    console.warn('[UserService] RPC admin_delete_user error, fallback to direct query:', rpcErr);
+  }
+
+  // 2. Fallback direct delete
+  const { error: delErr } = await supabase
+    .from('telegram_users')
+    .delete()
+    .eq('telegram_id', telegramId);
+
+  if (!delErr) {
+    return {
+      success: true,
+      soft_deleted: false,
+      message: 'Pengguna berhasil dihapus secara permanen.',
+    };
+  }
+
+  // Jika error karena foreign key constraint, fallback ke soft delete (is_active = false)
+  const { error: softErr } = await supabase
+    .from('telegram_users')
+    .update({
+      is_active: false,
+      has_web_access: false,
+      notes: 'Akun dinonaktifkan oleh Admin',
+    })
+    .eq('telegram_id', telegramId);
+
+  if (softErr) {
+    throw new Error(`Gagal menghapus pengguna: ${delErr.message}`);
+  }
+
+  return {
+    success: true,
+    soft_deleted: true,
+    message: 'Pengguna memiliki riwayat transaksi dan telah dinonaktifkan (soft delete).',
+  };
+}
+
+/**
+ * Toggle cepat status aktif/nonaktif akun pengguna
+ */
+export async function setUserActiveStatus(telegramId: number, isActive: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('telegram_users')
+    .update({ is_active: isActive })
+    .eq('telegram_id', telegramId);
+
+  if (error) {
+    throw new Error(`Gagal mengubah status aktif: ${error.message}`);
+  }
+}
+
+/**
+ * Setujui permintaan akses secara instan
+ */
+export async function approveUserAccess(
+  telegramId: number,
+  approvedRole: UserRole = 'user',
+  region: string | null = null
+): Promise<void> {
+  const { error } = await supabase
+    .from('telegram_users')
+    .update({
+      role: approvedRole,
+      assigned_region: approvedRole === 'user' ? region : null,
+      notes: `Disetujui sebagai ${approvedRole}${region ? ` (Region: ${region})` : ''}`,
+      is_active: true,
+    })
+    .eq('telegram_id', telegramId);
+
+  if (error) {
+    throw new Error(`Gagal menyetujui permintaan akses: ${error.message}`);
+  }
+}
+
 

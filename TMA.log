@@ -1228,3 +1228,46 @@ Verifikasi:
   - npx tsc --noEmit -> 0 error (TypeScript strict check pass).
   - npm run build -> Berhasil di-bundle Vite dalam 3.71s tanpa error.
 
+--------------------------------------------------------------------------------
+STEP 72: MANAJEMEN AKUN & HAK AKSES PENGGUNA (TAMBAH, EDIT RIGHTS, & RLS POLICIES) (2026-09-04)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Panel Manajemen Akun belum memiliki fungsi untuk menambah pengguna baru (Add User)
+    maupun mengedit hak akses (rights/permissions) pengguna secara lengkap.
+  - Tabel telegram_users sebelumnya hanya memiliki RLS SELECT policy, sehingga mutasi
+    langsung dari client tertahan atau gagal memperbarui wewenang.
+
+Perubahan Implementasi:
+  1. Database Migration & RLS (docs/create_user_management_and_rights.sql & sql/create_user_management_and_rights.sql):
+     - Memastikan ekstensi pgcrypto aktif untuk hashing bcrypt password web.
+     - Memastikan kelengkapan kolom telegram_users: role, assigned_region, is_active,
+       web_password, has_web_access, notes, username.
+     - Memperbaiki RLS policies telegram_users untuk mengizinkan operasi SELECT, INSERT,
+       UPDATE, dan DELETE.
+     - Membuat RPC admin_upsert_user (SECURITY DEFINER) untuk insert/update user, hashing
+       bcrypt password web, serta sinkronisasi role dan assigned_region.
+     - Membuat RPC admin_delete_user (SECURITY DEFINER) dengan proteksi data: jika user
+       memiliki riwayat transaksi atau audit opname, dialihkan ke soft-delete (is_active = false)
+       untuk menjaga integritas foreign key.
+  2. Types & Service Layer:
+     - src/types/inventory.ts: Menambahkan has_web_access pada TelegramUser dan interface
+       baru UpsertUserData.
+     - src/services/userService.ts: Menambahkan fungsi adminUpsertUser (dengan fallback direct
+       upsert), deleteUser (dengan fallback soft delete), setUserActiveStatus, dan approveUserAccess.
+  3. UI Enhancement (src/components/modals/UserManagementModal.tsx):
+     - Menambahkan tombol "+ Tambah Pengguna" di header dengan modal form lengkap.
+     - Menambahkan modal form "Edit Hak Akses & Akun" yang komprehensif:
+       * Role selector (Admin, User IT, Guest) beserta penjelasan wewenangnya.
+       * Wilayah wewenang (assigned_region) dropdown sites, auto-disabled untuk Admin.
+       * Toggle Status Akun Aktif / Dinonaktifkan (Bekukan).
+       * Toggle Akses Web Browser (Dual Authentication) dengan input password Bcrypt.
+       * Edit Nama Lengkap, Username (@), dan Catatan wewenang.
+       * Opsi Hapus Akun dengan konfirmasi dialog aman.
+     - Quick Action tombol persetujuan instan (Setujui User IT / Setujui Admin) untuk request PENDING_APPROVAL.
+     - Filter chips interaktif: Semua, Permintaan, Admin, User IT, Guest, Nonaktif.
+
+Verifikasi:
+  - npx tsc --noEmit -> 0 error (TypeScript strict check pass).
+  - npm run build -> Bundle Vite berhasil dibuat dalam 1.91s tanpa error.
+
+
