@@ -226,95 +226,125 @@ className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 
 </button>
 </div>
 
-{/* Viewfinder Area */}
-<div className="relative bg-black mx-3 rounded-2xl overflow-hidden" style={{ minHeight: '280px' }}>
-{/* Html5Qrcode akan render video ke dalam div ini */}
-<div id={scannerDivId} className="w-full" style={{ minHeight: '280px' }} />
+{state === 'selection' ? (
+  <div className="flex flex-col px-6 pb-8 pt-4 gap-4 items-center">
+    <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-3xl mb-1">
+      <i className="fas fa-qrcode" />
+    </div>
+    <h3 className="text-sm font-bold text-slate-50 text-center">Pilih Metode Scan</h3>
+    <p className="text-xs text-slate-400 text-center mb-2 leading-relaxed">
+      TMA mendeteksi Anda menggunakan Telegram. Silakan gunakan pemindai bawaan Telegram untuk scan QR Code lebih cepat, atau gunakan pemindai Web untuk Barcode batang.
+    </p>
+    
+    <div className="w-full flex flex-col gap-3 mt-2">
+      <Button
+        variant="primary"
+        icon="fa-qrcode"
+        fullWidth
+        onClick={() => handleSelectMode('qr')}
+      >
+        Scan QR Code (Telegram)
+      </Button>
+      
+      <Button
+        variant="secondary"
+        icon="fa-barcode"
+        fullWidth
+        onClick={() => handleSelectMode('barcode')}
+      >
+        Scan Barcode Batang (1D)
+      </Button>
+    </div>
+  </div>
+) : (
+  <>
+    {/* Viewfinder Area */}
+    <div className="relative bg-black mx-3 rounded-2xl overflow-hidden" style={{ minHeight: '280px' }}>
+      {/* Html5Qrcode akan render video ke dalam div ini */}
+      <div id={scannerDivId} className="w-full" style={{ minHeight: '280px' }} />
 
-{/* Overlay UI saat starting */}
-{state === 'starting' && (
-<div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70">
-<i className="fas fa-spinner fa-spin text-3xl text-blue-400 mb-3"></i>
-<p className="text-xs text-slate-300">Memulai kamera...</p>
-</div>
-)}
+      {/* Overlay UI saat starting */}
+      {state === 'starting' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70">
+          <i className="fas fa-spinner fa-spin text-3xl text-blue-400 mb-3"></i>
+          <p className="text-xs text-slate-300">Memulai kamera...</p>
+        </div>
+      )}
 
-{/* Corner overlay frame */}
-{state === 'scanning' && (
-<div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-<div className="relative w-52 h-52">
-{/* Corner brackets */}
-<div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg"></div>
-<div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg"></div>
-<div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg"></div>
-<div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg"></div>
-{/* Scan line animation */}
-<div className="absolute left-1 right-1 top-2 h-0.5 bg-blue-400/80 animate-[scanline_2s_ease-in-out_infinite]"
-style={{ animation: 'scanline 2s ease-in-out infinite' }}
-></div>
-</div>
-</div>
-)}
+      {/* Corner overlay frame */}
+      {state === 'scanning' && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div className="relative w-52 h-52">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg"></div>
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg"></div>
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg"></div>
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg"></div>
+            <div className="absolute left-1 right-1 top-2 h-0.5 bg-blue-400/80 animate-[scanline_2s_ease-in-out_infinite]"
+                 style={{ animation: 'scanline 2s ease-in-out infinite' }}></div>
+          </div>
+        </div>
+      )}
 
-{/* Error State */}
-{(state === 'error' || state === 'no_camera') && (
-<div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 p-5 text-center gap-3">
-<div className="w-14 h-14 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center text-2xl">
-<i className={`fas ${state === 'no_camera' ? 'fa-video-slash' : 'fa-exclamation-triangle'}`}></i>
-</div>
-<p className="text-xs text-slate-300 leading-relaxed">{errorMsg}</p>
-{state === 'error' && (
-<button
-onClick={() => startScanner(activeCameraId || undefined)}
-className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold mt-1"
->
-<i className="fas fa-redo mr-1.5"></i>Coba Lagi
-</button>
-)}
-</div>
-)}
-</div>
+      {/* Error State */}
+      {(state === 'error' || state === 'no_camera') && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 p-5 text-center gap-3">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center text-2xl">
+            <i className={`fas ${state === 'no_camera' ? 'fa-video-slash' : 'fa-exclamation-triangle'}`}></i>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">{errorMsg}</p>
+          {state === 'error' && (
+            <button
+              onClick={() => startScanner(activeCameraId || undefined)}
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold mt-1"
+            >
+              <i className="fas fa-redo mr-1.5"></i>Coba Lagi
+            </button>
+          )}
+        </div>
+      )}
+    </div>
 
-{/* Controls Bar */}
-<div className="px-4 py-3 space-y-2">
-{/* Torch & Camera Switch */}
-{state === 'scanning' && (
-<div className="flex gap-2">
-<button
-onClick={handleToggleTorch}
-className={`flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${torchOn ? 'bg-yellow-500 text-slate-950' : 'bg-slate-700 text-slate-300'}`}
->
-<i className={`fas ${torchOn ? 'fa-bolt' : 'fa-lightbulb'}`}></i>
-{torchOn ? 'Torch ON' : 'Torch OFF'}
-</button>
-{cameras.length > 1 && (
-<select
-value={activeCameraId || ''}
-onChange={(e) => handleSwitchCamera(e.target.value)}
-className="flex-1 py-2 px-2 rounded-xl text-xs bg-slate-700 text-slate-300 border-none outline-none"
->
-{cameras.map((cam, i) => (
-<option key={cam.id} value={cam.id}>
-{cam.label || `Kamera ${i + 1}`}
-</option>
-))}
-</select>
-)}
-</div>
-)}
+    {/* Controls Bar */}
+    <div className="px-4 py-3 space-y-2">
+      {state === 'scanning' && (
+        <div className="flex gap-2">
+          <button
+            onClick={handleToggleTorch}
+            className={`flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${torchOn ? 'bg-yellow-500 text-slate-950' : 'bg-slate-700 text-slate-300'}`}
+          >
+            <i className={`fas ${torchOn ? 'fa-bolt' : 'fa-lightbulb'}`}></i>
+            {torchOn ? 'Torch ON' : 'Torch OFF'}
+          </button>
+          {cameras.length > 1 && (
+            <select
+              value={activeCameraId || ''}
+              onChange={(e) => handleSwitchCamera(e.target.value)}
+              className="flex-1 py-2 px-2 rounded-xl text-xs bg-slate-700 text-slate-300 border-none outline-none"
+            >
+              {cameras.map((cam, i) => (
+                <option key={cam.id} value={cam.id}>
+                  {cam.label || `Kamera ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
-{/* Status Info */}
-<div className={`text-center text-[11px] py-1 rounded-lg ${
-           state === 'scanning' ? 'text-emerald-400 bg-emerald-500/10' :
-           state === 'starting' ? 'text-blue-400 bg-blue-500/10' :
-           'text-slate-400 bg-slate-800/50'
-         }`}>
-{state === 'scanning' && <><i className="fas fa-circle text-[6px] mr-1 animate-pulse"></i>Scanner aktif — tunggu kode terdeteksi otomatis</>}
-{state === 'starting' && 'Inisialisasi kamera...'}
-{(state === 'error' || state === 'no_camera') && 'Scanner tidak aktif'}
-{state === 'idle' && 'Mempersiapkan scanner...'}
-</div>
-</div>
+      {/* Status Info */}
+      <div className={`text-center text-[11px] py-1 rounded-lg ${
+                 state === 'scanning' ? 'text-emerald-400 bg-emerald-500/10' :
+                 state === 'starting' ? 'text-blue-400 bg-blue-500/10' :
+                 'text-slate-400 bg-slate-800/50'
+               }`}>
+        {state === 'scanning' && <><i className="fas fa-circle text-[6px] mr-1 animate-pulse"></i>Scanner aktif - tunggu kode terdeteksi otomatis</>}
+        {state === 'starting' && 'Inisialisasi kamera...'}
+        {(state === 'error' || state === 'no_camera') && 'Scanner tidak aktif'}
+        {state === 'idle' && 'Mempersiapkan scanner...'}
+      </div>
+    </div>
+  </>
+)}
 </div>
 
 {/* Scan line CSS keyframes */}
@@ -330,6 +360,7 @@ className="flex-1 py-2 px-2 rounded-xl text-xs bg-slate-700 text-slate-300 borde
 };
 
 export default QRScannerModal;
+
 
 
 
