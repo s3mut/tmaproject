@@ -14,7 +14,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
 const scannerRef = useRef<Html5Qrcode | null>(null);
 const scannerDivId = 'qr-scanner-container';
 const [state, setState] = useState<ScannerState>('idle');
-const [scanMode, setScanMode] = useState<'qr' | 'barcode'>('qr');
+
 const [errorMsg, setErrorMsg] = useState<string>('');
 const [torchOn, setTorchOn] = useState(false);
 const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
@@ -162,7 +162,7 @@ const handleOpenNativeTg = () => {
 };
 
 const handleSelectMode = (mode: 'qr' | 'barcode') => {
-  setScanMode(mode);
+  
   if (mode === 'qr') {
     handleOpenNativeTg();
   } else {
@@ -360,6 +360,7 @@ className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 
 };
 
 export default QRScannerModal;
+
 
 
 
