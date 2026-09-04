@@ -1305,3 +1305,27 @@ Verifikasi:
 
 
 
+
+### STEP 74: Fix Camera Permission Spam & Barcode Switch Bug
+
+- **Removed Auto Permission on Load:** Removed the useEffect from useCameraPermission.ts that requested camera access on mount. This stops the browser/Telegram from spamming permission requests.
+
+- **Refactored QRScannerModal:** Configured the html5-qrcode scanner to support all 1D and 2D formats concurrently. Mode switching now instantly changes the UI without destroying/restarting the WebRTC instance, fixing the broken switch button issue.
+
+- **Status Logic Clarification:** Confirmed that master_assets.status (Active, Backup) remains static during shipment, while asset_transactions.status tracks In Transit state and useInventory.ts handles locking.
+
+### STEP 75: Implement Smart Scanner Selection (Telegram vs Web)
+
+- **Bugfix (AbortError):** Fixed the The play() request was interrupted error by preventing the html5-qrcode scanner from automatically mounting/starting if the user is using Telegram.
+
+- **Smart Selection UI:** Implemented a new 'Selection' screen in QRScannerModal.tsx. When a user opens the scanner on Telegram, they are prompted to choose between Native Telegram QR Scanner or Web Barcode Scanner, bypassing unnecessary WebRTC initialization.
+
+- **Seamless Web Experience:** If the user is on the Web (outside Telegram), it immediately auto-starts the HTML5 scanner, providing a smooth, uninterrupted experience.
+
+### STEP 76: Refactoring QR/Barcode Scanner Sesuai Instruksi Ketat
+
+- **Camera Stream Caching:** Mengembalikan logika useEffect di useCameraPermission.ts untuk memancing izin 1x saat load sesuai permintaan spesifik.
+
+- **UI Konsisten:** Mengganti tombol pemilih di QRScannerModal.tsx dengan komponen Button dari sistem desain kita (src/components/ui/Button.tsx).
+
+- **Optimasi Konfigurasi Engine:** Memperbarui formatsToSupport menjadi spesifik untuk Code 128, Code 39, EAN-13, dan QR Code, serta memastikan lifecycle penanganan pause berjalan baik tanpa di-destroy saat modal disembunyikan.

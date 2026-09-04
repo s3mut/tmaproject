@@ -69,14 +69,15 @@ export function useCameraPermission(): UseCameraPermissionResult {
       setIsRequesting(false);
     }
   }, []);
-
-  // Inisiasi diam-diam saat komponen pertama kali mount
+  // Inisiasi diam-diam saat komponen pertama kali mount (Camera Stream Caching)
+  // Menangkap izin 1x untuk mencegah pop-up berulang
   useEffect(() => {
     // Jalankan satu kali jika belum tercatat di memory
     if (!memoryHasPermission) {
       requestCameraPermission(false);
     }
   }, [requestCameraPermission]);
+
 
   return {
     hasCameraPermission,
@@ -87,3 +88,5 @@ export function useCameraPermission(): UseCameraPermissionResult {
 }
 
 export default useCameraPermission;
+
+

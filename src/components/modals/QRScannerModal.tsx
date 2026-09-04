@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeScannerState } from 'html5-qrcode';
+import Button from '../ui/Button';
 import { useCameraPermission } from '../../hooks/useCameraPermission';
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
   defaultMode?: 'qr' | 'barcode';
 }
 
-type ScannerState = 'idle' | 'starting' | 'scanning' | 'error' | 'no_camera';
+type ScannerState = 'idle' | 'selection' | 'starting' | 'scanning' | 'error' | 'no_camera';
 type ScanMode = 'qr' | 'barcode';
 
 const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: Props) => {
@@ -80,30 +81,12 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
     setErrorMsg('');
 
     try {
-      // Pastikan izin kamera sudah diinisiasi
-      if (!hasCameraPermission) {
-        const granted = await requestCameraPermission();
-        if (!granted) {
-          setState('error');
-          setErrorMsg('Akses kamera belum diizinkan. Silakan berikan izin kamera pada browser/Telegram.');
-          return;
-        }
-      }
-
-      // Format yang dioptimalkan sesuai instruksi (1D Barcode & 2D QR Code)
+      // Format yang dioptimalkan (mendukung 1D & 2D sekaligus untuk menghindari reload scanner saat switch mode)
       const formats = [
         Html5QrcodeSupportedFormats.CODE_128,
         Html5QrcodeSupportedFormats.CODE_39,
         Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.QR_CODE,
-        ...(mode === 'barcode'
-          ? [
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E,
-              Html5QrcodeSupportedFormats.ITF,
-            ]
-          : [Html5QrcodeSupportedFormats.DATA_MATRIX]),
+        Html5QrcodeSupportedFormats.QR_CODE
       ];
 
       scannerRef.current = new Html5Qrcode(instanceDivId, {
@@ -111,19 +94,11 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
         verbose: false,
       });
 
-      // Adaptive scan box:
-      // Barcode 1D butuh area horizontal lebar (280x120)
-      // QR Code 2D optimal dengan area kotak (250x250)
-      const qrbox =
-        mode === 'barcode'
-          ? { width: 280, height: 120 }
-          : 250;
-
-      // Konfigurasi optimal: fps 10, qrbox 250
+      // Gunakan qrbox universal 250x250 untuk semua tipe
       const config = {
         fps: 10,
-        qrbox,
-        aspectRatio: mode === 'barcode' ? 1.5 : 1.0,
+        qrbox: 250,
+        aspectRatio: 1.0,
         disableFlip: false,
       };
 
@@ -202,7 +177,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
   const handleSwitchMode = async (newMode: ScanMode) => {
     if (newMode === scanMode) return;
     setScanMode(newMode);
-    await startScanner(activeCameraId || undefined, newMode);
+    // Tidak memanggil startScanner ulang, cukup ganti UI saja (scanner sudah support semua format)
   };
 
   // ─── Optional: Launch Telegram Native QR Scanner popup ────────────────────
@@ -361,7 +336,43 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
           </button>
         </div>
 
-        {/* Mode Toggle Pills (QR Code & Barcode) */}
+        {state === 'selection' ? (
+          <div className="flex flex-col px-6 pb-8 pt-4 gap-4 items-center">
+            <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-3xl mb-1">
+              <i className="fas fa-qrcode" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-50 text-center">Pilih Metode Scan</h3>
+            <p className="text-xs text-slate-400 text-center mb-2 leading-relaxed">
+              TMA mendeteksi Anda menggunakan Telegram. Silakan gunakan pemindai bawaan Telegram untuk scan QR Code lebih cepat, atau gunakan pemindai Web untuk Barcode batang.
+            </p>
+            
+            <div className="w-full flex flex-col gap-3 mt-2">
+              <Button
+                variant="primary"
+                icon="fa-qrcode"
+                fullWidth
+                onClick={handleOpenTelegramNative}
+              >
+                Scan QR Code (Native Telegram)
+              </Button>
+              
+              <Button
+                variant="secondary"
+                icon="fa-barcode"
+                fullWidth
+                onClick={() => {
+                  setScanMode('barcode');
+                  startScanner(undefined, 'barcode');
+                }}
+              >
+                Scan Barcode Batang (1D)
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Mode Toggle Pills (QR Code & Barcode) */}
+            {/* Mode Toggle Pills (QR Code & Barcode) */}
         <div className="flex gap-1.5 mx-4 my-2 p-1 rounded-xl bg-slate-800/90 border border-slate-700/50">
           <button
             type="button"
@@ -505,6 +516,9 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
           </div>
         </div>
       </div>
+          </>
+        )}
+      </div>
 
       <style>{`
         @keyframes scanline {
@@ -523,3 +537,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 };
 
 export default QRScannerModal;
+
+
+
+
