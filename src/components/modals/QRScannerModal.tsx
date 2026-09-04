@@ -14,6 +14,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
 const scannerRef = useRef<Html5Qrcode | null>(null);
 const scannerDivId = 'qr-scanner-container';
 const [state, setState] = useState<ScannerState>('idle');
+const [scanMode, setScanMode] = useState<'qr' | 'barcode'>('qr');
 
 const [errorMsg, setErrorMsg] = useState<string>('');
 const [torchOn, setTorchOn] = useState(false);
@@ -34,8 +35,10 @@ isRunningRef.current = false;
 }
 };
 
-const startScanner = async (cameraId?: string) => {
+const startScanner = async (cameraId?: string, forceMode?: 'qr' | 'barcode') => {
 if (!document.getElementById(scannerDivId)) return;
+
+const currentMode = forceMode || scanMode;
 
 await stopScanner();
 setState('starting');
@@ -56,10 +59,11 @@ verbose: false,
 });
 }
 
+const isBarcode = currentMode === 'barcode';
 const config = {
 fps: 15,
-qrbox: { width: 240, height: 240 },
-aspectRatio: 1.0,
+qrbox: isBarcode ? { width: 280, height: 120 } : { width: 240, height: 240 },
+aspectRatio: isBarcode ? 2.0 : 1.0,
 disableFlip: false,
 };
 
@@ -151,23 +155,23 @@ const handleOpenNativeTg = () => {
           return false;
         }
       );
-    } catch {
+    }     } catch {
       setIsNativeTg(false);
-      startScanner();
+      startScanner(undefined, 'qr');
     }
-  } else {
+    } else {
     setIsNativeTg(false);
-    startScanner();
+    startScanner(undefined, 'qr');
   }
 };
 
 const handleSelectMode = (mode: 'qr' | 'barcode') => {
-  
+  setScanMode(mode);
   if (mode === 'qr') {
     handleOpenNativeTg();
   } else {
     setIsNativeTg(false);
-    startScanner();
+    startScanner(undefined, mode);
   }
 };
 
@@ -271,10 +275,10 @@ className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 
         </div>
       )}
 
-      {/* Corner overlay frame */}
+            {/* Corner overlay frame */}
       {state === 'scanning' && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div className="relative w-52 h-52">
+          <div className={`relative transition-all duration-300 ${scanMode === 'barcode' ? 'w-64 h-32' : 'w-52 h-52'}`}>
             <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg"></div>
             <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg"></div>
             <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg"></div>
@@ -360,6 +364,7 @@ className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 
 };
 
 export default QRScannerModal;
+
 
 
 
