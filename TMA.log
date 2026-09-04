@@ -1345,3 +1345,7 @@ Verifikasi:
 ### STEP 79: Revert QRScannerModal to User Baseline
 
 - Mengembalikan keseluruhan isi kode QRScannerModal.tsx ke versi *baseline* yang diberikan oleh pengguna untuk mengatur ulang status fitur scanner ke titik stabil sebelumnya.
+
+### STEP 80: Re-implement Selection Screen
+
+- **Pre-scan Selection:** Menambahkan kembali menu pemilihan mode (QR Code vs Barcode) sebelum kamera menyala, dirancang dengan elegan menggunakan komponen Button agar tidak memberatkan device dengan double-render. Pilihan ini memastikan kompatibilitas Telegram yang secara native hanya membaca QR.
