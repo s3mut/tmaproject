@@ -522,7 +522,6 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
             {state === 'idle' && 'Mempersiapkan scanner...'}
           </div>
         </div>
-      </div>
           </>
         )}
       </div>
@@ -544,6 +543,9 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 };
 
 export default QRScannerModal;
+
+
+
 
 
 
