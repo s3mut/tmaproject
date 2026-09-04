@@ -183,7 +183,7 @@ useEffect(() => {
     setTorchOn(false);
     setIsNativeTg(false);
     const tgWebApp = (window as any).Telegram?.WebApp;
-    if (tgWebApp?.closeScanQrPopup) {
+    if (tgWebApp?.closeScanQrPopup && tgWebApp.isVersionAtLeast && tgWebApp.isVersionAtLeast('6.4')) {
       try { tgWebApp.closeScanQrPopup(); } catch {}
     }
   }
@@ -194,7 +194,7 @@ useEffect(() => {
 return () => {
 stopScanner();
 const tgWebApp = (window as any).Telegram?.WebApp;
-if (tgWebApp?.closeScanQrPopup) {
+if (tgWebApp?.closeScanQrPopup && tgWebApp.isVersionAtLeast && tgWebApp.isVersionAtLeast('6.4')) {
         try { tgWebApp.closeScanQrPopup(); } catch {}
         try { tgWebApp.closeScanQrPopup?.(); } catch {}
 }
@@ -360,6 +360,7 @@ className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 
 };
 
 export default QRScannerModal;
+
 
 
 
