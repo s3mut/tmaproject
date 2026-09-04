@@ -1098,3 +1098,91 @@ Menyeragamkan 100% semua form input pemilihan cabang/lokasi menggunakan komponen
 ### Hasil TypeScript Check
 
 px tsc --noEmit → **0 errors** ✅
+
+--------------------------------------------------------------------------------
+STEP 69: FIX SCANNER BARCODE IN TELEGRAM MINI APP (2026-09-04)
+--------------------------------------------------------------------------------
+Masalah:
+  - Fitur scan barcode sudah muncul di web desktop/browser, namun tidak muncul
+    saat aplikasi dibuka melalui Bot Telegram Mini App (TMA).
+
+Root Cause:
+  - Pada implementasi sebelumnya di QRScannerModal.tsx, terdapat pengecekan:
+      canUseNativeQr = scanMode === 'qr' && tgWebApp?.isVersionAtLeast?.('6.4') && tgWebApp?.showScanQrPopup;
+      if (canUseNativeQr) { setIsNativeTg(true); tgWebApp.showScanQrPopup(...); }
+      ...
+      if (!isOpen || isNativeTg) return null;
+  - Karena scanMode default adalah 'qr', saat dibuka di Telegram Mini App,
+    popup native Telegram langsung aktif dan komponen modal React me-return null.
+  - Akibatnya: UI kustom modal (termasuk tombol toggle pill 'Barcode') tidak pernah
+    di-render di dalam Telegram. Karena Native Telegram Scanner hanya mendukung QR,
+    pengguna di Telegram tidak dapat melihat atau memilih opsi scan Barcode sama sekali.
+
+Perbaikan (src/components/modals/QRScannerModal.tsx):
+  1. Hapus pemblokiran render 'isNativeTg' sehingga modal kustom selalu di-render
+     baik di browser web biasa maupun di dalam Telegram Mini App.
+  2. Kedua tombol tab mode ('QR Code' dan 'Barcode (1D)') kini selalu tampil dan
+     dapat diakses langsung di dalam Telegram Bot.
+  3. Di dalam Telegram Mini App pada mode QR Code, disediakan tombol opsional
+     '⚡ Gunakan Scanner Native Telegram' jika pengguna ingin memanfaatkan popup
+     bawaan Telegram, dengan pelepasan stream kamera (stopScanner) dan auto-resume
+     saat popup native ditutup.
+  4. Pada mode Barcode, scanner otomatis menjalankan html5-qrcode dengan kotak
+     pembacaan horizontal 280x100 (Code 128, Code 39, EAN-13, EAN-8, UPC, ITF)
+     serta frame amber dan scanline animasi horizontal.
+  5. Menambahkan z-index 110 pada modal-overlay agar selalu berada di atas modal
+     lain saat dipanggil dari ItemFormModal atau OpnameView.
+
+Verifikasi:
+  - npx tsc --noEmit → 0 error (TypeScript strict check pass).
+  - npm run build → Berhasil di-bundle Vite dalam 2.68s.
+
+--------------------------------------------------------------------------------
+STEP 70: AUDIT & PERBAIKAN MENYELURUH MODUL NOTIFIKASI TELEGRAM BOT & APPROVAL (2026-09-04)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Notifikasi 'Request Akses Tim IT' dari Guest dan notifikasi persetujuan transaksi
+    sebelumnya tidak masuk ke Telegram.
+  - Memperbaiki komunikasi Edge Function, validasi payload, HTML parsing, dan inline
+    keyboard callback flow dari hulu ke hilir.
+
+Root Cause yang Ditemukan:
+  1. Frontend Client-Side: requestITAccess di userService.ts mencoba fetch langsung
+     ke api.telegram.org menggunakan env VITE_TELEGRAM_BOT_TOKEN & VITE_TELEGRAM_ADMIN_CHAT_ID
+     yang tidak pernah ada di frontend. Jika kosong, fungsi me-return success tanpa mengirim pesan.
+  2. Edge Function telegram-bot: Tidak memiliki endpoint /request-access dan tidak menangani
+     CORS preflight (OPTIONS).
+  3. Formatting Markdown: Penggunaan parse_mode: 'Markdown' rentan crash HTTP 400 jika terdapat
+     karakter khusus (_, *, [, ], () pada nama, serial number, atau catatan.
+  4. Webhook Callback Deadlock: Webhook di telegram-bot/index.ts hanya menangani approve_trx_
+     dan tidak memiliki handler untuk persetujuan role user (approve_user_, APPROVE_USER:, dll).
+  5. Silent Failure: functions.invoke tidak ditangkap detail error body-nya jika merespon non-2xx.
+
+Perubahan Implementasi:
+  1. supabase/functions/telegram-bot/index.ts:
+     - Tambah CORS headers & OPTIONS preflight handler.
+     - Tambah endpoint /request-access dan /test (diagnostik koneksi).
+     - Ganti seluruh parse_mode: 'Markdown' menjadi parse_mode: 'HTML' dengan helper escapeHtml().
+     - Standarisasi inline keyboard callback_data <= 64 bytes:
+       * APPROVE_USER:<telegram_id>
+       * APPROVE_ADMIN:<telegram_id>
+       * REJECT_USER:<telegram_id>
+       * APPROVE_TRX:<transaction_id>
+       * REJECT_TRX:<transaction_id>
+     - Logging respon Telegram API lengkap (resJson.error_code, resJson.description).
+     - Lengkapi webhook callback handler untuk approval role user dan approval transaksi.
+  2. src/services/userService.ts:
+     - requestITAccess: Mengalihkan pemanggilan ke Supabase Edge Function telegram-bot/request-access.
+     - Tambah testBotNotification: Fungsi diagnostik pengujian Telegram Bot dari client.
+     - Penanganan error lengkap dengan logging status code dan JSON body error.
+  3. src/services/transactionService.ts:
+     - createTransaction & updateTransactionStatus: Tambah penanganan error dan log respon
+       lengkap pada invoke telegram-bot/notify dan telegram-bot/dispatch.
+  4. src/views/ProfileView.tsx:
+     - Menambahkan tombol menu "Tes Notifikasi Bot Telegram" (DIAGNOSTIK) di panel Admin IT.
+  5. scripts/test-bot-notification.mjs:
+     - Tool CLI mandiri berbasis Node.js untuk memverifikasi getMe, sendMessage, dan Edge Function.
+
+Verifikasi:
+  - npx tsc --noEmit -> 0 error (Strict TypeScript Clean).
+  - npm run build -> Bundle Vite berhasil dibuat dalam 1.63s tanpa error.

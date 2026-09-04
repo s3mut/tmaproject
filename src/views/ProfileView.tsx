@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { AssetDetail, TransactionDetail, Site, Category } from '../types/inventory';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { getTelegramSDKUser } from '../services/userService';
+import { getTelegramSDKUser, testBotNotification } from '../services/userService';
 import RequestAccessModal from '../components/modals/RequestAccessModal';
 import SetPasswordModal from '../components/modals/SetPasswordModal';
 import BackupModal from '../components/modals/BackupModal';
@@ -35,6 +35,26 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
   const [bulkDisposalModalOpen, setBulkDisposalModalOpen] = useState(false);
   const [overdueLoans, setOverdueLoans]         = useState<OverdueLoan[]>([]);
   const [pendingReqCount, setPendingReqCount]   = useState(0);
+  const [testingBot, setTestingBot]             = useState(false);
+
+  const handleTestBotNotification = async () => {
+    if (testingBot) return;
+    setTestingBot(true);
+    onShowToast?.('Mengirim pesan uji coba ke Telegram...', 'success');
+    try {
+      const res = await testBotNotification();
+      if (res.success) {
+        onShowToast?.('✅ ' + res.message, 'success');
+      } else {
+        onShowToast?.('❌ ' + res.message, 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      onShowToast?.('❌ ' + msg, 'error');
+    } finally {
+      setTestingBot(false);
+    }
+  };
 
   const isGuest   = currentUser?.role === 'guest';
   const isAdmin   = currentUser?.role === 'admin';
@@ -75,6 +95,12 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
         onClick: () => setUserMgmtModalOpen(true),
         badge: pendingReqCount > 0 ? `${pendingReqCount} REQ` : 'ADMIN ONLY',
         badgeDot: pendingReqCount > 0 ? String(pendingReqCount) : undefined,
+      },
+      {
+        icon: 'fa-paper-plane', color: 'text-sky-400', bg: 'bg-sky-500/20',
+        title: 'Tes Notifikasi Bot Telegram', subtitle: testingBot ? 'Sedang mengirim pesan tes...' : 'Kirim pesan uji coba ke Admin Chat via Edge Function',
+        onClick: handleTestBotNotification,
+        badge: 'DIAGNOSTIK',
       },
     ] : []),
     {

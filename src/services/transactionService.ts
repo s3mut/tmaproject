@@ -112,8 +112,8 @@ export async function createTransaction(
     const reqByName = userRes.data?.name || 'Unknown User';
     const targetRegion = siteRes.data?.region || 'Tanpa Region';
 
-    // Memanggil Supabase Edge Function (telegram-bot)
-    await supabase.functions.invoke('telegram-bot/notify', {
+    // Memanggil Supabase Edge Function (telegram-bot) dengan log komprehensif
+    const { data: fnRes, error: fnErr } = await supabase.functions.invoke('telegram-bot/notify', {
       body: {
         transaction_id: data.id,
         type: trx.transaction_type,
@@ -125,9 +125,21 @@ export async function createTransaction(
         requested_by_name: reqByName
       }
     });
+
+    if (fnErr) {
+      let errBody: unknown = null;
+      try { errBody = await (fnErr as any).context?.json?.(); } catch {}
+      console.error('[TransactionService] Gagal kirim notifikasi telegram-bot/notify:', {
+        message: fnErr.message,
+        status: (fnErr as any).context?.status,
+        body: errBody
+      });
+    } else {
+      console.log('[TransactionService] Notifikasi transaksi berhasil dikirim ke Telegram:', fnRes);
+    }
   } catch (err) {
-    console.error('Failed to invoke telegram-bot edge function:', err);
-    // Kita tidak men-throw error di sini agar proses pembuatan transaksi tetap sukses di UI meskipun notif gagal
+    console.error('[TransactionService] Exception saat memanggil telegram-bot/notify:', err);
+    // Tidak throw error agar transaksi tetap sukses tersimpan di database
   }
 
   return data;
@@ -198,7 +210,7 @@ export async function updateTransactionStatus(
       if (trxFull) {
         const { data: assetData } = await supabase.from('master_assets').select('serial_number, brand, model_type').eq('id', trxFull.asset_id).single();
         
-        await supabase.functions.invoke('telegram-bot/dispatch', {
+        const { data: dispRes, error: dispErr } = await supabase.functions.invoke('telegram-bot/dispatch', {
           body: {
             transaction_code: trxFull.transaction_code,
             type: trxFull.transaction_type,
@@ -208,9 +220,21 @@ export async function updateTransactionStatus(
             serial_number: assetData?.serial_number || ''
           }
         });
+
+        if (dispErr) {
+          let errBody: unknown = null;
+          try { errBody = await (dispErr as any).context?.json?.(); } catch {}
+          console.error('[TransactionService] Gagal kirim notifikasi dispatch:', {
+            message: dispErr.message,
+            status: (dispErr as any).context?.status,
+            body: errBody
+          });
+        } else {
+          console.log('[TransactionService] Notifikasi dispatch berhasil dikirim ke Telegram:', dispRes);
+        }
       }
     } catch (err) {
-      console.error('Failed to invoke telegram-bot for dispatch:', err);
+      console.error('[TransactionService] Exception saat invoke telegram-bot dispatch:', err);
     }
   }
 
@@ -245,3 +269,4 @@ export async function updateTransactionStatus(
     }
   }
 }
+

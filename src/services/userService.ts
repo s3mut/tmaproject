@@ -98,17 +98,29 @@ export async function syncTelegramUser(): Promise<TelegramUser> {
 }
 
 /**
- * Mengirim notifikasi pengajuan akses ke grup/chat Admin IT di Telegram via Bot API
+ * Helper untuk meng-escape karakter khusus HTML
+ */
+function escapeHtml(text: unknown): string {
+  if (text === null || text === undefined) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * Mengirim notifikasi pengajuan akses ke grup/chat Admin IT di Telegram.
+ * Prioritas 1: Supabase Edge Function `telegram-bot/request-access` (Aman, token di server)
+ * Prioritas 2: Fallback Client-side HTTP (jika token env client diset)
  */
 export async function requestITAccess(
   user: TelegramUser,
   noteText: string,
   botToken?: string,
   adminChatId?: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; details?: unknown }> {
   const sdkUser = getTelegramSDKUser();
   const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-  const usernameFormatted = sdkUser.username ? `@${sdkUser.username}` : 'Tanpa Username';
   const updatedNote = `PENDING_APPROVAL: ${noteText || 'Request akses Tim IT'} (${timestamp})`;
 
   // 1. Update status/catatan request di Supabase telegram_users
@@ -124,34 +136,90 @@ export async function requestITAccess(
     }, { onConflict: 'telegram_id' });
 
   if (dbErr) {
-    console.error('Gagal menyimpan request ke Supabase:', dbErr);
+    console.error('[UserService] Gagal menyimpan request ke Supabase:', dbErr);
   }
 
-  // Ambil token bot & admin chat id dari env jika ada
+  // 2. Invoke Supabase Edge Function (Metode Utama & Aman)
+  try {
+    const payload = {
+      telegram_id: user.telegram_id,
+      name: user.name,
+      username: sdkUser.username || user.username || null,
+      note: noteText || 'Request akses Tim IT',
+    };
+
+    // Panggil endpoint /request-access
+    const { data: fnData, error: fnError } = await supabase.functions.invoke('telegram-bot/request-access', {
+      body: payload,
+    });
+
+    if (fnError) {
+      let errorBody: unknown = null;
+      try {
+        errorBody = await (fnError as any).context?.json?.();
+      } catch {
+        // ignore
+      }
+
+      console.error('[UserService] Gagal memanggil Edge Function telegram-bot/request-access:', {
+        message: fnError.message,
+        status: (fnError as any).context?.status,
+        body: errorBody,
+      });
+
+      // Coba fallback dengan query body `action: 'request-access'` jika routing URL gagal
+      const { data: fnFallbackData, error: fnFallbackErr } = await supabase.functions.invoke('telegram-bot', {
+        body: { action: 'request-access', ...payload },
+      });
+
+      if (fnFallbackErr) {
+        console.error('[UserService] Fallback action request-access juga gagal:', fnFallbackErr);
+      } else if (fnFallbackData) {
+        console.log('[UserService] Berhasil via fallback action request-access:', fnFallbackData);
+        return {
+          success: true,
+          message: 'Pengajuan akses berhasil dikirim ke Admin IT via Telegram!',
+          details: fnFallbackData,
+        };
+      }
+    } else {
+      console.log('[UserService] Sukses invoke telegram-bot/request-access:', fnData);
+      return {
+        success: true,
+        message: 'Pengajuan akses berhasil dikirim ke Admin IT via Telegram!',
+        details: fnData,
+      };
+    }
+  } catch (invokeEx) {
+    console.error('[UserService] Exception saat invoke edge function:', invokeEx);
+  }
+
+  // 3. Fallback Client-side jika botToken atau VITE_TELEGRAM_BOT_TOKEN tersedia
   const activeBotToken = botToken || (import.meta.env.VITE_TELEGRAM_BOT_TOKEN as string);
   const activeAdminChatId = adminChatId || (import.meta.env.VITE_TELEGRAM_ADMIN_CHAT_ID as string);
 
-  // 2. Jika Bot Token & Admin Chat ID tersedia, kirim notifikasi pesan interaktif + inline keyboard
   if (activeBotToken && activeAdminChatId) {
     try {
-      const botMessage = `🔔 *REQUEST AKSES TIM IT BARU*\n\n` +
-        `👤 *Nama*: ${user.name}\n` +
-        `🏷️ *Username*: ${usernameFormatted}\n` +
-        `🆔 *Telegram ID*: \`${user.telegram_id}\`\n` +
-        `📝 *Catatan/Alasan*: ${noteText || '-'}\n` +
-        `📅 *Waktu*: ${timestamp}\n\n` +
-        ` Silakan pilih tindakan untuk persetujuan role:`;
+      const usernameFormatted = sdkUser.username ? `@${escapeHtml(sdkUser.username)}` : '<i>Tanpa Username</i>';
+      const botMessage =
+        `🔔 <b>REQUEST AKSES TIM IT BARU</b>\n\n` +
+        `👤 <b>Nama:</b> ${escapeHtml(user.name)}\n` +
+        `🏷️ <b>Username:</b> ${usernameFormatted}\n` +
+        `🆔 <b>Telegram ID:</b> <code>${user.telegram_id}</code>\n` +
+        `📝 <b>Catatan/Alasan:</b> ${escapeHtml(noteText || '-')}\n` +
+        `📅 <b>Waktu:</b> ${timestamp}\n\n` +
+        `<i>Silakan pilih tindakan persetujuan role:</i>`;
 
       const inlineKeyboard = {
         inline_keyboard: [
           [
-            { text: '✅ Setujui (User)', callback_data: `approve_user_${user.telegram_id}` },
-            { text: '👑 Setujui (Admin)', callback_data: `approve_admin_${user.telegram_id}` }
+            { text: '✅ Setujui (User)', callback_data: `APPROVE_USER:${user.telegram_id}` },
+            { text: '👑 Setujui (Admin)', callback_data: `APPROVE_ADMIN:${user.telegram_id}` },
           ],
           [
-            { text: '❌ Tolak Permintaan', callback_data: `reject_${user.telegram_id}` }
-          ]
-        ]
+            { text: '❌ Tolak Permintaan', callback_data: `REJECT_USER:${user.telegram_id}` },
+          ],
+        ],
       };
 
       const res = await fetch(`https://api.telegram.org/bot${activeBotToken}/sendMessage`, {
@@ -160,24 +228,77 @@ export async function requestITAccess(
         body: JSON.stringify({
           chat_id: activeAdminChatId,
           text: botMessage,
-          parse_mode: 'Markdown',
-          reply_markup: inlineKeyboard
-        })
+          parse_mode: 'HTML',
+          reply_markup: inlineKeyboard,
+        }),
       });
 
       const resData = await res.json();
       if (!resData.ok) {
-        console.warn('Bot sendMessage warn:', resData.description);
+        console.error('[UserService] Client-side sendMessage failed:', {
+          error_code: resData.error_code,
+          description: resData.description,
+        });
+      } else {
+        console.log('[UserService] Client-side sendMessage berhasil:', resData);
       }
     } catch (botErr) {
-      console.error('Error sending Telegram Bot notification:', botErr);
+      console.error('[UserService] Error sending direct Telegram notification:', botErr);
     }
   }
 
   return {
     success: true,
-    message: 'Pengajuan akses berhasil dikirim ke Admin IT! Mohon tunggu konfirmasi.'
+    message: 'Pengajuan akses tersimpan. Jika notifikasi bot belum masuk, pastikan Edge Function aktif & Secrets telah dikonfigurasi.',
   };
+}
+
+/**
+ * Menguji konektivitas Telegram Bot API melalui Supabase Edge Function `/test`
+ */
+export async function testBotNotification(
+  targetChatId?: string | number
+): Promise<{ success: boolean; message: string; details?: unknown }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('telegram-bot/test', {
+      body: { chat_id: targetChatId },
+    });
+
+    if (error) {
+      let bodyDetail: unknown = null;
+      try {
+        bodyDetail = await (error as any).context?.json?.();
+      } catch {
+        // ignore
+      }
+
+      console.error('[UserService] Gagal test bot notification:', {
+        message: error.message,
+        status: (error as any).context?.status,
+        body: bodyDetail,
+      });
+
+      return {
+        success: false,
+        message: `Gagal mengirim tes notifikasi: ${error.message}`,
+        details: bodyDetail,
+      };
+    }
+
+    return {
+      success: data?.success ?? true,
+      message: data?.success
+        ? 'Pesan tes berhasil dikirim ke Telegram!'
+        : `Gagal: ${data?.error || 'Unknown error'}`,
+      details: data,
+    };  } catch (err: unknown) {
+    const errStr = err instanceof Error ? err.message : String(err);
+    console.error('[UserService] Exception in testBotNotification:', errStr);
+    return {
+      success: false,
+      message: `Exception: ${errStr}`,
+    };
+  }
 }
 
 /**
@@ -209,6 +330,7 @@ export async function getAllUsers(): Promise<TelegramUser[]> {
   }
   return data as TelegramUser[];
 }
+
 
 /**
  * Update role dan wilayah wewenang (assigned_region) pengguna oleh Admin
@@ -247,3 +369,4 @@ export async function getPendingUsersCount(): Promise<number> {
   }
   return count || 0;
 }
+
