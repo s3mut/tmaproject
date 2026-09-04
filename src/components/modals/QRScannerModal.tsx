@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import Button from '../ui/Button';
 
 interface Props {
 isOpen: boolean;
@@ -7,12 +8,13 @@ onClose: () => void;
 onScanResult: (scannedText: string) => void;
 }
 
-type ScannerState = 'idle' | 'starting' | 'scanning' | 'error' | 'no_camera';
+type ScannerState = 'idle' | 'selection' | 'starting' | 'scanning' | 'error' | 'no_camera';
 
 const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
 const scannerRef = useRef<Html5Qrcode | null>(null);
 const scannerDivId = 'qr-scanner-container';
 const [state, setState] = useState<ScannerState>('idle');
+const [scanMode, setScanMode] = useState<'qr' | 'barcode'>('qr');
 const [errorMsg, setErrorMsg] = useState<string>('');
 const [torchOn, setTorchOn] = useState(false);
 const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
@@ -126,71 +128,65 @@ setActiveCameraId(camId);
 await startScanner(camId);
 };
 
+// Handle Telegram Native Scanner
+const handleOpenNativeTg = () => {
+  const tgWebApp = (window as any).Telegram?.WebApp;
+  const canUseNativeQr = tgWebApp?.isVersionAtLeast && tgWebApp.isVersionAtLeast('6.4') && tgWebApp?.showScanQrPopup;
+  
+  if (canUseNativeQr) {
+    setIsNativeTg(true);
+    try {
+      const handlePopupClosed = () => { onClose(); };
+      if (tgWebApp.onEvent) tgWebApp.onEvent('scanQrPopupClosed', handlePopupClosed);
+
+      tgWebApp.showScanQrPopup(
+        { text: 'Arahkan kamera ke QR Code Aset' },
+        (scannedText: string) => {
+          if (scannedText) {
+            onScanResult(scannedText.trim());
+            try { tgWebApp.closeScanQrPopup(); } catch {}
+            onClose();
+            return true;
+          }
+          return false;
+        }
+      );
+    } catch {
+      setIsNativeTg(false);
+      startScanner();
+    }
+  } else {
+    setIsNativeTg(false);
+    startScanner();
+  }
+};
+
+const handleSelectMode = (mode: 'qr' | 'barcode') => {
+  setScanMode(mode);
+  if (mode === 'qr') {
+    handleOpenNativeTg();
+  } else {
+    setIsNativeTg(false);
+    startScanner();
+  }
+};
+
 // Mulai scanner saat modal terbuka
 useEffect(() => {
-let handlePopupClosed: (() => void) | null = null;
-const tgWebApp = (window as any).Telegram?.WebApp;
-
-if (isOpen) {
-      if (tgWebApp?.showScanQrPopup) {
-      const canUseNativeQr = tgWebApp?.isVersionAtLeast && tgWebApp.isVersionAtLeast('6.4') && tgWebApp?.showScanQrPopup;
-      if (canUseNativeQr) {
-setIsNativeTg(true);
-try {
-handlePopupClosed = () => {
-onClose();
-};
-if (tgWebApp.onEvent) {
-tgWebApp.onEvent('scanQrPopupClosed', handlePopupClosed);
-}
-
-tgWebApp.showScanQrPopup(
-{ text: 'Arahkan kamera ke QR / Barcode Aset' },
-(scannedText: string) => {
-if (scannedText) {
-onScanResult(scannedText.trim());
-                try { tgWebApp.closeScanQrPopup(); } catch {}
-                try { tgWebApp.closeScanQrPopup?.(); } catch {}
-onClose();
-return true;
-}
-return false;
-}
-);
-} catch {
-setIsNativeTg(false);
-loadCameraList();
-const t = setTimeout(() => startScanner(), 300);
-return () => {
-clearTimeout(t);
-if (handlePopupClosed && tgWebApp?.offEvent) {
-tgWebApp.offEvent('scanQrPopupClosed', handlePopupClosed);
-}
-};
-}
-} else {
-setIsNativeTg(false);
-loadCameraList();
-const t = setTimeout(() => startScanner(), 300);
-return () => clearTimeout(t);
-}
-} else {
-if (tgWebApp?.closeScanQrPopup) {
-        try { tgWebApp.closeScanQrPopup(); } catch {}
-        try { tgWebApp.closeScanQrPopup?.(); } catch {}
-}
-setIsNativeTg(false);
-stopScanner();
-setState('idle');
-setErrorMsg('');
-setTorchOn(false);
-}
-
-return () => {
-if (handlePopupClosed && tgWebApp?.offEvent) {
-tgWebApp.offEvent('scanQrPopupClosed', handlePopupClosed);
-}
-};
+  if (isOpen) {
+    setState('selection');
+    loadCameraList();
+  } else {
+    stopScanner();
+    setState('idle');
+    setErrorMsg('');
+    setTorchOn(false);
+    setIsNativeTg(false);
+    const tgWebApp = (window as any).Telegram?.WebApp;
+    if (tgWebApp?.closeScanQrPopup) {
+      try { tgWebApp.closeScanQrPopup(); } catch {}
+    }
+  }
 }, [isOpen]);
 
 // Cleanup saat unmount
@@ -334,4 +330,7 @@ className="flex-1 py-2 px-2 rounded-xl text-xs bg-slate-700 text-slate-300 borde
 };
 
 export default QRScannerModal;
+
+
+
 
