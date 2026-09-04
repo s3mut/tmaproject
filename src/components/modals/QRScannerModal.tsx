@@ -128,6 +128,10 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 
       setState('scanning');
     } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('AbortError') || msg.includes('play()') || msg.includes('interrupted')) {
+        return; // Abaikan error play() interrupted jika modal ditutup sangat cepat
+      }
       console.error('[QRScannerModal] Scanner error:', err);
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('Permission') || msg.includes('permission') || msg.includes('NotAllowed')) {
@@ -244,8 +248,12 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
         clearTimeout(timer);
       };
     } else {
-      // Modal disembunyikan sementara -> PAUSE stream alih-alih destroy
-      pauseScanner();
+      // Jika di Telegram, PAUSE stream agar izin tidak reset. Jika di Web, STOP kamera agar indikator mati.
+      if (hasTgNativeQr) {
+        pauseScanner();
+      } else {
+        stopScanner();
+      }
       setErrorMsg('');
 
       if (tgWebApp?.isVersionAtLeast?.('6.4') && tgWebApp?.closeScanQrPopup) {
@@ -537,6 +545,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 };
 
 export default QRScannerModal;
+
 
 
 

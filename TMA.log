@@ -1329,3 +1329,9 @@ Verifikasi:
 - **UI Konsisten:** Mengganti tombol pemilih di QRScannerModal.tsx dengan komponen Button dari sistem desain kita (src/components/ui/Button.tsx).
 
 - **Optimasi Konfigurasi Engine:** Memperbarui formatsToSupport menjadi spesifik untuk Code 128, Code 39, EAN-13, dan QR Code, serta memastikan lifecycle penanganan pause berjalan baik tanpa di-destroy saat modal disembunyikan.
+
+### STEP 77: Fix Web Scanner AbortError & Camera Indicator
+
+- **AbortError Fix:** Ditambahkan filter catch pada startScanner di QRScannerModal.tsx agar menyembunyikan log error harmless AbortError (The play() request was interrupted) jika modal ditutup paksa sebelum kamera sempat menyala.
+
+- **Lifecycle Web vs Telegram:** Diubah logika !isOpen agar di Web browser standar (hasTgNativeQr = false) kamera akan langsung di-stop (lampu kamera mati) saat modal ditutup, sementara di Telegram akan tetap di-pause sesuai permintaan stream caching.
