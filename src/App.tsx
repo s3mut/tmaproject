@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useInventory } from './hooks/useInventory';
+import { useCameraPermission } from './hooks/useCameraPermission';
 import type { AssetDetail } from './types/inventory';
 import { useAuth } from './contexts/AuthContext';
 
@@ -26,6 +27,7 @@ import LoginView from './views/LoginView';
 declare global { interface Window { Telegram?: any; } }
 
 function App() {
+  useCameraPermission();
   const { currentUser, authMethod, isLoading: authLoading } = useAuth();
   const { 
     assets, transactions, sites, categories, lockedAssetIds,

@@ -1270,4 +1270,38 @@ Verifikasi:
   - npx tsc --noEmit -> 0 error (TypeScript strict check pass).
   - npm run build -> Bundle Vite berhasil dibuat dalam 1.91s tanpa error.
 
+--------------------------------------------------------------------------------
+STEP 73: OPTIMASI QR/BARCODE SCANNER & CAMERA STREAM CACHING (2026-09-05)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Mengatasi masalah pop-up izin kamera yang mengganggu di WebView Telegram saat modal scanner
+    dibuka-tutup berulang kali (terutama saat Stock Opname dan scan serial number massal).
+  - Mengimplementasikan strategi "Camera Stream Caching" dengan inisiasi izin global satu kali di root,
+    serta menjaga sesi WebRTC scanner tanpa menghancurkan (unmount) DOM container.
+
+Perubahan Implementasi:
+  1. Custom Hook useCameraPermission (src/hooks/useCameraPermission.ts):
+     - Memancing izin kamera navigator.mediaDevices.getUserMedia SATU KALI secara diam-diam
+       pada background saat aplikasi pertama kali dimuat.
+     - Segera menghentikan track video (stream.getTracks().forEach(track => track.stop())) agar
+       lampu/indikator kamera tidak aktif terus-menerus.
+     - Menyimpan status hasCameraPermission pada state in-memory dan localStorage.
+  2. Root Integration (src/App.tsx):
+     - Mengimpor dan menjalankan useCameraPermission() di tingkat root App.tsx saat startup.
+  3. Optimasi QRScannerModal (src/components/modals/QRScannerModal.tsx):
+     - Memeriksa hasCameraPermission sebelum inisialisasi; menyediakan tombol izin jika terblokir.
+     - Mencegah unmounting penuh: menggunakan CSS display: none / flex pada modal container
+       alih-alih mereturn null, sehingga kontainer #qr-scanner-[id] tetap presisten.
+     - Menggunakan instance ID unik per modal instance (qr-scanner-[random]) untuk mencegah bentrok DOM.
+     - Menerapkan Html5Qrcode pause(true) saat modal disembunyikan sementara, dan resume()
+       langsung saat modal dibuka kembali tanpa perlu re-negosiasi WebRTC atau izin ulang OS.
+     - Konfigurasi scanner optimal sesuai panduan: fps: 10, qrbox: 250 (atau horizontal 280x120 untuk 1D barcode),
+       dengan formatsToSupport [CODE_128, CODE_39, EAN_13, QR_CODE, dll.] untuk pembacaan barcode batang yang cepat.
+     - Menjaga stopScanner() hanya dipanggil saat unmount permanen komponen atau perpindahan kamera.
+
+Verifikasi:
+  - npx tsc --noEmit -> 0 error (TypeScript strict check pass).
+  - npm run build -> Bundle Vite berhasil dibuat dalam 2.40s tanpa error.
+
+
 

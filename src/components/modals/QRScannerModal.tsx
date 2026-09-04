@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeScannerState } from 'html5-qrcode';
+import { useCameraPermission } from '../../hooks/useCameraPermission';
 
 interface Props {
   isOpen: boolean;
@@ -12,15 +13,16 @@ type ScannerState = 'idle' | 'starting' | 'scanning' | 'error' | 'no_camera';
 type ScanMode = 'qr' | 'barcode';
 
 const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: Props) => {
+  const { hasCameraPermission, requestCameraPermission } = useCameraPermission();
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerDivId = 'qr-scanner-container';
+  const instanceDivId = useRef(`qr-scanner-${Math.random().toString(36).substring(2, 9)}`).current;
+
   const [state, setState] = useState<ScannerState>('idle');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [torchOn, setTorchOn] = useState(false);
   const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
   const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<ScanMode>(defaultMode);
-  const isRunningRef = useRef(false);
   const isStoppingRef = useRef(false);
 
   // Check Telegram WebApp Native QR capability
@@ -29,29 +31,47 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
     tgWebApp?.isVersionAtLeast?.('6.4') && tgWebApp?.showScanQrPopup
   );
 
-  // ─── Stop & fully reset scanner instance ──────────────────────────────────
-  const stopScanner = async () => {
-    if (scannerRef.current && isRunningRef.current && !isStoppingRef.current) {
+  // ─── Stop & fully destroy scanner instance (on unmount or device switch) ──
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current && !isStoppingRef.current) {
       isStoppingRef.current = true;
       try {
-        await scannerRef.current.stop();
+        const s = scannerRef.current.getState();
+        if (s === Html5QrcodeScannerState.SCANNING || s === Html5QrcodeScannerState.PAUSED) {
+          await scannerRef.current.stop();
+        }
         scannerRef.current.clear();
       } catch {
         // ignore stop errors
       } finally {
-        isRunningRef.current = false;
         isStoppingRef.current = false;
+        scannerRef.current = null;
       }
     }
-    scannerRef.current = null;
-  };
+  }, []);
 
-  // ─── Start scanner with adaptive configuration per mode ───────────────────
-  const startScanner = async (cameraId?: string, mode: ScanMode = scanMode) => {
-    let el = document.getElementById(scannerDivId);
+  // ─── Pause scanning without destroying WebRTC session ──────────────────────
+  const pauseScanner = useCallback(() => {
+    if (scannerRef.current) {
+      try {
+        const s = scannerRef.current.getState();
+        if (s === Html5QrcodeScannerState.SCANNING) {
+          scannerRef.current.pause(true);
+        }
+      } catch (e) {
+        console.warn('[QRScannerModal] Gagal pause scanner:', e);
+      }
+    }
+    setState('idle');
+    setTorchOn(false);
+  }, []);
+
+  // ─── Start scanner with optimized config per instructions ─────────────────
+  const startScanner = useCallback(async (cameraId?: string, mode: ScanMode = scanMode) => {
+    let el = document.getElementById(instanceDivId);
     if (!el) {
-      await new Promise((r) => setTimeout(r, 200));
-      el = document.getElementById(scannerDivId);
+      await new Promise((r) => setTimeout(r, 150));
+      el = document.getElementById(instanceDivId);
       if (!el) return;
     }
 
@@ -60,51 +80,70 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
     setErrorMsg('');
 
     try {
-      const formats =
-        mode === 'barcode'
+      // Pastikan izin kamera sudah diinisiasi
+      if (!hasCameraPermission) {
+        const granted = await requestCameraPermission();
+        if (!granted) {
+          setState('error');
+          setErrorMsg('Akses kamera belum diizinkan. Silakan berikan izin kamera pada browser/Telegram.');
+          return;
+        }
+      }
+
+      // Format yang dioptimalkan sesuai instruksi (1D Barcode & 2D QR Code)
+      const formats = [
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.QR_CODE,
+        ...(mode === 'barcode'
           ? [
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.CODE_39,
-              Html5QrcodeSupportedFormats.EAN_13,
               Html5QrcodeSupportedFormats.EAN_8,
               Html5QrcodeSupportedFormats.UPC_A,
               Html5QrcodeSupportedFormats.UPC_E,
               Html5QrcodeSupportedFormats.ITF,
-              Html5QrcodeSupportedFormats.CODABAR,
             ]
-          : [
-              Html5QrcodeSupportedFormats.QR_CODE,
-              Html5QrcodeSupportedFormats.DATA_MATRIX,
-            ];
+          : [Html5QrcodeSupportedFormats.DATA_MATRIX]),
+      ];
 
-      scannerRef.current = new Html5Qrcode(scannerDivId, {
+      scannerRef.current = new Html5Qrcode(instanceDivId, {
         formatsToSupport: formats,
         verbose: false,
       });
 
       // Adaptive scan box:
-      // Barcode 1D butuh area horizontal lebar (280x100)
-      // QR Code 2D optimal dengan area kotak (220x220)
+      // Barcode 1D butuh area horizontal lebar (280x120)
+      // QR Code 2D optimal dengan area kotak (250x250)
       const qrbox =
         mode === 'barcode'
-          ? { width: 280, height: 100 }
-          : { width: 220, height: 220 };
+          ? { width: 280, height: 120 }
+          : 250;
 
+      // Konfigurasi optimal: fps 10, qrbox 250
       const config = {
-        fps: 15,
+        fps: 10,
         qrbox,
         aspectRatio: mode === 'barcode' ? 1.5 : 1.0,
         disableFlip: false,
       };
 
       const onSuccess = (decodedText: string) => {
-        stopScanner().then(() => {
-          onScanResult(decodedText.trim());
-          onClose();
-        });
+        // Pause kamera tanpa destroy instance saat barcode terbaca
+        if (scannerRef.current) {
+          try {
+            const s = scannerRef.current.getState();
+            if (s === Html5QrcodeScannerState.SCANNING) {
+              scannerRef.current.pause(true);
+            }
+          } catch {}
+        }
+        onScanResult(decodedText.trim());
+        onClose();
       };
 
-      const onError = () => { /* frame-level decoding errors are normal */ };
+      const onError = () => {
+        /* frame-level decoding errors are normal */
+      };
 
       if (cameraId) {
         await scannerRef.current.start({ deviceId: { exact: cameraId } }, config, onSuccess, onError);
@@ -112,10 +151,9 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
         await scannerRef.current.start({ facingMode: 'environment' }, config, onSuccess, onError);
       }
 
-      isRunningRef.current = true;
       setState('scanning');
     } catch (err: unknown) {
-      console.error('Scanner error:', err);
+      console.error('[QRScannerModal] Scanner error:', err);
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('Permission') || msg.includes('permission') || msg.includes('NotAllowed')) {
         setState('error');
@@ -128,7 +166,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
         setErrorMsg(`Gagal membuka kamera: ${msg}`);
       }
     }
-  };
+  }, [hasCameraPermission, instanceDivId, onClose, onScanResult, requestCameraPermission, scanMode, stopScanner]);
 
   const loadCameraList = async () => {
     try {
@@ -143,7 +181,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
   };
 
   const handleToggleTorch = async () => {
-    if (!scannerRef.current || !isRunningRef.current) return;
+    if (!scannerRef.current) return;
     try {
       const track = (scannerRef.current as unknown as { mediaStream?: MediaStream })
         ?.mediaStream?.getVideoTracks?.()[0];
@@ -170,12 +208,18 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
   // ─── Optional: Launch Telegram Native QR Scanner popup ────────────────────
   const handleOpenTelegramNative = async () => {
     if (!hasTgNativeQr) return;
-    await stopScanner();
-    setState('idle');
+    pauseScanner();
 
     const handleClosed = () => {
       tgWebApp?.offEvent?.('scanQrPopupClosed', handleClosed);
-      // Restart in-app camera when native popup is closed
+      // Resume in-app camera when native popup is closed
+      if (scannerRef.current && scannerRef.current.getState() === Html5QrcodeScannerState.PAUSED) {
+        try {
+          scannerRef.current.resume();
+          setState('scanning');
+          return;
+        } catch {}
+      }
       startScanner(activeCameraId || undefined, 'qr');
     };
 
@@ -201,26 +245,41 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
       const mode = defaultMode || 'qr';
       setScanMode(mode);
       loadCameraList();
+
+      // Cek apakah ada instance yang sedang di-pause, jika ada cukup resume!
+      if (scannerRef.current) {
+        try {
+          const s = scannerRef.current.getState();
+          if (s === Html5QrcodeScannerState.PAUSED) {
+            scannerRef.current.resume();
+            setState('scanning');
+            return;
+          }
+        } catch (e) {
+          console.warn('[QRScannerModal] Resume failed, re-starting scanner:', e);
+        }
+      }
+
+      // Jika belum ada instance atau gagal resume, start baru
       const timer = setTimeout(() => {
         startScanner(undefined, mode);
-      }, 250);
+      }, 150);
 
       return () => {
         clearTimeout(timer);
       };
     } else {
-      stopScanner();
-      setState('idle');
+      // Modal disembunyikan sementara -> PAUSE stream alih-alih destroy
+      pauseScanner();
       setErrorMsg('');
-      setTorchOn(false);
 
       if (tgWebApp?.isVersionAtLeast?.('6.4') && tgWebApp?.closeScanQrPopup) {
         try { tgWebApp.closeScanQrPopup?.(); } catch {}
       }
     }
-  }, [isOpen, defaultMode]);
+  }, [isOpen, defaultMode, pauseScanner, startScanner, tgWebApp]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount (ketika benar-benar keluar dari halaman)
   useEffect(() => {
     return () => {
       stopScanner();
@@ -228,9 +287,12 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
         try { tgWebApp.closeScanQrPopup?.(); } catch {}
       }
     };
-  }, []);
+  }, [stopScanner, tgWebApp]);
 
-  if (!isOpen) return null;
+  const handleModalClose = () => {
+    pauseScanner();
+    onClose();
+  };
 
   const ScanFrame = () =>
     scanMode === 'barcode' ? (
@@ -248,7 +310,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
       </div>
     ) : (
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="relative w-52 h-52">
+        <div className="relative w-56 h-56">
           <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg" />
           <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg" />
           <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg" />
@@ -263,9 +325,16 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 
   return (
     <div
-      className="modal-overlay active"
-      style={{ zIndex: 110 }}
-      onClick={(e) => { if (e.target === e.currentTarget) { stopScanner(); onClose(); } }}
+      className={`modal-overlay ${isOpen ? 'active' : ''}`}
+      style={{
+        zIndex: 110,
+        display: isOpen ? 'flex' : 'none',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleModalClose();
+        }
+      }}
     >
       <div className="modal-content p-0 overflow-hidden max-w-sm mx-auto rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl">
         {/* Header */}
@@ -284,7 +353,8 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
             </div>
           </div>
           <button
-            onClick={() => { stopScanner(); onClose(); }}
+            type="button"
+            onClick={handleModalClose}
             className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 flex items-center justify-center transition-colors"
           >
             <i className="fas fa-times text-sm" />
@@ -327,9 +397,9 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
           </div>
         )}
 
-        {/* Viewfinder Camera Area */}
+        {/* Viewfinder Camera Area (Persistent container) */}
         <div className="relative bg-black mx-3 rounded-2xl overflow-hidden" style={{ minHeight: '280px' }}>
-          <div id={scannerDivId} className="w-full" style={{ minHeight: '280px' }} />
+          <div id={instanceDivId} className="w-full" style={{ minHeight: '280px' }} />
 
           {/* Starting State Overlay */}
           {state === 'starting' && (
@@ -353,19 +423,22 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
                 {state === 'error' && (
                   <button
                     type="button"
-                    onClick={() => startScanner(activeCameraId || undefined, scanMode)}
-                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold transition-all hover:bg-blue-500"
+                    onClick={async () => {
+                      await requestCameraPermission(true);
+                      startScanner(activeCameraId || undefined, scanMode);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold transition-all hover:bg-blue-500 flex items-center justify-center gap-1.5"
                   >
-                    <i className="fas fa-redo mr-1.5" /> Coba Lagi
+                    <i className="fas fa-camera" /> Izinkan & Coba Lagi
                   </button>
                 )}
                 {hasTgNativeQr && (
                   <button
                     type="button"
                     onClick={handleOpenTelegramNative}
-                    className="px-4 py-2 rounded-xl bg-sky-600 text-white text-xs font-semibold transition-all hover:bg-sky-500"
+                    className="px-4 py-2 rounded-xl bg-sky-600 text-white text-xs font-semibold transition-all hover:bg-sky-500 flex items-center justify-center gap-1.5"
                   >
-                    <i className="fab fa-telegram-plane mr-1.5" /> Buka Scanner Telegram
+                    <i className="fab fa-telegram-plane" /> Buka Scanner Telegram
                   </button>
                 )}
               </div>
