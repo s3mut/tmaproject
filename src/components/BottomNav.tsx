@@ -1,4 +1,4 @@
-export type TabName = 'dashboard' | 'transactions' | 'sites' | 'opname' | 'profile' | 'report';
+export type TabName = 'dashboard' | 'transactions' | 'sites' | 'opname' | 'profile' | 'report' | 'settings';
 
 interface NavItem { tab: TabName; icon: string; label: string; }
 

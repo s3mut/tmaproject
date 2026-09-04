@@ -20,6 +20,7 @@ import SitesView from './views/SitesView';
 import OpnameView from './views/OpnameView';
 import ProfileView from './views/ProfileView';
 import ReportView from './views/ReportView';
+import SettingsView from './views/SettingsView';
 import LoginView from './views/LoginView';
 
 declare global { interface Window { Telegram?: any; } }
@@ -83,6 +84,13 @@ function App() {
       setActiveTab('transactions');
     }
   }, [currentUser?.role]);
+
+  // Keamanan: Hanya role admin yang dapat mengakses tab 'settings'
+  useEffect(() => {
+    if (activeTab === 'settings' && currentUser?.role !== 'admin') {
+      setActiveTab('profile');
+    }
+  }, [activeTab, currentUser?.role]);
 
   // Tab
   const handleTabChange = (tab: TabName) => {
@@ -352,8 +360,36 @@ function App() {
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
         {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} lockedAssetIds={lockedAssetIds} onBulkStatusChange={handleBulkStatusChange} />}
-        {activeTab === 'profile' && <ProfileView assets={assets} transactions={transactions} sites={sites} categories={categories} onShowToast={showToast} onOpenReport={() => setActiveTab('report')} />}
-        {activeTab === 'report' && <ReportView onBack={() => setActiveTab('profile')} onShowToast={showToast} sites={sites} categories={categories} transactions={transactions} />}
+        {activeTab === 'profile' && (
+          <ProfileView
+            assets={assets}
+            transactions={transactions}
+            sites={sites}
+            categories={categories}
+            onShowToast={showToast}
+            onOpenReport={() => setActiveTab('report')}
+            onOpenSettings={() => setActiveTab('settings')}
+          />
+        )}
+        {activeTab === 'report' && (
+          <ReportView
+            onBack={() => setActiveTab('profile')}
+            onShowToast={showToast}
+            sites={sites}
+            categories={categories}
+            transactions={transactions}
+          />
+        )}
+        {activeTab === 'settings' && (
+          <SettingsView
+            onBack={() => setActiveTab('profile')}
+            onShowToast={showToast}
+            sites={sites}
+            categories={categories}
+            currentUser={currentUser}
+            onRefresh={refresh}
+          />
+        )}
       </main>
 
       {showFab && (

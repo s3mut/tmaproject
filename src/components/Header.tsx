@@ -9,6 +9,7 @@ const tabTitles: Record<TabName, TabConfig> = {
   opname:       { title: 'Stock Opname',         subtitle: 'Audit fisik aset' },
   profile:      { title: 'Profil',               subtitle: 'Pengaturan akun' },
   report:       { title: 'Laporan & Analitik',   subtitle: 'KPI, utilization & audit trail' },
+  settings:     { title: 'Super Admin Settings', subtitle: 'Pusat konfigurasi dinamis E1-TMA' },
 };
 
 interface Props {

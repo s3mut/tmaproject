@@ -164,3 +164,27 @@ export const transactionStatusConfig: Record<TransactionStatus, { label: string;
   Rejected:     { label: 'Rejected',    bg: 'bg-red-500/20 border border-red-500/40',       text: 'text-red-400',     icon: 'fa-times-circle' },
   Cancelled:    { label: 'Cancelled',   bg: 'bg-slate-700/30 border border-slate-600/40',   text: 'text-slate-400',   icon: 'fa-ban' },
 };
+
+// ============================================================
+// SUPER ADMIN SETTINGS & TELEGRAM ROUTING
+// ============================================================
+
+export interface SystemSetting<T = any> {
+  key: string;
+  value: T;
+  description?: string | null;
+  updated_at?: string;
+  updated_by?: number | null;
+}
+
+export interface TelegramGroupRoute {
+  id: number;
+  group_name: string;
+  chat_id: string;
+  region: string | null;
+  events: string[];
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+

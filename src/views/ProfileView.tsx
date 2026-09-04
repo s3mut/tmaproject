@@ -21,9 +21,10 @@ interface Props {
   categories?: Category[];
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
   onOpenReport?: () => void;
+  onOpenSettings?: () => void;
 }
 
-const ProfileView = ({ assets = [], transactions = [], sites = [], categories = [], onShowToast, onOpenReport }: Props) => {
+const ProfileView = ({ assets = [], transactions = [], sites = [], categories = [], onShowToast, onOpenReport, onOpenSettings }: Props) => {
   const { currentUser, authMethod, logout, refreshUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -101,6 +102,12 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
         title: 'Tes Notifikasi Bot Telegram', subtitle: testingBot ? 'Sedang mengirim pesan tes...' : 'Kirim pesan uji coba ke Admin Chat via Edge Function',
         onClick: handleTestBotNotification,
         badge: 'DIAGNOSTIK',
+      },
+      {
+        icon: 'fa-sliders-h', color: 'text-purple-400', bg: 'bg-purple-500/20',
+        title: 'Pengaturan Super Admin', subtitle: 'Pusat konfigurasi dinamis, SLA, routing bot, & kontrol sistem',
+        onClick: () => onOpenSettings ? onOpenSettings() : alert('Fitur settings belum tersedia!'),
+        badge: 'SUPER ADMIN',
       },
     ] : []),
     {

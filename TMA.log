@@ -1186,3 +1186,45 @@ Perubahan Implementasi:
 Verifikasi:
   - npx tsc --noEmit -> 0 error (Strict TypeScript Clean).
   - npm run build -> Bundle Vite berhasil dibuat dalam 1.63s tanpa error.
+
+--------------------------------------------------------------------------------
+STEP 71: MODUL SUPER ADMIN SETTINGS HUB (DYNAMIC RUNTIME CONFIGURATION) (2026-09-04)
+--------------------------------------------------------------------------------
+Kebutuhan:
+  - Membangun pusat konfigurasi dinamis aplikasi E1-TMA bagi Super Admin tanpa perlu
+    mengubah environment variables atau melakukan hardcoding/redeploy.
+  - Arsitektur terbagi dalam 3 fase: Database Migration (PostgreSQL RLS), Master UI
+    Settings (Mobile-First Glassmorphic Hub), dan Integrasi Navigasi & Keamanan (RBAC).
+
+Perubahan Implementasi:
+  1. FASE 1 - Database Migration (sql/create_super_admin_settings.sql):
+     - Tabel system_settings: (key TEXT PK, value JSONB, description TEXT, updated_at TIMESTAMPTZ, updated_by BIGINT).
+     - Tabel telegram_group_routes: (id BIGSERIAL PK, group_name TEXT, chat_id TEXT, region TEXT, events TEXT[], is_active BOOLEAN).
+     - Idempotent default seed configs: sla_limits, operational_controls (freeze/opname),
+       notification_templates, webhook_gsheet.
+     - Row Level Security (RLS) policies: Read publik untuk authenticated/anon dan Write khusus role 'admin'.
+  2. Types & Service Layer:
+     - src/types/inventory.ts: Menambahkan interface SystemSetting dan TelegramGroupRoute.
+     - src/services/settingsService.ts: Service layer CRUD Supabase untuk get/upsert system settings,
+       pengaturan freeze status, template, serta manajemen rute group telegram per wilayah.
+  3. FASE 2 - Master Settings UI (src/views/SettingsView.tsx):
+     - Desain Mobile-First dengan Glassmorphism (glass, Tailwind CSS, dark & light mode support).
+     - 5 Section Menu:
+       1. Akun & Wewenang (User Management via UserManagementModal, Region Mapping).
+       2. Master Data (Sites, Categories, Reasons summary).
+       3. SLA & Otomasi (SLA Limits modal, Webhook Google Sheets sync).
+       4. Komunikasi & Dokumen (Telegram Routing modal, Notification Template, BAST Template).
+       5. Kontrol Operasional (Zona bahaya dengan aksen merah: Sesi Opname & Freeze Transaksi toggle).
+     - Komponen reusable SettingMenuItem dengan icon warna-warni, badge status, switcher, dan danger styling.
+  4. FASE 3 - Integrasi Navigasi & Keamanan (RBAC):
+     - src/views/ProfileView.tsx: Menambahkan tombol "Pengaturan Super Admin" yang diproteksi hanya
+       tampil jika currentUser.role === 'admin'.
+     - src/components/BottomNav.tsx & src/components/Header.tsx: Mendaftarkan 'settings' tab identifier.
+     - src/App.tsx: Integrasi routing state activeTab === 'settings', auto-redirect guard jika non-admin,
+       serta tombol 'Kembali' yang mengembalikan view ke 'profile'.
+     - Standar UI Button: Semua tombol menggunakan komponen UI Button standar design system E1-TMA.
+
+Verifikasi:
+  - npx tsc --noEmit -> 0 error (TypeScript strict check pass).
+  - npm run build -> Berhasil di-bundle Vite dalam 3.71s tanpa error.
+
