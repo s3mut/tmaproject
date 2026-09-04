@@ -1349,3 +1349,7 @@ Verifikasi:
 ### STEP 80: Re-implement Selection Screen
 
 - **Pre-scan Selection:** Menambahkan kembali menu pemilihan mode (QR Code vs Barcode) sebelum kamera menyala, dirancang dengan elegan menggunakan komponen Button agar tidak memberatkan device dengan double-render. Pilihan ini memastikan kompatibilitas Telegram yang secara native hanya membaca QR.
+
+### STEP 81: Format & UI Constraints for Barcode 1D
+
+- Menerapkan konfigurasi dinamis pada html5-qrcode. Jika user memilih *Barcode 1D*, aspek rasio kamera (UI) dan area *scan* (qrbox) akan diubah menjadi format memanjang (horizontal w-64 h-32). Sebaliknya, untuk *QR Code*, akan menggunakan format persegi (w-52 h-52).
