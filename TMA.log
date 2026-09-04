@@ -1335,3 +1335,9 @@ Verifikasi:
 - **AbortError Fix:** Ditambahkan filter catch pada startScanner di QRScannerModal.tsx agar menyembunyikan log error harmless AbortError (The play() request was interrupted) jika modal ditutup paksa sebelum kamera sempat menyala.
 
 - **Lifecycle Web vs Telegram:** Diubah logika !isOpen agar di Web browser standar (hasTgNativeQr = false) kamera akan langsung di-stop (lampu kamera mati) saat modal ditutup, sementara di Telegram akan tetap di-pause sesuai permintaan stream caching.
+
+### STEP 78: Fix Duplicate Scanner Instances (Web)
+
+- **Removed Dependency Bug:** Removed scanMode from startScanner's dependency array. This prevents a React hook cascading effect where changing modes on Web caused a second Html5Qrcode instance to spawn on top of the first one.
+
+- **Cleaned Scan Frame UI:** Removed qrbox configuration so html5-qrcode scans the full screen and stops drawing its built-in white corner brackets, preventing them from stacking awkwardly with our custom CSS ScanFrame.

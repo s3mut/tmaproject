@@ -68,7 +68,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
   }, []);
 
   // ─── Start scanner with optimized config per instructions ─────────────────
-  const startScanner = useCallback(async (cameraId?: string, mode: ScanMode = scanMode) => {
+  const startScanner = useCallback(async (cameraId?: string) => {
     let el = document.getElementById(instanceDivId);
     if (!el) {
       await new Promise((r) => setTimeout(r, 150));
@@ -97,7 +97,6 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
       // Gunakan qrbox universal 250x250 untuk semua tipe
       const config = {
         fps: 10,
-        qrbox: 250,
         aspectRatio: 1.0,
         disableFlip: false,
       };
@@ -175,7 +174,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 
   const handleSwitchCamera = async (camId: string) => {
     setActiveCameraId(camId);
-    await startScanner(camId, scanMode);
+    await startScanner(camId);
   };
 
   const handleSwitchMode = async (newMode: ScanMode) => {
@@ -199,7 +198,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
           return;
         } catch {}
       }
-      startScanner(activeCameraId || undefined, 'qr');
+      startScanner(activeCameraId || undefined);
     };
 
     tgWebApp?.onEvent?.('scanQrPopupClosed', handleClosed);
@@ -241,7 +240,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 
       // Jika belum ada instance atau gagal resume, start baru
       const timer = setTimeout(() => {
-        startScanner(undefined, mode);
+        startScanner(undefined);
       }, 150);
 
       return () => {
@@ -370,7 +369,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
                 fullWidth
                 onClick={() => {
                   setScanMode('barcode');
-                  startScanner(undefined, 'barcode');
+                  startScanner(undefined);
                 }}
               >
                 Scan Barcode Batang (1D)
@@ -444,7 +443,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
                     type="button"
                     onClick={async () => {
                       await requestCameraPermission(true);
-                      startScanner(activeCameraId || undefined, scanMode);
+                      startScanner(activeCameraId || undefined);
                     }}
                     className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold transition-all hover:bg-blue-500 flex items-center justify-center gap-1.5"
                   >
@@ -545,6 +544,8 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult, defaultMode = 'qr' }: P
 };
 
 export default QRScannerModal;
+
+
 
 
 
