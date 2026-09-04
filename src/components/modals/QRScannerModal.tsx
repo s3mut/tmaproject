@@ -155,10 +155,14 @@ const handleOpenNativeTg = () => {
           return false;
         }
       );
-    }     } catch {
+    } catch {
       setIsNativeTg(false);
       startScanner(undefined, 'qr');
     }
+  } else {
+    setIsNativeTg(false);
+    startScanner(undefined, 'qr');
+  }
     } else {
     setIsNativeTg(false);
     startScanner(undefined, 'qr');
@@ -364,6 +368,7 @@ className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 
 };
 
 export default QRScannerModal;
+
 
 
 
