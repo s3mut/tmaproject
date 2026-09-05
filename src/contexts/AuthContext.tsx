@@ -8,6 +8,7 @@ import {
   clearWebSession,
 } from '../services/authService';
 import { syncTelegramUser } from '../services/userService';
+import { supabase } from '../lib/supabase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -118,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUser = useCallback(async () => {
     if (!currentUser) return;
     try {
-      const { supabase } = await import('../lib/supabase');
+      
       const { data } = await supabase
         .from('telegram_users')
         .select('*')
@@ -144,3 +145,4 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error('useAuth() harus digunakan di dalam <AuthProvider>.');
   return ctx;
 }
+

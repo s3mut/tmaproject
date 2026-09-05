@@ -49,7 +49,7 @@ const Input = ({
             <i className={`fas ${icon}`} />
           </div>
         )}
-        <input
+        <input autoComplete="off" data-lpignore="true"
           {...rest}
           id={inputId}
           required={required}
@@ -88,3 +88,4 @@ const Input = ({
 };
 
 export default Input;
+

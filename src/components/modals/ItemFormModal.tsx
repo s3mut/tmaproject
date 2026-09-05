@@ -89,7 +89,7 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
       title={editItem ? 'Edit Aset' : 'Tambah Aset'}
       titleIcon={editItem ? 'fa-pen-to-square' : 'fa-plus'}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form autoComplete="off" onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Serial Number" required
           placeholder="S/N dari perangkat"
@@ -194,5 +194,6 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
 };
 
 export default ItemFormModal;
+
 
 

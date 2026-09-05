@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useInventory } from './hooks/useInventory';
 import { useCameraPermission } from './hooks/useCameraPermission';
 import type { AssetDetail } from './types/inventory';
@@ -15,14 +15,14 @@ import TransactionModal from './components/modals/TransactionModal';
 import CSVImportModal from './components/modals/CSVImportModal';
 import ConfirmModal from './components/modals/ConfirmModal';
 
-import DashboardView from './views/DashboardView';
-import TransactionsView from './views/TransactionsView';
-import SitesView from './views/SitesView';
-import OpnameView from './views/OpnameView';
-import ProfileView from './views/ProfileView';
-import ReportView from './views/ReportView';
-import SettingsView from './views/SettingsView';
-import LoginView from './views/LoginView';
+const DashboardView = lazy(() => import('./views/DashboardView'));
+const TransactionsView = lazy(() => import('./views/TransactionsView'));
+const SitesView = lazy(() => import('./views/SitesView'));
+const OpnameView = lazy(() => import('./views/OpnameView'));
+const ProfileView = lazy(() => import('./views/ProfileView'));
+const ReportView = lazy(() => import('./views/ReportView'));
+const SettingsView = lazy(() => import('./views/SettingsView'));
+const LoginView = lazy(() => import('./views/LoginView'));
 
 declare global { interface Window { Telegram?: any; } }
 
@@ -154,7 +154,7 @@ function App() {
       if (editItem) {
         // Jika status berubah, catat di log audit
         if (data.status && data.status !== editItem.status) {
-          const { changeAssetStatus } = await import('./services/assetService');
+          
           await changeAssetStatus(
             editItem.id,
             data.status,
@@ -193,7 +193,7 @@ function App() {
 
   const handleBulkStatusChange = async (assetIds: number[], newStatus: any, notes: string) => {
     try {
-      const { changeAssetStatus } = await import('./services/assetService');
+      
       const teleId = currentUser?.telegram_id ?? 0;
       
       // Loop berurutan untuk mengubah status (bisa juga pakai Promise.all jika butuh paralel)
@@ -311,8 +311,14 @@ function App() {
         onImportCSVClick={() => setCsvImportOpen(true)}
       />
 
-      <main className="px-4 pt-4">
-        {activeTab === 'dashboard' && (
+      <main className="px-4 pt-4 pb-24">
+        <Suspense fallback={
+          <div className="flex flex-col items-center justify-center py-20 opacity-50">
+            <i className="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+            <p className="text-slate-400 text-sm animate-pulse">Memuat halaman...</p>
+          </div>
+        }>
+          {activeTab === 'dashboard' && (
           <DashboardView
             assets={assets}
             sites={sites}
@@ -392,6 +398,7 @@ function App() {
             onRefresh={refresh}
           />
         )}
+      </Suspense>
       </main>
 
       {showFab && (
@@ -456,3 +463,6 @@ function App() {
 }
 
 export default App;
+
+
+
