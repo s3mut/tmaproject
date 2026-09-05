@@ -1353,3 +1353,13 @@ Verifikasi:
 ### STEP 81: Format & UI Constraints for Barcode 1D
 
 - Menerapkan konfigurasi dinamis pada html5-qrcode. Jika user memilih *Barcode 1D*, aspek rasio kamera (UI) dan area *scan* (qrbox) akan diubah menjadi format memanjang (horizontal w-64 h-32). Sebaliknya, untuk *QR Code*, akan menggunakan format persegi (w-52 h-52).
+
+### STEP 82: System Performance Audit & Optimizations
+
+- Menerapkan *Code-Splitting* (React.lazy) pada App.tsx untuk memecah halaman (DashboardView, ReportView, dsb) dari *bundle* utama. Ukuran *bundle* awal turun drastis 42% (dari 1.4 MB menjadi 839 kB), mempercepat *loading* TMA.
+
+- Menghilangkan peringatan *dynamic import* statis yang tidak efisien.
+
+- Menambahkan pencegahan ekstensi *autofill browser* (autoComplete=off, data-lpignore=true) di komponen inti Input.tsx dan LoginView untuk menghindari *crash* struktur DOM akibat injeksi pihak ketiga.
+
+- Melakukan validasi efisiensi DB & State: useInventory.ts sudah menggunakan useMemo/useCallback yang optimal, dan koneksi Supabase terbukti sudah memanfaatkan range().
