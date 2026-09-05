@@ -3,6 +3,7 @@ import { useInventory } from './hooks/useInventory';
 import { useCameraPermission } from './hooks/useCameraPermission';
 import type { AssetDetail } from './types/inventory';
 import { useAuth } from './contexts/AuthContext';
+import { changeAssetStatus } from './services/assetService';
 
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';

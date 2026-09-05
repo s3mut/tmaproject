@@ -1363,3 +1363,5 @@ Verifikasi:
 - Menambahkan pencegahan ekstensi *autofill browser* (autoComplete=off, data-lpignore=true) di komponen inti Input.tsx dan LoginView untuk menghindari *crash* struktur DOM akibat injeksi pihak ketiga.
 
 - Melakukan validasi efisiensi DB & State: useInventory.ts sudah menggunakan useMemo/useCallback yang optimal, dan koneksi Supabase terbukti sudah memanfaatkan range().
+
+- Memperbaiki impor missing changeAssetStatus pada App.tsx pasca-audit refactor pembersihan dynamic import.
