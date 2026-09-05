@@ -163,10 +163,6 @@ const handleOpenNativeTg = () => {
     setIsNativeTg(false);
     startScanner(undefined, 'qr');
   }
-    } else {
-    setIsNativeTg(false);
-    startScanner(undefined, 'qr');
-  }
 };
 
 const handleSelectMode = (mode: 'qr' | 'barcode') => {
