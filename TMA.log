@@ -1365,3 +1365,6 @@ Verifikasi:
 - Melakukan validasi efisiensi DB & State: useInventory.ts sudah menggunakan useMemo/useCallback yang optimal, dan koneksi Supabase terbukti sudah memanfaatkan range().
 
 - Memperbaiki impor missing changeAssetStatus pada App.tsx pasca-audit refactor pembersihan dynamic import.
+
+STEP: Add store/site filter in ItemsView
+- Added new Dropdown in ItemsView to filter by Toko (Site).

@@ -124,6 +124,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
   const [activeCategory, setActiveCategory] = useState<string>(
     (initialCategory && initialCategory !== 'all') ? initialCategory : 'all'
   );
+  const [activeSite, setActiveSite] = useState<string>('all');
 
   // Sync filter saat initialStatus atau initialCategory berubah (dari klik stat card Dashboard)
   useEffect(() => {
@@ -150,6 +151,16 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
     }
   }, [initialRegion]);
 
+  // Reset activeSite jika region berubah dan site yang aktif tidak ada di region tersebut
+  useEffect(() => {
+    if (activeSite !== 'all' && activeRegion !== 'all') {
+      const site = sites.find(s => s.site_alias === activeSite);
+      if (site && (site.region || 'Tanpa Region') !== activeRegion) {
+        setActiveSite('all');
+      }
+    }
+  }, [activeRegion, activeSite, sites]);
+
   // Ekstrak opsi Region unik dari tabel Sites
   const regionOptions = useMemo(() => {
     const regSet = new Set(sites.map(s => s.region || 'Tanpa Region'));
@@ -157,6 +168,14 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
   }, [sites]);
   
   const siteRegionMap = useMemo(() => new Map(sites.map(s => [s.site_alias, s.region || 'Tanpa Region'])), [sites]);
+
+  const siteOptions = useMemo(() => {
+    let filteredSites = sites;
+    if (activeRegion !== 'all') {
+      filteredSites = sites.filter(s => (s.region || 'Tanpa Region') === activeRegion);
+    }
+    return filteredSites.sort((a, b) => (a.site_name || '').localeCompare(b.site_name || ''));
+  }, [sites, activeRegion]);
 
   const groupedCategories = useMemo(() => groupCategories(categories), [categories]);
 
@@ -184,6 +203,11 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
       });
     }
 
+    // Filter Site (Toko)
+    if (activeSite !== 'all') {
+      result = result.filter((a) => a.site_alias === activeSite);
+    }
+
     // Filter status — case-insensitive + null dianggap 'Active'
     if (activeFilter !== 'all') {
       result = result.filter((a) =>
@@ -204,7 +228,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
       );
     }
     return result;
-  }, [assets, activeFilter, activeRegion, searchValue, activeCategory, siteRegionMap]);
+  }, [assets, activeFilter, activeRegion, searchValue, activeCategory, siteRegionMap, activeSite]);
 
   // Group by region
   const groupedAssets = useMemo(() => {
@@ -228,7 +252,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
   [groupedAssets]);
 
   // Apakah sedang ada filter/pencarian aktif? → expand semua region agar hasil terlihat
-  const hasActiveFilter = activeFilter !== 'all' || !!searchValue.trim() || activeCategory !== 'all';
+  const hasActiveFilter = activeFilter !== 'all' || !!searchValue.trim() || activeCategory !== 'all' || activeSite !== 'all';
 
   // Default: hanya region pertama yang terbuka saat tidak ada filter
   const defaultOpenRegions = useMemo(() => {
@@ -272,6 +296,22 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
           )}
         </div>
 
+        {/* Dropdown Filter Toko */}
+        <div className="px-1">
+          <Select
+            value={activeSite}
+            onChange={(e) => setActiveSite(e.target.value)}
+            className="w-full text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
+          >
+            <option value="all">🏪 Semua Toko</option>
+            {siteOptions.map(s => (
+              <option key={s.site_alias || s.site_code} value={s.site_alias || ''}>
+                🏪 {s.site_name} {s.site_alias && s.site_alias !== s.site_name ? `(${s.site_alias})` : ''}
+              </option>
+            ))}
+          </Select>
+        </div>
+
         {/* Chips Filter Status */}
         <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide">
           {statusFilters.map(({ key, label }) => (
@@ -295,6 +335,9 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
           }
           {activeCategory !== 'all' && (
             <span className="ml-1 text-slate-600">• Kategori: <span className="text-slate-400">{activeCategory}</span></span>
+          )}
+          {activeSite !== 'all' && (
+            <span className="ml-1 text-slate-600">• Toko: <span className="text-slate-400">{activeSite}</span></span>
           )}
           {activeFilter !== 'all' && (
             <span className="ml-1 text-slate-600">• Status: <span className="text-slate-400">{activeFilter}</span></span>
