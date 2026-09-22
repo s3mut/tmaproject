@@ -78,10 +78,13 @@ export function printDisposalBAST(params: PrintBASTDisposalParams): void {
         Demikian Berita Acara Pemusnahan Aset TI ini dibuat dengan sebenarnya dalam rangkap yang cukup untuk dipergunakan sebagaimana mestinya sebagai bukti penonaktifan dan pemusnahan aset dari database inventaris resmi.
       </p>
 
-      <!-- Tanda Tangan (3 Kolom) -->
+      <!-- QR Code Validation & E-Sign Placeholder -->
       <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 30px; page-break-inside: avoid;">
         <div style="width: 30%;">
-          <p style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 60px;">Yang Mengajukan (Tim IT)</p>
+          <p style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 10px;">Yang Mengajukan (Tim IT)</p>
+          <!-- E-Sign Placeholder / QR -->
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=VALIDATION-${bastNo}&format=svg" alt="QR Code" style="width: 60px; height: 60px; margin-bottom: 10px; opacity: 0.8;" />
+          <p style="font-size: 10px; color: #64748b; font-style: italic; margin-bottom: 10px;">[E-SIGN VALIDATED]</p>
           <p style="font-size: 12px; font-weight: 700; text-decoration: underline; color: #0f172a;">${processedBy}</p>
           <p style="font-size: 10px; color: #64748b; margin-top: 2px;">IT Staff / Officer</p>
         </div>

@@ -7,6 +7,7 @@ const tabTitles: Record<TabName, TabConfig> = {
   transactions: { title: 'Mutasi Aset',          subtitle: 'Riwayat perpindahan' },
   sites:        { title: 'Daftar Site',          subtitle: 'Lokasi cabang & operasional' },
   opname:       { title: 'Stock Opname',         subtitle: 'Audit fisik aset' },
+  disposal:     { title: 'Antrean Afkir',        subtitle: 'Kelola usulan pemusnahan aset' },
   profile:      { title: 'Profil',               subtitle: 'Pengaturan akun' },
   report:       { title: 'Laporan & Analitik',   subtitle: 'KPI, utilization & audit trail' },
   settings:     { title: 'Super Admin Settings', subtitle: 'Pusat konfigurasi dinamis E1-TMA' },

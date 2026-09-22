@@ -15,6 +15,7 @@ import QRScannerModal from './components/modals/QRScannerModal';
 import TransactionModal from './components/modals/TransactionModal';
 import CSVImportModal from './components/modals/CSVImportModal';
 import ConfirmModal from './components/modals/ConfirmModal';
+import ProposeDisposalModal from './components/modals/ProposeDisposalModal';
 
 const DashboardView = lazy(() => import('./views/DashboardView'));
 const TransactionsView = lazy(() => import('./views/TransactionsView'));
@@ -24,6 +25,7 @@ const ProfileView = lazy(() => import('./views/ProfileView'));
 const ReportView = lazy(() => import('./views/ReportView'));
 const SettingsView = lazy(() => import('./views/SettingsView'));
 const LoginView = lazy(() => import('./views/LoginView'));
+const DisposalQueueView = lazy(() => import('./views/DisposalQueueView'));
 
 declare global { interface Window { Telegram?: any; } }
 
@@ -52,6 +54,7 @@ function App() {
   const [editItem, setEditItem]             = useState<AssetDetail | null>(null);
   const [detailItem, setDetailItem]         = useState<AssetDetail | null>(null);
   const [confirmOpen, setConfirmOpen]       = useState(false);
+  const [proposeDisposalOpen, setProposeDisposalOpen] = useState(false);
 
   // Toast
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' as 'success' | 'error' });
@@ -192,24 +195,6 @@ function App() {
     }
   };
 
-  const handleBulkStatusChange = async (assetIds: number[], newStatus: any, notes: string) => {
-    try {
-      
-      const teleId = currentUser?.telegram_id ?? 0;
-      
-      // Loop berurutan untuk mengubah status (bisa juga pakai Promise.all jika butuh paralel)
-      for (const id of assetIds) {
-        await changeAssetStatus(id, newStatus, teleId, notes || `Batch Update via Opname`);
-      }
-      
-      // Refresh state global agar data aset terupdate
-      refresh();
-      showToast(`Berhasil mengubah status ${assetIds.length} aset menjadi ${newStatus}!`);
-    } catch (e: any) {
-      showToast(e.message, 'error');
-      throw e;
-    }
-  };
 
   // QR Scan — Real scanner result handler
   const handleScanResult = (scannedText: string) => {
@@ -368,7 +353,25 @@ function App() {
           />
         )}
         {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
-        {activeTab === 'opname' && <OpnameView sites={sites} assets={assets} lockedAssetIds={lockedAssetIds} onBulkStatusChange={handleBulkStatusChange} />}
+        {activeTab === 'opname' && (
+          <OpnameView
+            sites={sites}
+            assets={assets}
+            lockedAssetIds={lockedAssetIds}
+            currentUserId={currentUser?.telegram_id || 0}
+            onShowToast={showToast}
+            onRefreshAssets={refresh}
+          />
+        )}
+        {activeTab === 'disposal' && (
+          <DisposalQueueView
+            currentUserId={currentUser?.telegram_id || 0}
+            currentUserName={currentUser?.name ?? 'Admin'}
+            currentUserRole={currentUser?.role}
+            onShowToast={showToast}
+            onRefreshAssets={refresh}
+          />
+        )}
         {activeTab === 'profile' && (
           <ProfileView
             assets={assets}
@@ -408,7 +411,7 @@ function App() {
         </button>
       )}
 
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} isGuest={isGuest} />
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} isGuest={isGuest} userRole={currentUser?.role} />
 
       <ItemFormModal
         isOpen={formOpen}
@@ -425,6 +428,11 @@ function App() {
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         onMutate={handleMutateClick}
+        currentUserRole={currentUser?.role}
+        onProposeDisposal={() => {
+          setDetailOpen(false);
+          setProposeDisposalOpen(true);
+        }}
       />
       <TransactionModal
         isOpen={transactionOpen}
@@ -459,11 +467,16 @@ function App() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setConfirmOpen(false)}
       />
+      <ProposeDisposalModal
+        isOpen={proposeDisposalOpen}
+        asset={detailItem}
+        currentUserId={currentUser?.telegram_id || 0}
+        onClose={() => setProposeDisposalOpen(false)}
+        onSuccess={() => { refresh(); }}
+        onShowToast={showToast}
+      />
     </div>
   );
 }
 
 export default App;
-
-
-

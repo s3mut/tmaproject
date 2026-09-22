@@ -1368,3 +1368,37 @@ Verifikasi:
 
 STEP: Add store/site filter in ItemsView
 - Added new Dropdown in ItemsView to filter by Toko (Site).
+
+--------------------------------------------------------------------------------
+STEP 33: ENTERPRISE-GRADE UPGRADE — IMMUTABLE LEDGER & STRICT STATE MACHINE (2026-09-22)
+--------------------------------------------------------------------------------
+Kebutuhan: Mengadopsi standar tata kelola dokumen dari sistem ERP ke dalam codebase E1-TMA, dengan menerapkan log pergerakan (immutable ledger), audit trail field, pemrosesan afkir aset dengan approval, serta alur rekonsiliasi stock opname.
+
+Implementasi & Perubahan:
+  [A] FASE 1: Database Migration
+      - `docs/schema.sql` dan `sql/upgrade_erp_standards.sql`: Membuat skema baru untuk `asset_movement_logs` (immutable stock ledger) dan `field_audit_trails` (trigger history untuk kolom krusial master_assets).
+      - Mengubah tipe `asset_status` untuk mendukung `PENDING_DISPOSAL` dan penambahan tabel baru `stock_opname`, `stock_reconciliations`, dan `stock_reconciliation_items` untuk alur approval opname yang bertingkat.
+      - Membuat RPC `update_transaction_status_safe` dan `propose_asset_disposal` yang aman dari race condition menggunakan `pg_advisory_xact_lock`.
+
+  [B] FASE 2: Types & Business Logic
+      - `src/types/inventory.ts`: Pemutakhiran tipe data TypeScript terkait log pergerakan, status dokumen, dan rekonsiliasi opname.
+      - `src/services/stateMachine.ts`: Implementasi mesin status (State Machine) lokal untuk membatasi transisi status mutasi (misal In Transit -> Completed) agar tidak bisa diloncati.
+      - `src/services/transactionService.ts` dan `src/services/assetService.ts`: Beralih menggunakan eksekusi RPC SQL yang baru dan mengecek mesin status secara lokal sebelum melakukan mutasi di UI.
+      - `src/services/opnameService.ts`: Mengatur sesi stock opname dengan metode *draft reconciliation*, yang akan dikunci saat diajukan (status draft -> submitted) ke Super Admin untuk validasi akhir.
+      
+  [C] FASE 3: UI Components & Integrasi Workflow
+      - `src/components/modals/ProposeDisposalModal.tsx` & `src/views/DisposalQueueView.tsx`: Menu antrian khusus (Admin Only) untuk mengesahkan afkir dan menolak pengajuan, serta mencetak dokumen BAST/BAPA dengan QR Code generator.
+      - `src/components/DocumentTimeline.tsx`: Komponen riwayat kronologis visual dari tiap aset yang di-embed pada `ItemDetailModal`.
+      - `src/views/OpnameView.tsx`: Ditulis ulang sepenuhnya untuk menginisiasi Sesi Opname resmi, menyimpan scan sementara (Ditemukan/Hilang/Nyasar), lalu membuat Draft Rekonsiliasi, menolak edit-langsung aset oleh user biasa.
+      - `src/components/BottomNav.tsx` & `src/components/Header.tsx`: Penambahan tab Navigasi "Afkir" eksklusif bagi Admin.
+
+  [D] FASE 4: Verifikasi & Build
+      - `npx tsc --noEmit` & `npm run build`: Bersih (Clean) tanpa TypeScript error dan performa bundle optimal.
+
+--------------------------------------------------------------------------------
+STEP 35: ENTERPRISE & ISO STANDARD UPGRADE (2026-09-23)
+--------------------------------------------------------------------------------
+- FASE 1: Membuat `sql/upgrade_iso_standards.sql` untuk Immutable Ledger (asset_movement_logs) & Field Audit Trails.
+- FASE 2: Modul Pemusnahan Aset & Karantina dengan generator BAPA yang dilengkapi validasi QR Code & E-Sign placeholder di `src/utils/printDisposalBAST.ts`. Memastikan status `PENDING_DISPOSAL` terkunci di `ItemDetailModal.tsx`.
+- FASE 3: Refactor `QRScannerModal.tsx` menggunakan `display: none` (Camera Stream Caching) untuk me-resume akses kamera tanpa jeda saat modal ditutup.
+- FASE 4: Verifikasi Super Admin Settings Hub di `SettingsView.tsx` dan `src/services/settingsService.ts` berjalan baik dan mematuhi standar. Build pass tanpa error TypeScript (`npx tsc --noEmit`).

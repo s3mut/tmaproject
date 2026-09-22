@@ -205,34 +205,40 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
   // ─────────────────────────────────────────
   useEffect(() => {
     if (isOpen) {
-      setState('selection');
-      setErrorMsg('');
-      setTorchOn(false);
-      setNativeTgActive(false);
-      // Load camera list untuk dropdown switch kamera
-      Html5Qrcode.getCameras()
-        .then((devices) => {
-          if (devices?.length > 0) {
-            setCameras(devices);
-            setActiveCameraId(devices[devices.length - 1].id);
-          }
-        })
-        .catch(() => { /* permissions belum diberikan */ });
+      if (scannerRef.current && isRunningRef.current) {
+        // Resume from cached stream
+        if (scannerRef.current.resume) {
+          try { scannerRef.current.resume(); } catch { /* ignore */ }
+        }
+      } else {
+        setState('selection');
+        setErrorMsg('');
+        setTorchOn(false);
+        setNativeTgActive(false);
+        // Load camera list untuk dropdown switch kamera
+        Html5Qrcode.getCameras()
+          .then((devices) => {
+            if (devices?.length > 0) {
+              setCameras(devices);
+              setActiveCameraId(devices[devices.length - 1].id);
+            }
+          })
+          .catch(() => { /* permissions belum diberikan */ });
+      }
     } else {
-      // Modal ditutup: hentikan semua scanner
-      stopScanner();
-      setState('idle');
-      setErrorMsg('');
-      setTorchOn(false);
+      // Modal ditutup: PAUSE scanner untuk Camera Stream Caching
+      if (scannerRef.current && isRunningRef.current && scannerRef.current.pause) {
+        try { scannerRef.current.pause(true); } catch { /* ignore */ }
+      }
       setNativeTgActive(false);
-      pendingModeRef.current = null;
+      // pendingModeRef.current = null; // Biarkan mode tersimpan untuk resume
 
       const tg = (window as any).Telegram?.WebApp;
       if (tg?.closeScanQrPopup) {
         try { tg.closeScanQrPopup(); } catch { /* ignore */ }
       }
     }
-  }, [isOpen, stopScanner]);
+  }, [isOpen]);
 
   // ─────────────────────────────────────────
   // Cleanup on unmount
@@ -273,16 +279,16 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
   }, [scanMode, startWebScanner]);
 
   // ─────────────────────────────────────────
-  // Render: jika modal tutup atau Telegram native aktif → tidak render apa-apa
+  // Render: Camera Stream Caching (display none saat ditutup)
   // ─────────────────────────────────────────
-  if (!isOpen || nativeTgActive) return null;
-
+  const isHidden = !isOpen || nativeTgActive;
   const isWebScannerVisible = state !== 'selection';
 
   return (
     <div
-      className="modal-overlay active"
-      onClick={(e) => { if (e.target === e.currentTarget) { stopScanner(); onClose(); } }}
+      className={`modal-overlay active ${isHidden ? 'hidden' : ''}`}
+      style={{ display: isHidden ? 'none' : undefined }}
+      onClick={(e) => { if (e.target === e.currentTarget) { onClose(); } }}
     >
       <div className="modal-content p-0 overflow-hidden max-w-sm mx-auto rounded-3xl">
 
@@ -302,7 +308,7 @@ const QRScannerModal = ({ isOpen, onClose, onScanResult }: Props) => {
             </div>
           </div>
           <button
-            onClick={() => { stopScanner(); onClose(); }}
+            onClick={() => { onClose(); }}
             className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-50 flex items-center justify-center"
           >
             <i className="fas fa-times text-sm" />

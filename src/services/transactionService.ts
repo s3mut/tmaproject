@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
-import type { AssetTransaction, TransactionDetail } from '../types/inventory';
+import type { AssetTransaction, TransactionDetail, AssetMovementLog } from '../types/inventory';
+import { assertTransition, isDocumentLocked } from './stateMachine';
 
 // Generate kode transaksi otomatis (contoh: TRX-2608-0001)
 function generateTransactionCode(type: string): string {
@@ -85,13 +86,14 @@ export async function createTransaction(
   trx: Omit<AssetTransaction, 'id' | 'transaction_code' | 'status' | 'requested_at' | 'approved_at' | 'dispatched_at' | 'received_at' | 'completed_at'>
 ): Promise<AssetTransaction> {
   const trxCode = generateTransactionCode(trx.transaction_type);
-  
+
   const { data, error } = await supabase
     .from('asset_transactions')
-    .insert({ 
-      ...trx, 
+    .insert({
+      ...trx,
       transaction_code: trxCode,
-      status: 'Requested' 
+      status: 'Requested',
+      doc_status: 0,  // Selalu mulai sebagai Draft
     })
     .select()
     .single();
@@ -100,19 +102,17 @@ export async function createTransaction(
 
   // Trigger Telegram Bot Notification via Edge Function
   try {
-    // Ambil detail aset, user, dan target site region secara paralel
     const [assetRes, userRes, siteRes] = await Promise.all([
       trx.asset_id ? supabase.from('master_assets').select('brand, model_type').eq('id', trx.asset_id).single() : { data: null },
       supabase.from('telegram_users').select('name').eq('telegram_id', trx.requested_by).single(),
       trx.to_site_code ? supabase.from('sites').select('region').eq('site_code', trx.to_site_code).single() : { data: null }
     ]);
-    
+
     const assetBrand = assetRes.data?.brand || '';
     const assetModel = assetRes.data?.model_type || 'Unknown Asset';
     const reqByName = userRes.data?.name || 'Unknown User';
     const targetRegion = siteRes.data?.region || 'Tanpa Region';
 
-    // Memanggil Supabase Edge Function (telegram-bot) dengan log komprehensif
     const { data: fnRes, error: fnErr } = await supabase.functions.invoke('telegram-bot/notify', {
       body: {
         transaction_id: data.id,
@@ -145,7 +145,12 @@ export async function createTransaction(
   return data;
 }
 
-// Update status transaksi
+/**
+ * Update status transaksi — VERSI BARU dengan:
+ * 1. Validasi State Machine sebelum hit database
+ * 2. RPC update_transaction_status_safe() untuk anti-race condition via advisory lock
+ * 3. Response error yang informatif untuk concurrent modification
+ */
 export async function updateTransactionStatus(
   transactionId: number,
   newStatus: string,
@@ -153,63 +158,90 @@ export async function updateTransactionStatus(
   assetId?: number,
   notes?: string
 ): Promise<void> {
-  
-  const updates: any = { 
-    status: newStatus 
-  };
+  // ── STEP 1: Baca status saat ini untuk validasi lokal ──────────────────────
+  const { data: currentTrx, error: fetchErr } = await supabase
+    .from('asset_transactions')
+    .select('status, doc_status, transaction_type')
+    .eq('id', transactionId)
+    .single();
 
-  if (notes) updates.notes = notes;
-  if (assetId) updates.asset_id = assetId;
-
-  const now = new Date().toISOString();
-
-  if (newStatus === 'Approved') {
-    updates.approved_by = userId;
-    updates.approved_at = now;
-  } else if (newStatus === 'In Transit') {
-    updates.dispatched_by = userId;
-    updates.dispatched_at = now;
-  } else if (newStatus === 'In Progress') {
-    updates.received_by = userId;
-    updates.received_at = now;
-    
-    // Calculate due_date if borrowing
-    const { data: trxCheck } = await supabase.from('asset_transactions').select('transaction_type, duration_days').eq('id', transactionId).single();
-    if (trxCheck && trxCheck.transaction_type === 'Borrowing' && trxCheck.duration_days) {
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + trxCheck.duration_days);
-      updates.due_date = dueDate.toISOString();
-    }
-  } else if (newStatus === 'Returning') {
-    // Hanya perbarui status (tidak ada kolom timestamp terpisah untuk retur)
-  } else if (newStatus === 'Completed') {
-    updates.completed_at = now;
+  if (fetchErr || !currentTrx) {
+    throw new Error('Gagal membaca data transaksi: ' + (fetchErr?.message ?? 'Not found'));
   }
 
-  const { error } = await supabase
-    .from('asset_transactions')
-    .update(updates)
-    .eq('id', transactionId);
+  const currentStatus = currentTrx.status as import('../types/inventory').TransactionStatus;
+  const typedNewStatus = newStatus as import('../types/inventory').TransactionStatus;
 
-  if (error) throw new Error(error.message);
+  // ── STEP 2: Periksa DocStatus — dokumen terkunci tidak bisa diubah ─────────
+  if (isDocumentLocked(currentStatus, currentTrx.doc_status)) {
+    throw new Error(
+      `Dokumen transaksi ini sudah dikunci (status: ${currentStatus}, doc_status: ${currentTrx.doc_status}). ` +
+      `Tidak dapat melakukan perubahan.`
+    );
+  }
 
-  // Trigger Telegram Notification for Dispatch
+  // ── STEP 3: Validasi State Machine lokal (early fail sebelum round-trip DB) ─
+  assertTransition(currentStatus, typedNewStatus);
+
+  // ── STEP 4: Panggil RPC safe update (advisory lock + optimistic locking) ────
+  const { data: rpcResult, error: rpcErr } = await supabase.rpc('update_transaction_status_safe', {
+    p_transaction_id: transactionId,
+    p_expected_current_status: currentStatus,
+    p_new_status: newStatus,
+    p_user_id: userId,
+    p_notes: notes ?? null,
+    p_asset_id: assetId ?? null,
+  });
+
+  if (rpcErr) {
+    throw new Error(`Database error: ${rpcErr.message}`);
+  }
+
+  // ── STEP 5: Interpretasi response dari RPC ────────────────────────────────
+  const result = rpcResult as {
+    success: boolean;
+    error_code?: string;
+    message?: string;
+    current_status?: string;
+  };
+
+  if (!result?.success) {
+    const errCode = result?.error_code ?? 'UNKNOWN_ERROR';
+    const errMsg = result?.message ?? 'Terjadi kesalahan yang tidak diketahui.';
+
+    switch (errCode) {
+      case 'CONCURRENT_MODIFICATION':
+        throw new Error(
+          `⚡ Konflik: ${errMsg}\n` +
+          `Status saat ini di server: "${result.current_status}". Silakan refresh halaman.`
+        );
+      case 'DOCUMENT_LOCKED':
+        throw new Error(`🔒 ${errMsg}`);
+      case 'INVALID_TRANSITION':
+        throw new Error(`🚫 ${errMsg}`);
+      case 'NOT_FOUND':
+        throw new Error(`❓ ${errMsg}`);
+      default:
+        throw new Error(`❌ ${errMsg}`);
+    }
+  }
+
+  // ── STEP 6: Kirim notifikasi Telegram untuk status 'In Transit' ───────────
   if (newStatus === 'In Transit') {
     try {
       const { data: trxFull } = await supabase
         .from('asset_transactions')
-        .select(`
-          transaction_code,
-          transaction_type,
-          requested_by,
-          asset_id
-        `)
+        .select('transaction_code, transaction_type, requested_by, asset_id')
         .eq('id', transactionId)
         .single();
 
       if (trxFull) {
-        const { data: assetData } = await supabase.from('master_assets').select('serial_number, brand, model_type').eq('id', trxFull.asset_id).single();
-        
+        const { data: assetData } = await supabase
+          .from('master_assets')
+          .select('serial_number, brand, model_type')
+          .eq('id', trxFull.asset_id)
+          .single();
+
         const { data: dispRes, error: dispErr } = await supabase.functions.invoke('telegram-bot/dispatch', {
           body: {
             transaction_code: trxFull.transaction_code,
@@ -225,48 +257,59 @@ export async function updateTransactionStatus(
           let errBody: unknown = null;
           try { errBody = await (dispErr as any).context?.json?.(); } catch {}
           console.error('[TransactionService] Gagal kirim notifikasi dispatch:', {
-            message: dispErr.message,
-            status: (dispErr as any).context?.status,
-            body: errBody
+            message: dispErr.message, status: (dispErr as any).context?.status, body: errBody
           });
         } else {
-          console.log('[TransactionService] Notifikasi dispatch berhasil dikirim ke Telegram:', dispRes);
+          console.log('[TransactionService] Notifikasi dispatch berhasil dikirim:', dispRes);
         }
       }
     } catch (err) {
       console.error('[TransactionService] Exception saat invoke telegram-bot dispatch:', err);
     }
   }
-
-  // Jika transaksi selesai, perbarui lokasi fisik aset (master_assets)
-  if (newStatus === 'Completed') {
-    // Ambil detail transaksi untuk mengetahui to_site_code dan asset_id
-    const { data: trxData, error: trxErr } = await supabase
-      .from('asset_transactions')
-      .select('asset_id, to_site_code, from_site_code, transaction_type')
-      .eq('id', transactionId)
-      .single();
-
-    if (trxErr || !trxData) {
-      console.error('Gagal mengambil data transaksi untuk update lokasi fisik', trxErr);
-      return;
-    }
-
-    if (trxData.asset_id && trxData.to_site_code && trxData.from_site_code && (trxData.transaction_type === 'Mutation' || trxData.transaction_type === 'Borrowing')) {
-      // Jika mutasi selesai = pindah permanen ke target
-      // Jika pinjam selesai = dikembalikan ke lokasi asal
-      const finalSite = trxData.transaction_type === 'Mutation' ? trxData.to_site_code : trxData.from_site_code;
-      
-      const { error: assetErr } = await supabase
-        .from('master_assets')
-        .update({ site_alias: finalSite })
-        .eq('id', trxData.asset_id);
-
-      if (assetErr) {
-        console.error('Gagal memperbarui lokasi fisik aset', assetErr);
-        throw new Error('Transaksi berhasil, tetapi gagal memperbarui lokasi aset fisik.');
-      }
-    }
-  }
 }
 
+/**
+ * Ambil timeline pergerakan aset dari view_asset_timeline (Immutable Ledger).
+ * Digunakan oleh komponen DocumentTimeline.
+ */
+export async function getAssetTimeline(assetId: number): Promise<AssetMovementLog[]> {
+  const { data, error } = await supabase
+    .from('view_asset_timeline')
+    .select('*')
+    .eq('asset_id', assetId)
+    .order('logged_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as AssetMovementLog[];
+}
+
+/**
+ * Insert manual ke asset_movement_logs (untuk event yang tidak ter-cover oleh RPC).
+ * Contoh: LOAN_DISPATCH saat status berubah ke 'In Transit'.
+ */
+export async function insertMovementLog(log: {
+  asset_id: number;
+  serial_number: string;
+  event_type: string;
+  document_code?: string;
+  from_site_code?: string;
+  to_site_code?: string;
+  executor_id?: number;
+  executor_name?: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { error } = await supabase
+    .from('asset_movement_logs')
+    .insert({
+      ...log,
+      metadata: log.metadata ?? {},
+    });
+
+  if (error) {
+    // Log tapi jangan throw — movement log bersifat opsional, jangan blokir main flow
+    console.error('[TransactionService] Gagal insert movement log:', error.message);
+  }
+}

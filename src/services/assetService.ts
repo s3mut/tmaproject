@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { MasterAsset, AssetDetail, Category } from '../types/inventory';
+import type { MasterAsset, AssetDetail, Category, DisposalProposal } from '../types/inventory';
 
 const PAGE_SIZE = 1000; // Batas default PostgREST per request
 
@@ -117,29 +117,117 @@ export async function getRetiredReports(telegramId?: number): Promise<any[]> {
   return data ?? [];
 }
 
-// Batch Pemusnahan Massal Aset
+// Batch Pemusnahan Massal Aset (menggunakan RPC atomic batch_approve_disposals)
 export async function bulkDisposeAssets(
   disposals: Array<{ assetId: number; reason: string }>,
-  telegramId: number
+  telegramId: number,
+  bastNo?: string
 ): Promise<void> {
-  for (const item of disposals) {
-    const { error } = await supabase.rpc('change_asset_status', {
-      p_asset_id: item.assetId,
-      p_new_status: 'Disposed',
-      p_telegram_id: telegramId,
-      p_notes: item.reason ? `[PEMUSNAHAN MASSAL] ${item.reason}` : '[PEMUSNAHAN MASSAL]'
-    });
+  const assetIds = disposals.map(d => d.assetId);
+  const bapa = bastNo ?? `BAPA-${Date.now()}`;
 
-    if (error) {
-      // Fallback direct status update
-      await supabase
-        .from('master_assets')
-        .update({
-          status: 'Disposed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', item.assetId);
-    }
+  const { data: result, error } = await supabase.rpc('batch_approve_disposals', {
+    p_asset_ids: assetIds,
+    p_bapa_no: bapa,
+    p_approved_by: telegramId,
+    p_notes: disposals.map(d => d.reason).join('; '),
+  });
+
+  if (error) throw new Error(error.message);
+  if (result && !result.success) {
+    throw new Error(`Batch disposal partially failed: ${result.failed} item gagal dari ${assetIds.length}`);
   }
 }
 
+// ── DISPOSAL WORKFLOW FUNCTIONS ───────────────────────────────────────────────
+
+/**
+ * Usulkan afkir aset secara Ad-Hoc atau dari jalur opname.
+ * Memanggil RPC propose_asset_disposal yang:
+ * 1. Set status aset → PENDING_DISPOSAL
+ * 2. Insert ke disposal_proposals
+ * 3. Catat di asset_movement_logs
+ * Semua dalam satu transaksi atomic.
+ */
+export async function proposeDisposal(
+  assetId: number,
+  reasonCategory: string,
+  proposedBy: number,
+  options?: {
+    reasonDetail?: string;
+    photoUrl?: string;
+    source?: 'AD_HOC' | 'OPNAME';
+    opnameId?: number;
+  }
+): Promise<{ proposalId: number; serialNumber: string }> {
+  const { data: result, error } = await supabase.rpc('propose_asset_disposal', {
+    p_asset_id: assetId,
+    p_reason_category: reasonCategory,
+    p_reason_detail: options?.reasonDetail ?? null,
+    p_photo_url: options?.photoUrl ?? null,
+    p_proposed_by: proposedBy,
+    p_source: options?.source ?? 'AD_HOC',
+    p_opname_id: options?.opnameId ?? null,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const r = result as { success: boolean; error_code?: string; message?: string; proposal_id?: number; serial_number?: string };
+
+  if (!r?.success) {
+    throw new Error(r?.message ?? 'Gagal mengusulkan afkir aset.');
+  }
+
+  return {
+    proposalId: r.proposal_id!,
+    serialNumber: r.serial_number!,
+  };
+}
+
+/**
+ * Ambil antrean usulan afkir yang masih Pending.
+ * Menggunakan view_disposal_queue yang sudah berisi join lengkap.
+ */
+export async function getDisposalQueue(
+  region?: string
+): Promise<DisposalProposal[]> {
+  let query = supabase
+    .from('view_disposal_queue')
+    .select('*')
+    .order('proposed_at', { ascending: true });
+
+  if (region && region !== 'all') {
+    query = query.eq('region', region);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data ?? []) as DisposalProposal[];
+}
+
+/**
+ * Batch approval disposal oleh Super Admin.
+ * Menggunakan RPC batch_approve_disposals yang atomic.
+ */
+export async function batchApproveDisposals(
+  assetIds: number[],
+  bapaNo: string,
+  approvedBy: number,
+  notes?: string
+): Promise<{ processed: number; failed: number; results: any[] }> {
+  const { data: result, error } = await supabase.rpc('batch_approve_disposals', {
+    p_asset_ids: assetIds,
+    p_bapa_no: bapaNo,
+    p_approved_by: approvedBy,
+    p_notes: notes ?? null,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const r = result as { success: boolean; processed: number; failed: number; bapa_no: string; results: any[] };
+  return {
+    processed: r?.processed ?? 0,
+    failed: r?.failed ?? 0,
+    results: r?.results ?? [],
+  };
+}
