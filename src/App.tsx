@@ -359,6 +359,7 @@ function App() {
             assets={assets}
             lockedAssetIds={lockedAssetIds}
             currentUserId={currentUser?.telegram_id || 0}
+            userRole={currentUser?.role}
             onShowToast={showToast}
             onRefreshAssets={refresh}
           />

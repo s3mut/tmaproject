@@ -11,17 +11,20 @@ import {
   createReconciliationDraft,
   submitReconciliation
 } from '../services/opnameService';
+import ReconciliationQueueView from './ReconciliationQueueView';
 
 interface Props {
   assets: AssetDetail[];
   sites: Site[];
   lockedAssetIds?: Set<number>;
   currentUserId: number;
+  userRole?: string;
   onShowToast: (msg: string, type?: 'success' | 'error') => void;
   onRefreshAssets: () => void;
 }
 
-const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, onShowToast, onRefreshAssets }: Props) => {
+const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, userRole, onShowToast, onRefreshAssets }: Props) => {
+  const [activeTab, setActiveTab] = useState<'session' | 'queue'>('session');
   const [siteInput, setSiteInput] = useState<string>('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedAssets, setScannedAssets] = useState<AssetDetail[]>([]);
@@ -200,12 +203,41 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
 
   return (
     <div className="fade-in space-y-4">
-      {/* Header Card */}
-      <div className="glass rounded-2xl p-5">
-        <h2 className="text-base font-bold text-slate-50 mb-4 flex items-center gap-2">
-          <i className="fas fa-clipboard-check text-blue-400"></i>
-          Sesi Stock Opname
-        </h2>
+      {userRole === 'admin' && (
+        <div className="flex bg-slate-800 p-1 rounded-xl mb-4 border border-slate-700">
+          <button
+            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
+              activeTab === 'session' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('session')}
+          >
+            Sesi Opname
+          </button>
+          <button
+            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
+              activeTab === 'queue' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('queue')}
+          >
+            Antrean Persetujuan
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'queue' ? (
+        <ReconciliationQueueView
+          currentUserId={currentUserId}
+          onShowToast={onShowToast}
+          onRefreshAssets={onRefreshAssets}
+        />
+      ) : (
+        <>
+          {/* Header Card */}
+          <div className="glass rounded-2xl p-5">
+            <h2 className="text-base font-bold text-slate-50 mb-4 flex items-center gap-2">
+              <i className="fas fa-clipboard-check text-blue-400"></i>
+              Sesi Stock Opname
+            </h2>
 
         {/* Input Manual Site Alias */}
         {!session && (
@@ -420,6 +452,8 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
         onConfirm={confirmConfig.onConfirm}
         onCancel={() => setConfirmOpen(false)}
       />
+      </>
+      )}
     </div>
   );
 };
