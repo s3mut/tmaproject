@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { AssetDetail, Site, StockOpname } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
 import QRScannerModal from '../components/modals/QRScannerModal';
+import ConfirmModal from '../components/modals/ConfirmModal';
 import { SiteSearchInput } from '../components/ui';
 import {
   createOpnameSession,
@@ -25,6 +26,14 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedAssets, setScannedAssets] = useState<AssetDetail[]>([]);
   const [lastScanMsg, setLastScanMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({
+    title: '',
+    message: '',
+    confirmLabel: '',
+    onConfirm: () => {}
+  });
 
   // Opname Session State
   const [session, setSession] = useState<StockOpname | null>(null);
@@ -122,9 +131,22 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
     }
   };
 
+  const promptSubmitReconciliation = () => {
+    if (!session) return;
+    setConfirmConfig({
+      title: 'Ajukan Rekonsiliasi?',
+      message: 'Selesai opname dan ajukan rekonsiliasi ke Super Admin?',
+      confirmLabel: 'Ya, Ajukan',
+      onConfirm: () => {
+        setConfirmOpen(false);
+        handleSubmitReconciliation();
+      }
+    });
+    setConfirmOpen(true);
+  };
+
   const handleSubmitReconciliation = async () => {
     if (!session) return;
-    if (!window.confirm('Selesai opname dan ajukan rekonsiliasi ke Super Admin?')) return;
 
     setLoading(true);
     try {
@@ -156,8 +178,21 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
     }
   };
 
+  const promptResetSession = () => {
+    if (!session) return;
+    setConfirmConfig({
+      title: 'Batalkan Sesi?',
+      message: 'Batalkan sesi opname ini? Data scan belum diajukan akan hilang.',
+      confirmLabel: 'Ya, Batalkan',
+      onConfirm: () => {
+        setConfirmOpen(false);
+        resetSessionLocally();
+      }
+    });
+    setConfirmOpen(true);
+  };
+
   const resetSessionLocally = () => {
-    if (session && !window.confirm('Batalkan sesi opname ini? Data scan belum diajukan akan hilang.')) return;
     setSession(null);
     setScannedAssets([]);
     setLastScanMsg(null);
@@ -208,7 +243,7 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
               <p className="text-xs text-blue-300 font-semibold">Sesi Aktif: {session.site_alias}</p>
               <p className="text-[10px] text-blue-400/80">ID: {session.id} • Dimulai: {new Date(session.start_date).toLocaleTimeString('id-ID')}</p>
             </div>
-            <button onClick={resetSessionLocally} className="text-xs text-red-400 hover:text-red-300 underline p-1">Batalkan</button>
+            <button onClick={promptResetSession} className="text-xs text-red-400 hover:text-red-300 underline p-1">Batalkan</button>
           </div>
         )}
 
@@ -309,7 +344,7 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
               {scannedAssets.length > 0 && (
                 <button
                   className="mt-2 py-3 px-4 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-lg shadow-orange-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  onClick={handleSubmitReconciliation}
+                  onClick={promptSubmitReconciliation}
                   disabled={loading}
                 >
                   {loading ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-paper-plane" />}
@@ -374,6 +409,16 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
         isOpen={scannerOpen}
         onClose={() => setScannerOpen(false)}
         onScanResult={handleScanResult}
+      />
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmLabel={confirmConfig.confirmLabel}
+        icon="fa-exclamation-triangle"
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmOpen(false)}
       />
     </div>
   );

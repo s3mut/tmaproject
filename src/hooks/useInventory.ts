@@ -2,13 +2,14 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { AssetDetail, MasterAsset, Site, Category, TransactionDetail } from '../types/inventory';
 import { getAssets, createAsset, updateAsset, deleteAsset, getCategories } from '../services/assetService';
 import { getSites } from '../services/siteService';
-import { getTransactions, createTransaction, updateTransactionStatus } from '../services/transactionService';
+import { getTransactions, createTransaction, updateTransactionStatus, getActiveTransactionAssetIds } from '../services/transactionService';
 
 export function useInventory() {
   const [assets, setAssets] = useState<AssetDetail[]>([]);
   const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [lockedAssetIds, setLockedAssetIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +43,7 @@ export function useInventory() {
         getTransactions(),
         getSites(),
         getCategories(),
+        getActiveTransactionAssetIds(),
       ]);
 
       if (results[0].status === 'fulfilled') setAssets(results[0].value);
@@ -55,6 +57,9 @@ export function useInventory() {
 
       if (results[3].status === 'fulfilled') setCategories(results[3].value);
       else { console.error('Error fetching categories:', results[3].reason); setError(prev => prev ? prev + ' | Error Kategori' : 'Error fetch Kategori'); }
+
+      if (results[4].status === 'fulfilled') setLockedAssetIds(new Set(results[4].value));
+      else { console.error('Error fetching locked assets:', results[4].reason); setError(prev => prev ? prev + ' | Error Locked Assets' : 'Error fetch Locked Assets'); }
 
     } catch (err: any) {
       setError(err.message ?? 'Terjadi kesalahan koneksi.');
@@ -79,12 +84,14 @@ export function useInventory() {
 
   const fetchAssetsAndTransactions = useCallback(async () => {
     try {
-      const [assetsRes, trxRes] = await Promise.allSettled([
+      const [assetsRes, trxRes, lockedRes] = await Promise.allSettled([
         getAssets(),
         getTransactions(),
+        getActiveTransactionAssetIds(),
       ]);
       if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
       if (trxRes.status === 'fulfilled') setTransactions(trxRes.value);
+      if (lockedRes.status === 'fulfilled') setLockedAssetIds(new Set(lockedRes.value));
     } catch (err: any) {
       console.error('Error refreshing assets and transactions:', err.message);
     }
@@ -119,21 +126,7 @@ export function useInventory() {
     await fetchAssetsAndTransactions();
   }, [fetchAssetsAndTransactions]);
 
-  // Locked assets (sedang dalam transaksi aktif)
-  const lockedAssetIds = useMemo(() => {
-    const locked = new Set<number>();
-    for (const trx of transactions) {
-      if (
-        trx.asset_id &&
-        trx.status !== 'Completed' &&
-        trx.status !== 'Cancelled' &&
-        trx.status !== 'Rejected'
-      ) {
-        locked.add(trx.asset_id);
-      }
-    }
-    return locked;
-  }, [transactions]);
+
 
   return {
     assets,

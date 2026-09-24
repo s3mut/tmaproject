@@ -286,6 +286,21 @@ export async function getAssetTimeline(assetId: number): Promise<AssetMovementLo
 }
 
 /**
+ * Ambil daftar ID aset yang sedang dalam transaksi aktif (tidak completed/cancelled/rejected).
+ * Digunakan untuk mengisi lockedAssetIds secara akurat tanpa limit.
+ */
+export async function getActiveTransactionAssetIds(): Promise<number[]> {
+  const { data, error } = await supabase
+    .from('asset_transactions')
+    .select('asset_id')
+    .not('status', 'in', '("Completed","Cancelled","Rejected")')
+    .not('asset_id', 'is', null);
+
+  if (error) throw new Error(error.message);
+  return Array.from(new Set((data ?? []).map((row: any) => row.asset_id)));
+}
+
+/**
  * Insert manual ke asset_movement_logs (untuk event yang tidak ter-cover oleh RPC).
  * Contoh: LOAN_DISPATCH saat status berubah ke 'In Transit'.
  */

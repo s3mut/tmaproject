@@ -324,11 +324,15 @@ export async function approveReconciliation(
     }
   }
 
-  // Finalisasi rekonsiliasi
+  if (errors.length > 0) {
+    throw new Error(`Approval selesai sebagian. Gagal memproses ${errors.length} item:\n${errors.join('\n')}`);
+  }
+
+  // Finalisasi rekonsiliasi jika semua berhasil
   await supabase
     .from('stock_reconciliations')
     .update({
-      status: errors.length > 0 ? 'Approved' : 'Approved', // Tetap Approved meskipun ada partial error
+      status: 'Approved',
       approved_by: approvedBy,
       approved_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

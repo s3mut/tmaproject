@@ -62,6 +62,31 @@ export async function updateAsset(
 
 // Hapus aset (Soft Delete)
 export async function deleteAsset(id: number): Promise<void> {
+  // Guard: Cek apakah aset sedang dalam transaksi aktif atau pending disposal
+  const { data: asset, error: fetchErr } = await supabase
+    .from('master_assets')
+    .select('status')
+    .eq('id', id)
+    .single();
+
+  if (fetchErr || !asset) throw new Error('Aset tidak ditemukan.');
+  if (asset.status === 'PENDING_DISPOSAL') {
+    throw new Error('Aset sedang dalam proses pemusnahan (Pending Disposal). Tidak dapat dihapus manual.');
+  }
+
+  // Guard: Cek transaksi aktif
+  const { data: activeTrx, error: trxErr } = await supabase
+    .from('asset_transactions')
+    .select('id')
+    .eq('asset_id', id)
+    .not('status', 'in', '("Completed","Cancelled","Rejected")')
+    .limit(1);
+
+  if (trxErr) throw new Error('Gagal memeriksa status transaksi aset.');
+  if (activeTrx && activeTrx.length > 0) {
+    throw new Error('Aset sedang dalam proses transaksi (mutasi/peminjaman). Tidak dapat dihapus manual.');
+  }
+
   const { error } = await supabase
     .from('master_assets')
     .update({ 
