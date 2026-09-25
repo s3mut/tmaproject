@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { StockReconciliation, StockReconciliationItem, ProposedActionType } from '../../types/inventory';
 import { getReconciliationItems, approveReconciliation } from '../../services/opnameService';
 import { getSites } from '../../services/siteService';
