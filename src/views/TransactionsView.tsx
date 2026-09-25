@@ -1,7 +1,8 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { TransactionDetail, Site, Category } from '../types/inventory';
 import { transactionStatusConfig } from '../types/inventory';
 import { Button, SiteSearchInput } from '../components/ui';
+import BASTDocumentModal from '../components/modals/BASTDocumentModal';
 
 interface Props {
   transactions: TransactionDetail[];
@@ -22,6 +23,10 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
   // ── Guest Gate Screen state ──────────────────────────────────────────────
   const [guestSiteInput, setGuestSiteInput] = useState<string>('');
   const [guestSite, setGuestSite]           = useState<Site | null>(null);
+
+  // ── BAST Print State ─────────────────────────────────────────────────────
+  const [bastModalOpen, setBastModalOpen]   = useState(false);
+  const [selectedBastTrx, setSelectedBastTrx] = useState<TransactionDetail | null>(null);
 
   const handleGuestSiteChange = (val: string, matched: Site | null) => {
     setGuestSiteInput(val);
@@ -207,12 +212,32 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
                   {trx.status === 'Requested' && trx.requested_by === currentUserId && (
                     <Button variant="danger" size="sm" onClick={() => onUpdateStatus(trx.id, 'Cancelled')}>Batalkan</Button>
                   )}
+                  {['In Transit', 'In Progress', 'Returning', 'Completed'].includes(trx.status) && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="ml-auto flex items-center gap-1 bg-slate-700/50 hover:bg-slate-600 text-slate-300"
+                      onClick={() => {
+                        setSelectedBastTrx(trx);
+                        setBastModalOpen(true);
+                      }}
+                    >
+                      <i className="fas fa-print" /> Cetak BAST
+                    </Button>
+                  )}
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      <BASTDocumentModal
+        isOpen={bastModalOpen}
+        onClose={() => setBastModalOpen(false)}
+        loan={selectedBastTrx as any}
+        mode={selectedBastTrx?.status === 'Returning' ? 'pengembalian' : 'peminjaman'}
+      />
     </div>
   );
 };
