@@ -45,10 +45,6 @@ function App() {
   const [activeTab, setActiveTab]           = useState<TabName>('home');
   const [activeSubView, setActiveSubView]   = useState<string | null>(null);
   const [searchValue, setSearchValue]       = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus]     = useState<string>('all');
-  const [selectedRegion, setSelectedRegion]     = useState<string>('all');
-  const [isShowingItems, setIsShowingItems]     = useState<boolean>(false);
 
   const navigateTo = (subView: string) => setActiveSubView(subView);
   const goBack = () => setActiveSubView(null);
@@ -104,26 +100,9 @@ function App() {
     setActiveTab(tab);
     setActiveSubView(null);
     setSearchValue('');
-    setIsShowingItems(false);
   };
 
-  // Category click from dashboard
-  const handleCategoryClick = (cat: string) => {
-    setSelectedCategory(cat);
-  };
 
-  // Region click from dashboard
-  const handleRegionClick = (reg: string) => {
-    setSelectedRegion(reg);
-  };
-
-  // Status click from Dashboard stat card: Barulah bawa ke ItemsView dengan filter
-  const handleStatusClick = (status: string, category: string, region: string) => {
-    setSelectedCategory(category);
-    setSelectedRegion(region);
-    setSelectedStatus(status);
-    setIsShowingItems(true);
-  };
 
   // Item actions
   const handleItemClick = (id: number) => {
