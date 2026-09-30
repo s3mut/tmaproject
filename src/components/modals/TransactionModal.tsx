@@ -1,6 +1,7 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { AssetDetail, Site, Category } from '../../types/inventory';
 import { ModalShell, Button, Select, Input, Textarea, SiteSearchInput } from '../ui';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface Props {
   isOpen: boolean;
@@ -12,40 +13,48 @@ interface Props {
 }
 
 const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit }: Props) => {
-  const [type, setType]                   = useState<'Mutation' | 'Borrowing' | 'Repair'>('Borrowing');
-  const [categoryId, setCategoryId]       = useState<number | ''>(asset?.category_id || '');
-  const [toSiteInput, setToSiteInput]     = useState<string>('');
-  const [toSiteCode, setToSiteCode]       = useState<string>('');
-  const [purpose, setPurpose]             = useState('');
-  const [durationDays, setDurationDays]   = useState<number>(7);
-  const [submitting, setSubmitting]       = useState(false);
+  const { values, errors, setFieldValue, validate, resetForm } = useFormValidation({
+    type: 'Borrowing' as 'Mutation' | 'Borrowing' | 'Repair',
+    categoryId: asset?.category_id || '',
+    toSiteInput: '',
+    toSiteCode: '',
+    purpose: '',
+    durationDays: 7,
+  });
+  
+  const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  /** Saat user mengetik site alias/kode, simpan nilai display & site_code FK terpisah */
   const handleSiteChange = (val: string, matched: Site | null) => {
-    setToSiteInput(val);
-    setToSiteCode(matched ? matched.site_code : val);
+    setFieldValue('toSiteInput', val);
+    setFieldValue('toSiteCode', matched ? matched.site_code : val);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const isValid = validate({
+      categoryId: (val) => (!asset && !val) ? 'Kategori wajib dipilih' : null,
+      toSiteCode: (val) => !val ? 'Lokasi tujuan wajib dipilih' : null,
+      purpose: (val) => !val ? 'Tujuan / Catatan wajib diisi' : null,
+      durationDays: (val) => (values.type === 'Borrowing' && (!val || val < 1)) ? 'Durasi pinjam minimal 1 hari' : null,
+    });
+    
+    if (!isValid) return;
+
     setSubmitting(true);
     try {
       await onSubmit({
-        transaction_type: type,
+        transaction_type: values.type,
         asset_id:         asset?.id || null,
-        category_id:      categoryId || null,
+        category_id:      values.categoryId || null,
         from_site_code:   asset?.site_alias || null,
-        to_site_code:     toSiteCode,
-        purpose,
-        duration_days:    type === 'Borrowing' ? durationDays : null,
+        to_site_code:     values.toSiteCode,
+        purpose:          values.purpose,
+        duration_days:    values.type === 'Borrowing' ? values.durationDays : null,
       });
-      setType('Borrowing');
-      setToSiteInput('');
-      setToSiteCode('');
-      setPurpose('');
-      setDurationDays(7);
+      resetForm();
     } finally {
       setSubmitting(false);
     }
@@ -57,8 +66,8 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
 
         <Select
           label="Tipe Transaksi"
-          value={type}
-          onChange={(e) => setType(e.target.value as any)}
+          value={values.type}
+          onChange={(e) => setFieldValue('type', e.target.value as any)}
         >
           <option value="Borrowing">Peminjaman (Borrowing)</option>
           <option value="Mutation">Mutasi (Pindah Cabang)</option>
@@ -66,52 +75,66 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
         </Select>
 
         {!asset && (
-          <Select
-            label="Kategori Barang"
-            value={categoryId}
-            onChange={(e) => setCategoryId(Number(e.target.value))}
-            required
-          >
-            <option value="">-- Pilih Kategori --</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </Select>
+          <div>
+            <Select
+              label="Kategori Barang"
+              value={values.categoryId}
+              onChange={(e) => setFieldValue('categoryId', Number(e.target.value))}
+            >
+              <option value="">-- Pilih Kategori --</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </Select>
+            {errors.categoryId && <p className="text-red-500 text-xs mt-1">{errors.categoryId}</p>}
+          </div>
         )}
 
-        <SiteSearchInput
-          label="Lokasi Tujuan (Site Alias)"
-          placeholder="Ketik kode atau alias site..."
-          sites={sites}
-          value={toSiteInput}
-          onChange={handleSiteChange}
-          required
-          icon="fa-building"
-        />
-
-        {type === 'Borrowing' && (
-          <Input
-            label="Durasi Pinjam (Hari)"
-            type="number"
-            value={durationDays}
-            onChange={(e) => setDurationDays(Number(e.target.value))}
-            required
-            icon="fa-calendar-alt"
+        <div>
+          <SiteSearchInput
+            label="Lokasi Tujuan (Site Alias)"
+            placeholder="Ketik kode atau alias site..."
+            sites={sites}
+            value={values.toSiteInput}
+            onChange={handleSiteChange}
+            icon="fa-building"
           />
+          {errors.toSiteCode && <p className="text-red-500 text-xs mt-1">{errors.toSiteCode}</p>}
+        </div>
+
+        {values.type === 'Borrowing' && (
+          <div>
+            <Input
+              label="Durasi Pinjam (Hari)"
+              type="number"
+              value={values.durationDays}
+              onChange={(e) => setFieldValue('durationDays', Number(e.target.value))}
+              icon="fa-calendar-alt"
+            />
+            {errors.durationDays && <p className="text-red-500 text-xs mt-1">{errors.durationDays}</p>}
+          </div>
         )}
 
-        <Textarea
-          label="Tujuan / Catatan"
-          placeholder="Alasan peminjaman / catatan mutasi..."
-          value={purpose}
-          onChange={(e) => setPurpose(e.target.value)}
-          required
-        />
+        <div>
+          <Textarea
+            label="Tujuan / Catatan"
+            placeholder="Alasan peminjaman / catatan mutasi..."
+            value={values.purpose}
+            onChange={(e) => setFieldValue('purpose', e.target.value)}
+          />
+          {errors.purpose && <p className="text-red-500 text-xs mt-1">{errors.purpose}</p>}
+        </div>
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Batal</Button>
-          <Button type="submit" variant="primary" fullWidth loading={submitting}>
-            Kirim Permintaan
+          <Button type="button" variant="secondary" fullWidth onClick={onClose} disabled={submitting}>Batal</Button>
+          <Button type="submit" variant="primary" fullWidth disabled={submitting}>
+            {submitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <i className="fas fa-spinner fa-spin"></i> Memproses...
+              </span>
+            ) : (
+              'Kirim Permintaan'
+            )}
           </Button>
         </div>
       </form>

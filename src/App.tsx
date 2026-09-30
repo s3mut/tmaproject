@@ -3,8 +3,9 @@ import { useInventory } from './hooks/useInventory';
 import { useCameraPermission } from './hooks/useCameraPermission';
 import type { AssetDetail } from './types/inventory';
 import { useAuth } from './contexts/AuthContext';
+import { useModals } from './contexts/ModalContext';
 import { changeAssetStatus } from './services/assetService';
-
+import { triggerHaptic } from './utils/telegramHaptics';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import type { TabName } from './components/BottomNav';
@@ -49,16 +50,7 @@ function App() {
   const navigateTo = (subView: string) => setActiveSubView(subView);
   const goBack = () => setActiveSubView(null);
 
-  // Modals state
-  const [formOpen, setFormOpen]             = useState(false);
-  const [detailOpen, setDetailOpen]         = useState(false);
-  const [qrOpen, setQrOpen]                 = useState(false);
-  const [transactionOpen, setTransactionOpen] = useState(false);
-  const [csvImportOpen, setCsvImportOpen]   = useState(false);
-  const [editItem, setEditItem]             = useState<AssetDetail | null>(null);
-  const [detailItem, setDetailItem]         = useState<AssetDetail | null>(null);
-  const [confirmOpen, setConfirmOpen]       = useState(false);
-  const [proposeDisposalOpen, setProposeDisposalOpen] = useState(false);
+  const { state: modals, openForm, closeForm, openDetail, closeDetail, openQr, closeQr, openTransaction, closeTransaction, openCsvImport, closeCsvImport, openConfirm, closeConfirm, openProposeDisposal, closeProposeDisposal } = useModals();
 
   // Toast
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' as 'success' | 'error' });
@@ -79,6 +71,7 @@ function App() {
   }, []);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+    triggerHaptic(type);
     setToast({ visible: true, message: msg, type });
     setTimeout(() => setToast((p) => ({ ...p, visible: false })), 3000);
   }, []);
@@ -111,56 +104,54 @@ function App() {
       return;
     }
     const item = assets.find((a) => a.id === id);
-    if (item) { setDetailItem(item); setDetailOpen(true); }
+    if (item) { openDetail(item); }
   };
 
-  const handleAddClick = () => { setEditItem(null); setFormOpen(true); };
+  const handleAddClick = () => { openForm(); };
 
   const handleEditClick = () => {
-    setDetailOpen(false);
-    setEditItem(detailItem);
-    setFormOpen(true);
+    closeDetail();
+    openForm(modals.detailItem);
   };
 
   const handleDeleteClick = () => {
-    if (!detailItem) return;
-    setConfirmOpen(true);
+    if (!modals.detailItem) return;
+    openConfirm();
   };
 
   const handleDeleteConfirm = () => {
-    if (!detailItem) return;
-    removeAsset(detailItem.id)
-      .then(() => { setDetailOpen(false); setDetailItem(null); setConfirmOpen(false); showToast('Aset berhasil dihapus (soft delete)!'); })
-      .catch((e: any) => { setConfirmOpen(false); showToast(e.message, 'error'); });
+    if (!modals.detailItem) return;
+    removeAsset(modals.detailItem.id)
+      .then(() => { closeDetail(); closeConfirm(); showToast('Aset berhasil dihapus (soft delete)!'); })
+      .catch((e: any) => { closeConfirm(); showToast(e.message, 'error'); });
   };
 
   const handleFormSubmit = async (data: any) => {
     try {
-      if (editItem) {
+      if (modals.editItem) {
         // Jika status berubah, catat di log audit
-        if (data.status && data.status !== editItem.status) {
+        if (data.status && data.status !== modals.editItem.status) {
           
           await changeAssetStatus(
-            editItem.id,
+            modals.editItem.id,
             data.status,
             currentUser?.telegram_id ?? 0,
             data.description || 'Diubah via form Edit'
           );
         }
-        await editAsset(editItem.id, data);
+        await editAsset(modals.editItem.id, data);
         showToast('Aset berhasil diupdate!');
       } else {
         await addAsset(data);
         showToast('Aset berhasil ditambahkan!');
       }
-      setFormOpen(false);
-      setEditItem(null);
+      closeForm();
     } catch (e: any) {
       showToast(e.message, 'error');
     }
   };
 
-  const handleMutateClick = () => { setDetailOpen(false); setTransactionOpen(true); };
+  const handleMutateClick = () => { closeDetail(); openTransaction(modals.detailItem); };
 
   const handleTransactionSubmit = async (data: any) => {
     try {
@@ -168,8 +159,7 @@ function App() {
         ...data,
         requested_by: currentUser?.telegram_id ?? 0,
       });
-      setTransactionOpen(false);
-      setDetailItem(null);
+      closeTransaction();
       showToast('Permintaan transaksi berhasil dibuat!');
     } catch (e: any) {
       showToast(e.message, 'error');
@@ -186,9 +176,11 @@ function App() {
         (a.external_id && a.external_id.toLowerCase() === trimmed.toLowerCase())
     );
     if (found) {
+      triggerHaptic('success');
       showToast(`✅ Aset ditemukan: ${found.serial_number}`);
       setTimeout(() => handleItemClick(found.id), 400);
     } else {
+      triggerHaptic('error');
       showToast(`⚠️ Aset tidak ditemukan: "${trimmed}"`, 'error');
     }
   };
@@ -275,8 +267,8 @@ function App() {
           searchValue={searchValue}
           userRole={currentUser?.role}
           onSearchChange={setSearchValue}
-          onScanClick={() => setQrOpen(true)}
-          onImportCSVClick={() => setCsvImportOpen(true)}
+          onScanClick={openQr}
+          onImportCSVClick={openCsvImport}
         />
       )}
 
@@ -356,7 +348,7 @@ function App() {
                 userRole={currentUser?.role}
                 currentUserId={currentUser?.telegram_id || 0}
                 currentUserRegion={currentUser?.assigned_region}
-                onCreateTransaction={() => { setDetailItem(null); setTransactionOpen(true); }}
+                onCreateTransaction={() => { openTransaction(); }}
                 onRefresh={refresh}
                 onUpdateStatus={async (id, status) => {
                   try {
@@ -435,64 +427,64 @@ function App() {
       )}
 
       <ItemFormModal
-        isOpen={formOpen}
-        editItem={editItem}
+        isOpen={modals.formOpen}
+        editItem={modals.editItem}
         sites={sites}
         categories={categories}
-        onClose={() => { setFormOpen(false); setEditItem(null); }}
+        onClose={closeForm}
         onSubmit={handleFormSubmit}
       />
       <ItemDetailModal
-        isOpen={detailOpen}
-        item={detailItem}
-        onClose={() => { setDetailOpen(false); setDetailItem(null); }}
+        isOpen={modals.detailOpen}
+        item={modals.detailItem}
+        onClose={closeDetail}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         onMutate={handleMutateClick}
         currentUserRole={currentUser?.role}
         onProposeDisposal={() => {
-          setDetailOpen(false);
-          setProposeDisposalOpen(true);
+          closeDetail();
+          openProposeDisposal();
         }}
       />
       <TransactionModal
-        isOpen={transactionOpen}
-        asset={detailItem}
+        isOpen={modals.transactionOpen}
+        asset={modals.detailItem}
         sites={sites}
         categories={categories}
-        onClose={() => setTransactionOpen(false)}
+        onClose={closeTransaction}
         onSubmit={handleTransactionSubmit}
       />
       <QRScannerModal
-        isOpen={qrOpen}
-        onClose={() => setQrOpen(false)}
+        isOpen={modals.qrOpen}
+        onClose={closeQr}
         onScanResult={handleScanResult}
       />
       <CSVImportModal
-        isOpen={csvImportOpen}
+        isOpen={modals.csvImportOpen}
         userRole={currentUser?.role ?? 'guest'}
         categories={categories}
         sites={sites}
-        onClose={() => setCsvImportOpen(false)}
+        onClose={closeCsvImport}
         onSuccess={(count) => {
           refresh();
           showToast(`Berhasil mengunggah ${count} unit aset dari CSV!`);
         }}
       />
       <ConfirmModal
-        isOpen={confirmOpen}
+        isOpen={modals.confirmOpen}
         title="Hapus Aset?"
-        message={`Aset "${detailItem?.brand ?? ''} ${detailItem?.model_type ?? detailItem?.serial_number ?? ''}" akan dihapus dari inventaris. Tindakan ini bisa dibatalkan oleh Admin melalui database.`}
+        message={`Aset "${modals.detailItem?.brand ?? ''} ${modals.detailItem?.model_type ?? modals.detailItem?.serial_number ?? ''}" akan dihapus dari inventaris. Tindakan ini bisa dibatalkan oleh Admin melalui database.`}
         confirmLabel="Ya, Hapus Aset"
         icon="fa-trash-alt"
         onConfirm={handleDeleteConfirm}
-        onCancel={() => setConfirmOpen(false)}
+        onCancel={closeConfirm}
       />
       <ProposeDisposalModal
-        isOpen={proposeDisposalOpen}
-        asset={detailItem}
+        isOpen={modals.proposeDisposalOpen}
+        asset={modals.detailItem}
         currentUserId={currentUser?.telegram_id || 0}
-        onClose={() => setProposeDisposalOpen(false)}
+        onClose={closeProposeDisposal}
         onSuccess={() => { refresh(); }}
         onShowToast={showToast}
       />

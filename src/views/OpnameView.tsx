@@ -27,6 +27,7 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
   const [activeTab, setActiveTab] = useState<'session' | 'queue'>('session');
   const [siteInput, setSiteInput] = useState<string>('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [isProcessingScan, setIsProcessingScan] = useState(false);
   const [scannedAssets, setScannedAssets] = useState<AssetDetail[]>([]);
   const [lastScanMsg, setLastScanMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -91,7 +92,9 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
   };
 
   const handleScanResult = async (text: string) => {
-    if (!session) return;
+    if (!session || isProcessingScan) return;
+    setIsProcessingScan(true);
+    
     const trimmed = text.trim().toLowerCase();
 
     // Cari aset di database global
@@ -102,11 +105,13 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
 
     if (!foundGlobal) {
       setLastScanMsg({ text: `❌ Aset tidak ditemukan di database: "${text}"`, ok: false });
+      setIsProcessingScan(false);
       return;
     }
 
     if (scannedAssets.some(a => a.id === foundGlobal.id)) {
       setLastScanMsg({ text: `⚠️ Aset sudah discanned: ${foundGlobal.serial_number}`, ok: false });
+      setIsProcessingScan(false);
       return;
     }
 
@@ -131,6 +136,7 @@ const OpnameView = ({ assets, sites, lockedAssetIds = new Set(), currentUserId, 
       setLastScanMsg({ text: `❌ Gagal menyimpan scan: ${err.message}`, ok: false });
     } finally {
       setLoading(false);
+      setIsProcessingScan(false);
     }
   };
 

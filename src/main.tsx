@@ -6,13 +6,16 @@ import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
 
 import { ThemeProvider } from './contexts/ThemeContext.tsx'
+import { ModalProvider } from './contexts/ModalContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <App />
+          <ModalProvider>
+            <App />
+          </ModalProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

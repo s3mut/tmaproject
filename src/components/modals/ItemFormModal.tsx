@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { AssetDetail, AssetStatus, Site, Category } from '../../types/inventory';
 import { ModalShell, Button, Input, Select, SiteSearchInput, Textarea } from '../ui';
 import QRScannerModal from './QRScannerModal';
+import { triggerHaptic } from '../../utils/telegramHaptics';
 
 interface FormData {
   serial_number: string;
@@ -69,9 +70,7 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
   const handleScanResult = (scannedText: string) => {
     if (activeScanField) {
       set(activeScanField, scannedText.trim());
-      try {
-        (window as any).Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
-      } catch {}
+      triggerHaptic('success');
     }
     setActiveScanField(null);
   };
@@ -178,8 +177,16 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
           value={form.description} onChange={e => set('description', e.target.value)} />
 
         <div className="flex gap-3 pt-2">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Batal</Button>
-          <Button type="submit" variant="primary" fullWidth loading={submitting}>Simpan</Button>
+          <Button type="button" variant="secondary" fullWidth onClick={onClose} disabled={submitting}>Batal</Button>
+          <Button type="submit" variant="primary" fullWidth disabled={submitting}>
+            {submitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <i className="fas fa-spinner fa-spin"></i> Memproses...
+              </span>
+            ) : (
+              'Simpan'
+            )}
+          </Button>
         </div>
       </form>
 

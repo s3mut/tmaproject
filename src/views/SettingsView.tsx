@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import type { Site, Category, TelegramUser, TelegramGroupRoute } from '../types/inventory';
-import { Button, ModalShell, Input } from '../components/ui';
-import UserManagementModal from '../components/modals/UserManagementModal';
+import { Button, ModalShell, Input, LoadingSpinner } from '../components/ui';
+
+const UserManagementModal = lazy(() => import('../components/modals/UserManagementModal'));
 import {
   getSystemSetting,
   updateSystemSetting,
@@ -877,13 +878,15 @@ const SettingsView: React.FC<Props> = ({
       </ModalShell>
 
       {userMgmtOpen && (
-        <UserManagementModal
-          isOpen={userMgmtOpen}
-          onClose={() => setUserMgmtOpen(false)}
-          sites={sites}
-          onShowToast={onShowToast}
-          onRefresh={onRefresh}
-        />
+        <Suspense fallback={<LoadingSpinner />}>
+          <UserManagementModal
+            isOpen={userMgmtOpen}
+            onClose={() => setUserMgmtOpen(false)}
+            sites={sites}
+            onShowToast={onShowToast}
+            onRefresh={onRefresh}
+          />
+        </Suspense>
       )}
     </div>
   );

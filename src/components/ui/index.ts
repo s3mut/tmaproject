@@ -11,3 +11,4 @@ export { default as SectionHeader }from './SectionHeader';
 export { default as EmptyState }   from './EmptyState';
 export { default as ModalShell }      from './ModalShell';
 export { default as SiteSearchInput }   from './SiteSearchInput';
+export { LoadingSpinner } from './LoadingSpinner';

@@ -1,8 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, AreaChart, Area,
-} from 'recharts';
+import { lazy, Suspense } from 'react';
 import { useReport } from '../hooks/useReport';
 import { useAuth } from '../contexts/AuthContext';
 import { getLoanReport, exportToCSV } from '../services/reportService';
@@ -10,13 +7,15 @@ import type { TransactionDetail, Site, Category } from '../types/inventory';
 import OverdueAlertModal from '../components/modals/OverdueAlertModal';
 import AuditTrailModal   from '../components/modals/AuditTrailModal';
 import LoanReportModal   from '../components/modals/LoanReportModal';
+import { LoadingSpinner } from '../components/ui';
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
-const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#f97316'];
 const STATUS_COLORS: Record<string, string> = {
   Active: '#10b981', Backup: '#3b82f6', Borrowed: '#8b5cf6',
   Repair: '#f59e0b', Retired: '#64748b', 'In Transit': '#06b6d4', Disposed: '#ef4444',
 };
+
+const ReportCharts = lazy(() => import('./ReportCharts'));
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 const KPICard = ({
@@ -263,80 +262,9 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
                 </div>
               </div>
 
-              {/* Mutation Trend Chart */}
-              {trendData.length > 0 && (
-                <div className="glass rounded-2xl p-4">
-                  <SectionTitle icon="fa-chart-bar" title="Trend Mutasi Aset" sub="12 Bulan Terakhir" />
-                  <div className="h-44">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={trendData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="gradSelesai" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#10b981" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                          </linearGradient>
-                          <linearGradient id="gradPending" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#f59e0b" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,116,139,0.2)" />
-                        <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                        <Tooltip content={<CustomBarTooltip />} />
-                        <Area type="monotone" dataKey="Selesai" stroke="#10b981" fill="url(#gradSelesai)" strokeWidth={2} />
-                        <Area type="monotone" dataKey="Pending" stroke="#f59e0b" fill="url(#gradPending)" strokeWidth={2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex justify-center gap-4 mt-2">
-                    <span className="flex items-center gap-1.5 text-[11px] text-slate-400"><span className="w-3 h-0.5 bg-emerald-400 rounded inline-block" />Selesai</span>
-                    <span className="flex items-center gap-1.5 text-[11px] text-slate-400"><span className="w-3 h-0.5 bg-amber-400 rounded inline-block" />Pending</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Asset Status Pie */}
-              {pieData.length > 0 && (
-                <div className="glass rounded-2xl p-4">
-                  <SectionTitle icon="fa-chart-pie" title="Distribusi Status Aset" />
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80}
-                          dataKey="value" paddingAngle={3}>
-                          {pieData.map((entry) => (
-                            <Cell key={entry.name} fill={STATUS_COLORS[entry.name] ?? '#64748b'} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(v: any, n: any) => [v.toLocaleString(), n]} />
-                        <Legend iconType="circle" iconSize={8}
-                          formatter={(v) => <span style={{ color: '#94a3b8', fontSize: 11 }}>{v}</span>} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-
-              {/* Top Site Ranking */}
-              {siteRanking.length > 0 && (
-                <div className="glass rounded-2xl p-4">
-                  <SectionTitle icon="fa-trophy" title="Top Site Peminjam" sub="Berdasarkan volume transaksi" />
-                  <div className="h-44">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={siteRanking.slice(0, 8)} layout="vertical"
-                        margin={{ top: 0, right: 16, left: -8, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,116,139,0.2)" horizontal={false} />
-                        <XAxis type="number" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                        <YAxis dataKey="site_alias" type="category" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} width={60} />
-                        <Tooltip content={<CustomBarTooltip />} />
-                        <Bar dataKey="total_loans" name="Total" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-                        <Bar dataKey="overdue_loans" name="Overdue" fill="#ef4444" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
+              <Suspense fallback={<LoadingSpinner />}>
+                <ReportCharts trendData={trendData} pieData={pieData} siteRanking={siteRanking} />
+              </Suspense>
             </>
           ) : (
             <div className="glass rounded-2xl p-8 text-center">
