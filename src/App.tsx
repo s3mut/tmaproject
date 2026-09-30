@@ -8,6 +8,7 @@ import { changeAssetStatus } from './services/assetService';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import type { TabName } from './components/BottomNav';
+import SubViewLayout from './components/layout/SubViewLayout';
 import Toast from './components/Toast';
 import ItemFormModal from './components/modals/ItemFormModal';
 import ItemDetailModal from './components/modals/ItemDetailModal';
@@ -38,12 +39,16 @@ function App() {
     refresh
   } = useInventory();
 
-  const [activeTab, setActiveTab]           = useState<TabName>('dashboard');
+  const [activeTab, setActiveTab]           = useState<TabName>('home');
+  const [activeSubView, setActiveSubView]   = useState<string | null>(null);
   const [searchValue, setSearchValue]       = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus]     = useState<string>('all');
   const [selectedRegion, setSelectedRegion]     = useState<string>('all');
   const [isShowingItems, setIsShowingItems]     = useState<boolean>(false);
+
+  const navigateTo = (subView: string) => setActiveSubView(subView);
+  const goBack = () => setActiveSubView(null);
 
   // Modals state
   const [formOpen, setFormOpen]             = useState(false);
@@ -84,23 +89,17 @@ function App() {
     if (error) showToast(`Error: ${error}`, 'error');
   }, [error, showToast]);
 
-  // Jika user berstatus guest, otomatis arahkan tab default ke 'transactions'
-  useEffect(() => {
-    if (currentUser?.role === 'guest') {
-      setActiveTab('transactions');
-    }
-  }, [currentUser?.role]);
-
   // Keamanan: Hanya role admin yang dapat mengakses tab 'settings'
   useEffect(() => {
-    if (activeTab === 'settings' && currentUser?.role !== 'admin') {
-      setActiveTab('profile');
+    if (activeSubView === 'settings' && currentUser?.role !== 'admin') {
+      setActiveSubView('profile');
     }
-  }, [activeTab, currentUser?.role]);
+  }, [activeSubView, currentUser?.role]);
 
   // Tab
   const handleTabChange = (tab: TabName) => {
     setActiveTab(tab);
+    setActiveSubView(null);
     setSearchValue('');
     setIsShowingItems(false);
   };
@@ -213,7 +212,7 @@ function App() {
   };
 
   const isGuest = currentUser?.role === 'guest';
-  const showFab = !isGuest && activeTab === 'dashboard';
+  const showFab = !isGuest && activeTab === 'home' && !activeSubView;
 
   // ── Auth Loading / Splash Screen ────────────────────────────────────────────
   if (authLoading) {
@@ -288,123 +287,129 @@ function App() {
     <div className="min-h-screen pb-20">
       <Toast message={toast.message} visible={toast.visible} type={toast.type} />
 
-      <Header
-        activeTab={activeTab}
-        searchValue={searchValue}
-        userRole={currentUser?.role}
-        onSearchChange={setSearchValue}
-        onScanClick={() => setQrOpen(true)}
-        onImportCSVClick={() => setCsvImportOpen(true)}
-      />
+      {!activeSubView && (
+        <Header
+          activeView={activeTab as any}
+          searchValue={searchValue}
+          userRole={currentUser?.role}
+          onSearchChange={setSearchValue}
+          onScanClick={() => setQrOpen(true)}
+          onImportCSVClick={() => setCsvImportOpen(true)}
+        />
+      )}
 
-      <main className="px-4 pt-4 pb-24">
+      {!activeSubView ? (
+        <main className="px-4 pt-4 pb-24">
+          <Suspense fallback={
+            <div className="flex flex-col items-center justify-center py-20 opacity-50">
+              <i className="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+              <p className="text-slate-400 text-sm animate-pulse">Memuat halaman...</p>
+            </div>
+          }>
+            {activeTab === 'home' && (
+              <DashboardView
+                assets={assets}
+                transactions={transactions}
+                loading={loading}
+                onItemClick={handleItemClick}
+                onViewAll={() => navigateTo('transactions')}
+              />
+            )}
+            {activeTab === 'menu' && (
+              <div className="flex flex-col items-center justify-center py-20">
+                <i className="fas fa-th-large text-4xl text-slate-700 mb-4"></i>
+                <p className="text-slate-500 text-sm">Menu Utama (Dalam Pengembangan)</p>
+              </div>
+            )}
+            {activeTab === 'profile' && (
+              <ProfileView onShowToast={showToast} />
+            )}
+          </Suspense>
+        </main>
+      ) : (
         <Suspense fallback={
           <div className="flex flex-col items-center justify-center py-20 opacity-50">
             <i className="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
             <p className="text-slate-400 text-sm animate-pulse">Memuat halaman...</p>
           </div>
         }>
-          {activeTab === 'dashboard' && (
-          <DashboardView
-            assets={assets}
-            sites={sites}
-            searchValue={searchValue}
-            initialCategory={selectedCategory}
-            initialStatus={selectedStatus}
-            initialRegion={selectedRegion}
-            isShowingItems={isShowingItems}
-            onClearFilters={() => {
-              setSearchValue('');
-              setSelectedCategory('all');
-              setSelectedStatus('all');
-              setSelectedRegion('all');
-              setIsShowingItems(false);
-            }}
-            transactions={transactions}
-            lockedAssetIds={lockedAssetIds}
-            categories={categories}
-            loading={loading}
-            onItemClick={handleItemClick}
-            onCategoryClick={handleCategoryClick}
-            onRegionClick={handleRegionClick}
-            onViewAll={() => setActiveTab('transactions')}
-            onStatusClick={handleStatusClick}
-          />
-        )}
-        {activeTab === 'transactions' && (
-          <TransactionsView
-            transactions={transactions}
-            sites={sites}
-            categories={categories}
-            loading={loading}
-            userRole={currentUser?.role}
-            currentUserId={currentUser?.telegram_id || 0}
-            currentUserRegion={currentUser?.assigned_region}
-            onCreateTransaction={() => { setDetailItem(null); setTransactionOpen(true); }}
-            onRefresh={refresh}
-            onUpdateStatus={async (id, status) => {
-              try {
-                await updateTrxStatus(id, status, currentUser?.telegram_id || 0);
-                showToast(`Status transaksi berhasil diperbarui menjadi ${status}`);
-              } catch (e: any) {
-                showToast(e.message, 'error');
-              }
-            }}
-          />
-        )}
-        {activeTab === 'sites' && <SitesView sites={sites} loading={loading} />}
-        {activeTab === 'opname' && (
-          <OpnameView
-            sites={sites}
-            assets={assets}
-            lockedAssetIds={lockedAssetIds}
-            currentUserId={currentUser?.telegram_id || 0}
-            userRole={currentUser?.role}
-            onShowToast={showToast}
-            onRefreshAssets={refresh}
-          />
-        )}
-        {activeTab === 'disposal' && (
-          <DisposalQueueView
-            currentUserId={currentUser?.telegram_id || 0}
-            currentUserName={currentUser?.name ?? 'Admin'}
-            currentUserRole={currentUser?.role}
-            onShowToast={showToast}
-            onRefreshAssets={refresh}
-          />
-        )}
-        {activeTab === 'profile' && (
-          <ProfileView
-            assets={assets}
-            transactions={transactions}
-            sites={sites}
-            categories={categories}
-            onShowToast={showToast}
-            onOpenReport={() => setActiveTab('report')}
-            onOpenSettings={() => setActiveTab('settings')}
-          />
-        )}
-        {activeTab === 'report' && (
-          <ReportView
-            onBack={() => setActiveTab('profile')}
-            onShowToast={showToast}
-            sites={sites}
-            categories={categories}
-            transactions={transactions}
-          />
-        )}
-        {activeTab === 'settings' && (
-          <SettingsView
-            onBack={() => setActiveTab('profile')}
-            onShowToast={showToast}
-            sites={sites}
-            categories={categories}
-            currentUser={currentUser}
-            onRefresh={refresh}
-          />
-        )}
-      </Suspense>
-      </main>
+          {activeSubView === 'transactions' && (
+            <SubViewLayout title="Mutasi Aset" onBack={goBack}>
+              <TransactionsView
+                transactions={transactions}
+                sites={sites}
+                categories={categories}
+                loading={loading}
+                userRole={currentUser?.role}
+                currentUserId={currentUser?.telegram_id || 0}
+                currentUserRegion={currentUser?.assigned_region}
+                onCreateTransaction={() => { setDetailItem(null); setTransactionOpen(true); }}
+                onRefresh={refresh}
+                onUpdateStatus={async (id, status) => {
+                  try {
+                    await updateTrxStatus(id, status, currentUser?.telegram_id || 0);
+                    showToast(`Status transaksi berhasil diperbarui menjadi ${status}`);
+                  } catch (e: any) {
+                    showToast(e.message, 'error');
+                  }
+                }}
+              />
+            </SubViewLayout>
+          )}
+          {activeSubView === 'sites' && (
+            <SubViewLayout title="Daftar Site" onBack={goBack}>
+              <SitesView sites={sites} loading={loading} />
+            </SubViewLayout>
+          )}
+          {activeSubView === 'opname' && (
+            <SubViewLayout title="Stock Opname" onBack={goBack}>
+              <OpnameView
+                sites={sites}
+                assets={assets}
+                lockedAssetIds={lockedAssetIds}
+                currentUserId={currentUser?.telegram_id || 0}
+                userRole={currentUser?.role}
+                onShowToast={showToast}
+                onRefreshAssets={refresh}
+              />
+            </SubViewLayout>
+          )}
+          {activeSubView === 'disposal' && (
+            <SubViewLayout title="Antrean Afkir" onBack={goBack}>
+              <DisposalQueueView
+                currentUserId={currentUser?.telegram_id || 0}
+                currentUserName={currentUser?.name ?? 'Admin'}
+                currentUserRole={currentUser?.role}
+                onShowToast={showToast}
+                onRefreshAssets={refresh}
+              />
+            </SubViewLayout>
+          )}
+          {activeSubView === 'report' && (
+            <SubViewLayout title="Laporan & Analitik" onBack={goBack}>
+              <ReportView
+                onBack={goBack}
+                onShowToast={showToast}
+                sites={sites}
+                categories={categories}
+                transactions={transactions}
+              />
+            </SubViewLayout>
+          )}
+          {activeSubView === 'settings' && (
+            <SubViewLayout title="Super Admin Settings" onBack={goBack}>
+              <SettingsView
+                onBack={goBack}
+                onShowToast={showToast}
+                sites={sites}
+                categories={categories}
+                currentUser={currentUser}
+                onRefresh={refresh}
+              />
+            </SubViewLayout>
+          )}
+        </Suspense>
+      )}
 
       {showFab && (
         <button className="floating-btn" onClick={handleAddClick}>
@@ -412,7 +417,9 @@ function App() {
         </button>
       )}
 
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} isGuest={isGuest} userRole={currentUser?.role} />
+      {!activeSubView && (
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      )}
 
       <ItemFormModal
         isOpen={formOpen}

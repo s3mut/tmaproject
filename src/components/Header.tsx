@@ -1,20 +1,21 @@
-import type { TabName } from './BottomNav';
+export type ViewName = 'home' | 'menu' | 'profile' | 'transactions' | 'sites' | 'opname' | 'disposal' | 'report' | 'settings';
 
 interface TabConfig { title: string; subtitle: string; }
 
-const tabTitles: Record<TabName, TabConfig> = {
-  dashboard:    { title: 'Inventory IT',         subtitle: 'Kelola aset teknologi' },
+const tabTitles: Record<ViewName, TabConfig> = {
+  home:         { title: 'Inventory IT',         subtitle: 'Kelola aset teknologi' },
+  menu:         { title: 'Menu Utama',           subtitle: 'Akses fitur sistem' },
+  profile:      { title: 'Profil',               subtitle: 'Pengaturan akun' },
   transactions: { title: 'Mutasi Aset',          subtitle: 'Riwayat perpindahan' },
   sites:        { title: 'Daftar Site',          subtitle: 'Lokasi cabang & operasional' },
   opname:       { title: 'Stock Opname',         subtitle: 'Audit fisik aset' },
   disposal:     { title: 'Antrean Afkir',        subtitle: 'Kelola usulan pemusnahan aset' },
-  profile:      { title: 'Profil',               subtitle: 'Pengaturan akun' },
   report:       { title: 'Laporan & Analitik',   subtitle: 'KPI, utilization & audit trail' },
   settings:     { title: 'Super Admin Settings', subtitle: 'Pusat konfigurasi dinamis E1-TMA' },
 };
 
 interface Props {
-  activeTab: TabName;
+  activeView: ViewName;
   searchValue: string;
   userRole?: string;
   onSearchChange: (value: string) => void;
@@ -22,9 +23,9 @@ interface Props {
   onImportCSVClick?: () => void;
 }
 
-const Header = ({ activeTab, searchValue, userRole, onSearchChange, onScanClick, onImportCSVClick }: Props) => {
-  const { title, subtitle } = tabTitles[activeTab];
-  const showSearch = activeTab === 'dashboard';
+const Header = ({ activeView, searchValue, userRole, onSearchChange, onScanClick, onImportCSVClick }: Props) => {
+  const { title, subtitle } = tabTitles[activeView];
+  const showSearch = activeView === 'home';
   const isAdmin = userRole === 'admin';
 
   return (

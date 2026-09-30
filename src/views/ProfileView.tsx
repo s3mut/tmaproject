@@ -1,18 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { AssetDetail, TransactionDetail, Site, Category } from '../types/inventory';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { getTelegramSDKUser, testBotNotification } from '../services/userService';
+import { getTelegramSDKUser } from '../services/userService';
 import RequestAccessModal from '../components/modals/RequestAccessModal';
 import SetPasswordModal from '../components/modals/SetPasswordModal';
-import BackupModal from '../components/modals/BackupModal';
-import UserManagementModal from '../components/modals/UserManagementModal';
-import OverdueAlertModal from '../components/modals/OverdueAlertModal';
-import ExportGSheetModal from '../components/modals/ExportGSheetModal';
-import BulkDisposalModal from '../components/modals/BulkDisposalModal';
-import { getOverdueLoans } from '../services/reportService';
-import type { OverdueLoan } from '../services/reportService';
-import { getPendingUsersCount } from '../services/userService';
 
 interface Props {
   assets?:     AssetDetail[];
@@ -24,191 +16,89 @@ interface Props {
   onOpenSettings?: () => void;
 }
 
-const ProfileView = ({ assets = [], transactions = [], sites = [], categories = [], onShowToast, onOpenReport, onOpenSettings }: Props) => {
+const ProfileView = ({ onShowToast }: Props) => {
   const { currentUser, authMethod, logout, refreshUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [setPassModalOpen, setSetPassModalOpen] = useState(false);
-  const [backupModalOpen, setBackupModalOpen]   = useState(false);
-  const [userMgmtModalOpen, setUserMgmtModalOpen] = useState(false);
-  const [overdueOpen, setOverdueOpen]           = useState(false);
-  const [gsheetModalOpen, setGsheetModalOpen]   = useState(false);
-  const [bulkDisposalModalOpen, setBulkDisposalModalOpen] = useState(false);
-  const [overdueLoans, setOverdueLoans]         = useState<OverdueLoan[]>([]);
-  const [pendingReqCount, setPendingReqCount]   = useState(0);
-  const [testingBot, setTestingBot]             = useState(false);
-
-  const handleTestBotNotification = async () => {
-    if (testingBot) return;
-    setTestingBot(true);
-    onShowToast?.('Mengirim pesan uji coba ke Telegram...', 'success');
-    try {
-      const res = await testBotNotification();
-      if (res.success) {
-        onShowToast?.('✅ ' + res.message, 'success');
-      } else {
-        onShowToast?.('❌ ' + res.message, 'error');
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      onShowToast?.('❌ ' + msg, 'error');
-    } finally {
-      setTestingBot(false);
-    }
-  };
 
   const isGuest   = currentUser?.role === 'guest';
-  const isAdmin   = currentUser?.role === 'admin';
-
-  // Fetch overdue count & pending requests count on mount for badge display (non-blocking)
-  useEffect(() => {
-    if (!isGuest) {
-      getOverdueLoans().then(setOverdueLoans).catch(() => {});
-    }
-    if (isAdmin) {
-      getPendingUsersCount().then(setPendingReqCount).catch(() => {});
-    }
-  }, [isGuest, isAdmin]);
-
   const sdkUser = getTelegramSDKUser();
 
   const roleColor: Record<string, string> = {
-    admin: 'text-yellow-400 bg-yellow-500/15 border-yellow-500/30',
-    user:  'text-blue-400 bg-blue-500/15 border-blue-500/30',
-    guest: 'text-slate-400 bg-slate-500/15 border-slate-500/30',
+    admin: 'text-yellow-500 dark:text-yellow-400 bg-yellow-500/15 border-yellow-500/30',
+    user:  'text-blue-500 dark:text-blue-400 bg-blue-500/15 border-blue-500/30',
+    guest: 'text-slate-500 dark:text-slate-400 bg-slate-500/15 border-slate-500/30',
   };
 
   const isPending = currentUser?.notes?.includes('PENDING_APPROVAL');
   const isTelegramLogin = authMethod === 'telegram';
 
-  let menuItems = [
-    // Menu Khusus Admin IT
-    ...(isAdmin ? [
-      {
-        icon: 'fa-database', color: 'text-amber-400', bg: 'bg-amber-500/20',
-        title: 'Backup & Export Data', subtitle: 'Export CSV Master Aset, Mutasi, & Snapshot JSON',
-        onClick: () => setBackupModalOpen(true),
-        badge: 'ADMIN ONLY',
-      },
-      {
-        icon: 'fa-users-cog', color: 'text-indigo-400', bg: 'bg-indigo-500/20',
-        title: 'Manajemen Akun & Region IT', subtitle: 'Kelola role pengguna & pembagian wilayah wewenang IT',
-        onClick: () => setUserMgmtModalOpen(true),
-        badge: pendingReqCount > 0 ? `${pendingReqCount} REQ` : 'ADMIN ONLY',
-        badgeDot: pendingReqCount > 0 ? String(pendingReqCount) : undefined,
-      },
-      {
-        icon: 'fa-paper-plane', color: 'text-sky-400', bg: 'bg-sky-500/20',
-        title: 'Tes Notifikasi Bot Telegram', subtitle: testingBot ? 'Sedang mengirim pesan tes...' : 'Kirim pesan uji coba ke Admin Chat via Edge Function',
-        onClick: handleTestBotNotification,
-        badge: 'DIAGNOSTIK',
-      },
-      {
-        icon: 'fa-sliders-h', color: 'text-purple-400', bg: 'bg-purple-500/20',
-        title: 'Pengaturan Super Admin', subtitle: 'Pusat konfigurasi dinamis, SLA, routing bot, & kontrol sistem',
-        onClick: () => onOpenSettings ? onOpenSettings() : alert('Fitur settings belum tersedia!'),
-        badge: 'SUPER ADMIN',
-      },
-    ] : []),
-    {
-      icon: 'fa-dumpster', color: 'text-red-400', bg: 'bg-red-500/20',
-      title: 'Pemusnahan Massal & BAST', subtitle: 'Proses penghapusan aset massal & cetak BAST Pemusnahan',
-      onClick: () => setBulkDisposalModalOpen(true),
-      hideGuest: true,
-    },
-    {
-      icon: 'fa-file-excel', color: 'text-emerald-400', bg: 'bg-emerald-500/20',
-      title: 'Export ke Google Sheets', subtitle: 'Kirim snapshot data inventory ke spreadsheet Google Anda',
-      onClick: () => setGsheetModalOpen(true),
-      hideGuest: true,
-    },
-    {
-      icon: 'fa-chart-pie', color: 'text-blue-400', bg: 'bg-blue-500/20',
-      title: 'Laporan & Analitik', subtitle: 'KPI, utilization, audit trail, laporan peminjaman',
-      onClick: () => onOpenReport ? onOpenReport() : alert('Fitur laporan belum tersedia!'),
-      badge: undefined,
-      badgeDot: undefined,
-      hideGuest: true,
-    },
-    {
-      icon: 'fa-bell', color: overdueLoans.length > 0 ? 'text-red-400' : 'text-amber-400',
-      bg: overdueLoans.length > 0 ? 'bg-red-500/20' : 'bg-amber-500/20',
-      title: 'Alert Overdue',
-      subtitle: overdueLoans.length > 0
-        ? `⚠️ ${overdueLoans.length} tiket melewati jatuh tempo`
-        : 'Semua pinjaman tepat waktu',
-      onClick: () => setOverdueOpen(true),
-      badgeDot: overdueLoans.length > 0 ? String(overdueLoans.length) : undefined,
-      hideGuest: true,
-    },
-    {
-      icon: 'fa-sync-alt', color: 'text-emerald-400', bg: 'bg-emerald-500/20',
-      title: 'Sinkronisasi Data', subtitle: 'Refresh dari Supabase',
-      onClick: () => window.location.reload(),
-      hideGuest: true,
-    },
+  const menuItems = [
     // Hanya tampilkan Set Password Web jika login via Telegram
     ...(isTelegramLogin ? [{
-      icon: 'fa-key', color: 'text-blue-400', bg: 'bg-blue-500/20',
+      icon: 'fa-key', color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-500/10 dark:bg-blue-500/20',
       title: 'Password Akses Web', subtitle: 'Set / ubah password untuk login via browser',
       onClick: () => setSetPassModalOpen(true),
     }] : []),
     {
       icon: theme === 'dark' ? 'fa-sun' : 'fa-moon', 
-      color: theme === 'dark' ? 'text-yellow-400' : 'text-slate-700', 
+      color: theme === 'dark' ? 'text-yellow-400' : 'text-slate-600', 
       bg: theme === 'dark' ? 'bg-yellow-500/20' : 'bg-slate-200',
       title: 'Tema Aplikasi', 
       subtitle: `Beralih ke mode ${theme === 'dark' ? 'Terang' : 'Gelap'}`,
       onClick: toggleTheme,
     },
     {
-      icon: 'fa-shield-alt', color: 'text-orange-400', bg: 'bg-orange-500/20',
-      title: 'Info Koneksi',
-      subtitle: `${currentUser?.username ? `@${currentUser.username} • ` : ''}ID: ${currentUser?.telegram_id || sdkUser.id}`,
-      onClick: () => onShowToast?.(`✅ ${currentUser?.name} | Role: ${(currentUser?.role || 'guest').toUpperCase()} | Login: ${authMethod === 'telegram' ? 'Telegram' : 'Web Browser'}`, 'success'),
+      icon: 'fa-shield-alt', color: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+      title: 'Status Koneksi',
+      subtitle: `Terkoneksi via ${isTelegramLogin ? 'Telegram WebApp' : 'Web Browser Session'}`,
+      onClick: () => onShowToast?.(`Koneksi aktif: ${isTelegramLogin ? 'Telegram' : 'Web'}`, 'success'),
     },
   ];
 
-  if (isGuest) {
-    menuItems = menuItems.filter(item => !(item as any).hideGuest);
-  }
-
   return (
-    <div className="fade-in space-y-4">
+    <div className="fade-in space-y-4 max-w-md mx-auto">
       {/* Avatar & User Info */}
-      <div className="text-center py-6 glass rounded-2xl p-6 relative overflow-hidden">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-3 text-white text-xl font-bold shadow-lg shadow-blue-500/30">
+      <div className="text-center py-6 glass rounded-3xl p-6 relative overflow-hidden shadow-lg border border-white/20 dark:border-slate-700/50">
+        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 opacity-50 blur-2xl pointer-events-none"></div>
+        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4 text-white text-3xl font-bold shadow-xl shadow-blue-500/30 ring-4 ring-white/40 dark:ring-white/10">
           {(currentUser?.name || 'IT').split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
         </div>
-        <h2 className="text-lg font-bold text-slate-50">{currentUser?.name || 'Pengguna'}</h2>
+        <h2 className="relative text-xl font-bold text-slate-800 dark:text-slate-50">{currentUser?.name || 'Pengguna'}</h2>
 
         {sdkUser.username && isTelegramLogin && (
-          <p className="text-xs text-blue-400 font-medium">@{sdkUser.username}</p>
+          <p className="relative text-sm text-blue-500 dark:text-blue-400 font-medium mt-1">@{sdkUser.username}</p>
         )}
 
-        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-          <span className="text-xs text-slate-400 font-mono">ID: {currentUser?.telegram_id || '—'}</span>
-          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${roleColor[currentUser?.role || 'guest']}`}>
+        <div className="relative flex items-center justify-center gap-2 mt-4 flex-wrap">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-slate-800/50 px-2.5 py-1 rounded-lg">ID: {currentUser?.telegram_id || sdkUser.id || '—'}</span>
+          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border ${roleColor[currentUser?.role || 'guest']}`}>
             {(currentUser?.role || 'GUEST').toUpperCase()}
           </span>
-          {/* Badge metode login */}
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${isTelegramLogin ? 'bg-blue-500/15 text-blue-400' : 'bg-slate-700 text-slate-400'}`}>
-            <i className={`fab ${isTelegramLogin ? 'fa-telegram' : 'fa-globe'} text-[10px]`}></i>
+          <span className={`text-[10px] font-medium px-2.5 py-1 rounded-lg flex items-center gap-1.5 ${isTelegramLogin ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20' : 'bg-slate-700 border border-slate-600 text-slate-300'}`}>
+            <i className={`fab ${isTelegramLogin ? 'fa-telegram' : 'fa-globe'} text-[11px]`}></i>
             {isTelegramLogin ? 'Telegram' : 'Web'}
           </span>
+          {currentUser?.assigned_region && (
+             <span className="text-[10px] font-medium px-2.5 py-1 rounded-lg flex items-center gap-1.5 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/20">
+               <i className="fas fa-map-marker-alt"></i>
+               {currentUser.assigned_region}
+             </span>
+          )}
         </div>
       </div>
 
       {/* Banner Khusus Guest / Pending Request Access */}
       {isGuest && (
-        <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/10 border border-amber-500/40 rounded-2xl p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-              <i className="fas fa-user-lock text-lg"></i>
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/5 border border-amber-500/30 rounded-3xl p-5 space-y-4 backdrop-blur-sm">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <i className="fas fa-user-lock text-xl"></i>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-50">Akses Tim IT (Guest)</h3>
-              <p className="text-xs text-amber-200/80 mt-0.5">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-50">Akses Tim IT (Guest)</h3>
+              <p className="text-xs text-slate-600 dark:text-amber-200/80 mt-1 leading-relaxed">
                 {isPending
                   ? 'Pengajuan akses Anda sedang dalam proses verifikasi oleh Admin IT.'
                   : 'Akun Anda berstatus Guest (akses terbatas). Ajukan verifikasi ke Admin untuk mendapatkan akses penuh Tim IT.'}
@@ -218,7 +108,7 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
 
           <button
             onClick={() => setRequestModalOpen(true)}
-            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all"
+            className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
             <i className="fas fa-paper-plane"></i>
             {isPending ? 'Kirim Ulang Request Akses IT' : 'Request Akses Tim IT'}
@@ -227,66 +117,36 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
       )}
 
       {/* Menu Options */}
-      <div className="space-y-2">
+      <div className="space-y-3 pt-2">
         {menuItems.map((item) => (
           <div
             key={item.title}
-            className="glass rounded-xl p-4 flex items-center justify-between cursor-pointer card-hover"
+            className="glass rounded-3xl p-4 flex items-center justify-between cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 active:scale-[0.98] transition-all"
             onClick={item.onClick}
           >
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${item.bg} flex items-center justify-center ${item.color} relative`}>
-                <i className={`fas ${item.icon}`}></i>
-                {(item as any).badgeDot && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
-                    {(item as any).badgeDot}
-                  </span>
-                )}
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-2xl ${item.bg} flex items-center justify-center ${item.color} shadow-sm`}>
+                <i className={`fas ${item.icon} text-lg`}></i>
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-slate-50">{item.title}</p>
-                  {(item as any).badge && (
-                    <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-wider rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 uppercase">
-                      {(item as any).badge}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400">{item.subtitle}</p>
+                <p className="text-[15px] font-bold text-slate-800 dark:text-slate-100">{item.title}</p>
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">{item.subtitle}</p>
               </div>
             </div>
-            <i className="fas fa-chevron-right text-slate-600 text-xs"></i>
+            <i className="fas fa-chevron-right text-slate-400 text-sm"></i>
           </div>
         ))}
       </div>
 
-      {/* Logout button (hanya untuk web login) */}
-      {authMethod === 'web' && (
-        <button
-          onClick={logout}
-          className="w-full py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-        >
-          <i className="fas fa-sign-out-alt"></i> Keluar dari Akses Web
-        </button>
-      )}
+      {/* Logout button */}
+      <button
+        onClick={logout}
+        className="w-full mt-6 py-4 rounded-3xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+      >
+        <i className="fas fa-sign-out-alt text-lg"></i> Keluar dari Aplikasi
+      </button>
 
-      {/* Database Status Badge (Dihilangkan untuk Guest) */}
-      {!isGuest && (
-        <div className="glass rounded-xl p-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <i className="fas fa-database"></i>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-50">Database</p>
-            <p className="text-xs text-slate-500">
-              {isTelegramLogin ? 'Auto-Synced via Telegram SDK' : 'Login via Browser (Web Session)'}
-            </p>
-          </div>
-          <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-        </div>
-      )}
-
-      {/* Request Access Modal */}
+      {/* Modals */}
       {currentUser && (
         <RequestAccessModal
           isOpen={requestModalOpen}
@@ -300,7 +160,6 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
         />
       )}
 
-      {/* Set Web Password Modal (Telegram login only) */}
       <SetPasswordModal
         isOpen={setPassModalOpen}
         onClose={() => setSetPassModalOpen(false)}
@@ -308,68 +167,6 @@ const ProfileView = ({ assets = [], transactions = [], sites = [], categories = 
           if (onShowToast) onShowToast(msg, 'success');
           else alert(msg);
         }}
-      />
-
-      {/* Admin Backup Modal */}
-      <BackupModal
-        isOpen={backupModalOpen}
-        onClose={() => setBackupModalOpen(false)}
-        assets={assets}
-        transactions={transactions}
-        sites={sites}
-        categories={categories}
-        adminName={currentUser?.name}
-        onShowToast={onShowToast}
-      />
-
-      {/* Admin User & Region Management Modal */}
-      <UserManagementModal
-        isOpen={userMgmtModalOpen}
-        onClose={() => {
-          setUserMgmtModalOpen(false);
-          // Refresh hitungan saat modal manajemen akun ditutup
-          if (isAdmin) getPendingUsersCount().then(setPendingReqCount).catch(() => {});
-        }}
-        sites={sites}
-        onShowToast={onShowToast}
-        onRefresh={() => {
-          refreshUser();
-          if (isAdmin) getPendingUsersCount().then(setPendingReqCount).catch(() => {});
-        }}
-      />
-
-      {/* Overdue Alert Modal */}
-      <OverdueAlertModal
-        isOpen={overdueOpen}
-        overdueLoans={overdueLoans}
-        onClose={() => setOverdueOpen(false)}
-        onRefresh={async () => {
-          const data = await getOverdueLoans();
-          setOverdueLoans(data);
-          return data;
-        }}
-        onShowToast={onShowToast}
-      />
-
-      {/* Export to Google Sheets Modal */}
-      <ExportGSheetModal
-        isOpen={gsheetModalOpen}
-        onClose={() => setGsheetModalOpen(false)}
-        assets={assets}
-        onShowToast={onShowToast}
-      />
-
-      {/* Bulk Disposal Modal */}
-      <BulkDisposalModal
-        isOpen={bulkDisposalModalOpen}
-        onClose={() => setBulkDisposalModalOpen(false)}
-        assets={assets}
-        currentUserId={currentUser?.telegram_id}
-        currentUserName={currentUser?.name}
-        onSuccess={() => {
-          if (onShowToast) onShowToast('✅ Data pemusnahan berhasil disimpan!', 'success');
-        }}
-        onShowToast={onShowToast}
       />
     </div>
   );
