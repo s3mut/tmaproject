@@ -1410,3 +1410,18 @@ STEP 36: UX POLISHING & OPTIMISTIC UI REFACTOR (2026-09-30)
 - FASE 2: Menyempurnakan Telegram Haptic Feedback dengan menambahkan pemanggilan triggerHaptic('light') pada setiap navigasi menu utama di MenuView.tsx dan peralihan tab di App.tsx agar terasa selayaknya native app.
 - FASE 3: Menerapkan Form Validation Parity di ItemFormModal.tsx secara client-side (pengecekan Serial Number, Kategori, Site Alias) agar konsisten dengan TransactionModal.tsx dan mencegah pengiriman request kosong ke API.
 - FASE 4: Meningkatkan performa interaksi (Optimistic UI) pada aksi Write (addAsset, editAsset, createNewTransaction, updateTrxStatus) dengan memanfaatkan object spread dan local enrichment (tanpa SQL query refetch penuh) di dalam useInventory.ts, sehingga perubahan muncul secara instan (<100ms) di UI.
+
+--------------------------------------------------------------------------------
+STEP 37: THEME FIX — ROLLBACK & CSS VARIABLE AUTO-INVERT DISCOVERY (2026-10-01)
+--------------------------------------------------------------------------------
+TEMUAN KRITIS: index.css menggunakan arsitektur CSS Variable Auto-Invert di mana
+seluruh palette slate di :root (light mode) di-map TERBALIK dari standar Tailwind
+(slate-50 = gelap, slate-900 = terang). Saat .dark aktif, nilai dikembalikan ke
+standar. Sistem ini memungkinkan satu className Tailwind (misal text-slate-50)
+secara otomatis menampilkan warna gelap di light mode DAN terang di dark mode.
+
+ROLLBACK 11 FILE (Select, Textarea, ModalShell, SectionHeader, Skeleton,
+EmptyState, SiteSearchInput, MenuView, ItemsView, ItemCard, SubViewLayout).
+FIX BUG ASLI di SubViewLayout.tsx: bg-slate-50 -> bg-slate-950 (auto-invert),
+h1 text-slate-900 -> text-slate-50, hover:bg-slate-100 -> hover:bg-slate-800.
+Verifikasi: npx tsc --noEmit (exit 0), npm run build (exit 0).

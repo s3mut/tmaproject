@@ -44,13 +44,13 @@ const Textarea = ({
         onFocus={(e) => { setFocused(true); rest.onFocus?.(e); }}
         onBlur={(e)  => { setFocused(false); rest.onBlur?.(e); }}
         className={[
-          'w-full bg-white/70 dark:bg-slate-900/70 border text-slate-900 dark:text-slate-100 text-sm rounded-xl px-4 py-3 resize-none transition-all duration-200 outline-none',
-          'placeholder:text-slate-500 dark:placeholder:text-slate-400',
+          'w-full bg-slate-900/70 border text-slate-100 text-sm rounded-xl px-4 py-3 resize-none transition-all duration-200 outline-none',
+          'placeholder:text-slate-600',
           focused
-            ? 'border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.12)] bg-white/90 dark:bg-slate-900/90'
+            ? 'border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.12)] bg-slate-900/90'
             : error
             ? 'border-red-500/60'
-            : 'border-slate-200/60 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600',
+            : 'border-slate-700/60 hover:border-slate-600',
           className,
         ].filter(Boolean).join(' ')}
       />

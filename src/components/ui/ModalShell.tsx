@@ -45,19 +45,19 @@ const ModalShell = ({
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-700/60">
           <div className="flex items-center gap-3">
             {titleIcon && (
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${titleIconBg}`}>
                 <i className={`fas ${titleIcon} text-base`} />
               </div>
             )}
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-50">{title}</h2>
+            <h2 className="text-base font-bold text-slate-50">{title}</h2>
           </div>
           <button
             onClick={onClose}
             aria-label="Tutup"
-            className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 flex items-center justify-center transition-all"
+            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-50 flex items-center justify-center transition-all"
           >
             <i className="fas fa-times text-sm" />
           </button>

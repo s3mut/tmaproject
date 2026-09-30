@@ -20,7 +20,7 @@ const ItemCard = ({ item, isLocked, onClick }: Props) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-50 truncate flex items-center gap-2">
                 {item.brand} {item.model_type ?? item.serial_number}
                 {isLocked && <i className="fas fa-lock text-amber-500 text-xs" title="Sedang diproses"></i>}
               </h3>
@@ -39,7 +39,7 @@ const ItemCard = ({ item, isLocked, onClick }: Props) => {
                 {item.computer_name}
               </span>
             )}
-            <span className="text-slate-600 dark:text-slate-400">{item.category_name}</span>
+            <span className="text-slate-600">{item.category_name}</span>
           </div>
         </div>
       </div>

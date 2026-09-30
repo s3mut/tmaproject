@@ -7,9 +7,9 @@
 export const SkeletonCard = ({ lines = 2 }: { lines?: number }) => (
   <div className="item-card rounded-xl p-4 animate-pulse">
     <div className="flex gap-3">
-      <div className="w-10 h-10 rounded-lg bg-slate-200/80 dark:bg-slate-700/80 flex-shrink-0" />
+      <div className="w-10 h-10 rounded-lg bg-slate-700/80 flex-shrink-0" />
       <div className="flex-1 space-y-2 pt-0.5">
-        <div className="h-3.5 bg-slate-200/80 dark:bg-slate-700/80 rounded-lg w-3/4" />
+        <div className="h-3.5 bg-slate-700/80 rounded-lg w-3/4" />
         {lines >= 2 && <div className="h-3 bg-slate-700/60 rounded-lg w-1/2" />}
         {lines >= 3 && <div className="h-3 bg-slate-700/40 rounded-lg w-2/3" />}
       </div>
@@ -31,12 +31,12 @@ export const SkeletonList = ({ count = 3 }: { count?: number }) => (
 
 // ── Stat Card Skeleton ────────────────────────────────────────────────────────
 export const SkeletonStat = () => (
-  <div className="rounded-xl p-4 animate-pulse border border-slate-200/50 dark:border-slate-800/50 bg-slate-100/30 dark:bg-slate-800/30">
+  <div className="rounded-xl p-4 animate-pulse border border-slate-800/50 bg-slate-800/30">
     <div className="flex items-center justify-between mb-3">
-      <div className="h-3 bg-slate-200/80 dark:bg-slate-700/80 rounded w-16" />
-      <div className="w-8 h-8 rounded-lg bg-slate-200/80 dark:bg-slate-700/80" />
+      <div className="h-3 bg-slate-700/80 rounded w-16" />
+      <div className="w-8 h-8 rounded-lg bg-slate-700/80" />
     </div>
-    <div className="h-7 bg-slate-200/80 dark:bg-slate-700/80 rounded-lg w-12" />
+    <div className="h-7 bg-slate-700/80 rounded-lg w-12" />
   </div>
 );
 
