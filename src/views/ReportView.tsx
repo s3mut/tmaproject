@@ -16,6 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const ReportCharts = lazy(() => import('./ReportCharts'));
+const UtilizationChart = lazy(() => import('../components/charts/UtilizationChart'));
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 const KPICard = ({
@@ -56,19 +57,6 @@ const SectionTitle = ({ icon, title, sub }: { icon: string; title: string; sub?:
     </div>
   </div>
 );
-
-// ─── Custom Tooltip ────────────────────────────────────────────────────────────
-const CustomBarTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-slate-800 border border-slate-600 rounded-xl p-3 text-xs shadow-xl">
-      <p className="font-bold text-slate-50 mb-1">{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color }}>{p.name}: {p.value}</p>
-      ))}
-    </div>
-  );
-};
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
@@ -389,19 +377,9 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
             <div className="glass rounded-2xl p-4">
               <SectionTitle icon="fa-chart-bar" title="Top Kategori by Total Aset" sub="6 kategori terbesar" />
               <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topCategories} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,116,139,0.2)" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<CustomBarTooltip />} />
-                    <Bar dataKey="total" name="Total Aset" radius={[4, 4, 0, 0]}>
-                      {topCategories.map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <UtilizationChart data={topCategories} />
+                </Suspense>
               </div>
             </div>
           )}

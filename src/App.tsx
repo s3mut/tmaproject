@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useInventory } from './hooks/useInventory';
 import { useCameraPermission } from './hooks/useCameraPermission';
-import type { AssetDetail } from './types/inventory';
+
 import { useAuth } from './contexts/AuthContext';
 import { useModals } from './contexts/ModalContext';
 import { changeAssetStatus } from './services/assetService';
