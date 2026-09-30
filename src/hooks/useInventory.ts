@@ -83,21 +83,6 @@ export function useInventory() {
     }
   }, []);
 
-  const fetchAssetsAndTransactions = useCallback(async () => {
-    try {
-      const [assetsRes, trxRes, lockedRes] = await Promise.allSettled([
-        getAssets(),
-        getTransactions(),
-        getActiveTransactionAssetIds(),
-      ]);
-      if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
-      if (trxRes.status === 'fulfilled') setTransactions(trxRes.value);
-      if (lockedRes.status === 'fulfilled') setLockedAssetIds(new Set(lockedRes.value));
-    } catch (err: any) {
-      console.error('Error refreshing assets and transactions:', err.message);
-    }
-  }, []);
-
   // Tambah aset - hanya refresh daftar aset
   const addAsset = useCallback(async (data: Omit<MasterAsset, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => {
     const created = await createAsset(data);
