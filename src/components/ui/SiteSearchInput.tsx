@@ -99,8 +99,8 @@ const SiteSearchInput = ({
           </span>
         </p>
       ) : value && value.trim() !== '' ? (
-        <p className="mt-1.5 text-xs text-slate-400 flex items-center gap-1.5">
-          <i className="fas fa-info-circle text-blue-400 text-[11px]" />
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <i className="fas fa-info-circle text-blue-600 dark:text-blue-400 text-[11px]" />
           <span>
             {customInfoText ? customInfoText(value) : `Alias / Kode lokasi: ${value.toUpperCase()}`}
           </span>

@@ -44,12 +44,12 @@ const Select = ({
           onFocus={(e) => { setFocused(true); rest.onFocus?.(e); }}
           onBlur={(e)  => { setFocused(false); rest.onBlur?.(e); }}
           className={[
-            'w-full bg-slate-900/70 border text-slate-100 text-sm rounded-xl px-4 py-3 transition-all duration-200 outline-none appearance-none cursor-pointer',
+            'w-full bg-white/70 dark:bg-slate-900/70 border text-slate-900 dark:text-slate-100 text-sm rounded-xl px-4 py-3 transition-all duration-200 outline-none appearance-none cursor-pointer',
             focused
-              ? 'border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.12)] bg-slate-900/90'
+              ? 'border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.12)] bg-white/90 dark:bg-slate-900/90'
               : error
               ? 'border-red-500/60'
-              : 'border-slate-700/60 hover:border-slate-600',
+              : 'border-slate-200/60 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600',
             className,
           ].filter(Boolean).join(' ')}
         >

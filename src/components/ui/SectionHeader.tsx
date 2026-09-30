@@ -27,9 +27,9 @@ interface Props {
  *   <SectionHeader title="Kategori Aset" icon="fa-layer-group"
  *     action={{ label: 'Reset Filter', icon: 'fa-undo', onClick: handleReset }} />
  */
-const SectionHeader = ({ title, icon, iconColor = 'text-blue-400', action, className = '', children }: Props) => (
+const SectionHeader = ({ title, icon, iconColor = 'text-blue-600 dark:text-blue-400', action, className = '', children }: Props) => (
   <div className={`flex items-center justify-between mb-3 ${className}`}>
-    <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+    <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-2">
       {icon && <i className={`fas ${icon} ${iconColor}`} />}
       {title}
     </h2>
