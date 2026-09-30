@@ -146,7 +146,7 @@ const MenuView = ({ navigateTo }: Props) => {
             placeholder="Cari fitur menu..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-inner text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all dark:text-slate-50"
+            className="w-full pl-11 pr-4 py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-inner text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-900 dark:text-slate-50"
           />
           {search && (
             <button

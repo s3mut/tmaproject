@@ -8,7 +8,7 @@ interface Props {
 
 const SubViewLayout = ({ title, onBack, children }: Props) => {
   return (
-    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 z-40 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 z-40 flex flex-col overflow-hidden">
       {/* Top Bar */}
       <header className="flex-none flex items-center h-14 px-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 z-50 pt-safe-top">
         <button

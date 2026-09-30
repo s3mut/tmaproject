@@ -80,7 +80,7 @@ const RegionCard = ({ region, regionAssets, lockedAssetIds, defaultOpen, onItemC
             <i className={`fas ${region === 'Tanpa Region' ? 'fa-question-circle' : 'fa-map-marker-alt'} text-sm`}></i>
           </div>
           <div className="text-left min-w-0">
-            <p className="text-sm font-bold text-slate-50 truncate">{region}</p>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-50 truncate">{region}</p>
             {/* Badge breakdown status */}
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               {statusSummary.map(([status, count]) => (
@@ -270,7 +270,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
           <Select
             value={activeRegion}
             onChange={(e) => setActiveRegion(e.target.value)}
-            className="flex-1 text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
+            className="flex-1 text-xs py-2 font-semibold"
           >
             <option value="all">🌍 Semua Wilayah</option>
             {regionOptions.map(r => (
@@ -282,7 +282,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
             <Select
               value={activeCategory}
               onChange={(e) => setActiveCategory(e.target.value)}
-              className="flex-1 text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
+              className="flex-1 text-xs py-2 font-semibold"
             >
               <option value="all">📦 Semua Kategori</option>
               {groupedCategories.map(grp => (
@@ -301,7 +301,7 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
           <Select
             value={activeSite}
             onChange={(e) => setActiveSite(e.target.value)}
-            className="w-full text-xs py-2 bg-slate-800/80 border-slate-700/60 font-semibold"
+            className="w-full text-xs py-2 font-semibold"
           >
             <option value="all">🏪 Semua Toko</option>
             {siteOptions.map(s => (
@@ -334,13 +334,13 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
             : <><span className="text-blue-400 font-semibold">{filtered.length}</span> dari {assets.length} aset</>
           }
           {activeCategory !== 'all' && (
-            <span className="ml-1 text-slate-600">• Kategori: <span className="text-slate-400">{activeCategory}</span></span>
+            <span className="ml-1 text-slate-600 dark:text-slate-300">• Kategori: <span className="text-slate-500 dark:text-slate-400">{activeCategory}</span></span>
           )}
           {activeSite !== 'all' && (
-            <span className="ml-1 text-slate-600">• Toko: <span className="text-slate-400">{activeSite}</span></span>
+            <span className="ml-1 text-slate-600 dark:text-slate-300">• Toko: <span className="text-slate-500 dark:text-slate-400">{activeSite}</span></span>
           )}
           {activeFilter !== 'all' && (
-            <span className="ml-1 text-slate-600">• Status: <span className="text-slate-400">{activeFilter}</span></span>
+            <span className="ml-1 text-slate-600 dark:text-slate-300">• Status: <span className="text-slate-500 dark:text-slate-400">{activeFilter}</span></span>
           )}
         </p>
       )}
@@ -351,20 +351,20 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
           {[1, 2, 3].map(i => (
             <div key={i} className="glass rounded-2xl p-4 animate-pulse">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-700"></div>
+                <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-700"></div>
                 <div className="flex-1 space-y-2">
-                  <div className="h-3.5 bg-slate-700 rounded w-1/3"></div>
-                  <div className="h-2.5 bg-slate-700 rounded w-1/2"></div>
+                  <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+                  <div className="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
                 </div>
-                <div className="w-7 h-6 rounded-full bg-slate-700"></div>
+                <div className="w-7 h-6 rounded-full bg-slate-200 dark:bg-slate-700"></div>
               </div>
             </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-server text-3xl text-slate-600"></i>
+          <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-server text-3xl text-slate-500 dark:text-slate-600"></i>
           </div>
           <p className="text-slate-500 text-sm">Tidak ada aset ditemukan</p>
           {(activeFilter !== 'all' || !!searchValue) && (
