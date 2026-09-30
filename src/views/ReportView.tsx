@@ -9,7 +9,7 @@ import AuditTrailModal   from '../components/modals/AuditTrailModal';
 import LoanReportModal   from '../components/modals/LoanReportModal';
 import { LoadingSpinner } from '../components/ui';
 
-const UtilizationChart = React.lazy(() => import('../components/charts/ReportCharts'));
+const ReportChartsComponent = React.lazy(() => import('../components/charts/ReportCharts'));
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 const KPICard = ({
@@ -243,7 +243,9 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
                 </div>
               </div>
 
-
+              <Suspense fallback={<LoadingSpinner />}>
+                <ReportChartsComponent pieData={pieData} siteRanking={siteRanking} trendData={trendData} />
+              </Suspense>
             </>
           ) : (
             <div className="glass rounded-2xl p-8 text-center">
@@ -369,7 +371,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
               <SectionTitle icon="fa-chart-bar" title="Top Kategori by Total Aset" sub="6 kategori terbesar" />
               <div className="h-44">
                 <Suspense fallback={<div className="p-4 text-center">Memuat grafik...</div>}>
-                  <UtilizationChart data={topCategories} />
+                  <ReportChartsComponent utilizationData={topCategories} />
                 </Suspense>
               </div>
             </div>
