@@ -203,8 +203,10 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
                   {trx.status === 'In Transit' && trx.transaction_type !== 'Mutation' && (
                     <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'In Progress')}>Terima Unit (In Progress)</Button>
                   )}
-                  {trx.status === 'In Progress' && (trx.transaction_type === 'Borrowing' || trx.transaction_type === 'Repair') && trx.requested_by === currentUserId && (
-                    <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Returning')}>Kembalikan Unit (Return)</Button>
+                  {trx.status === 'In Progress' && (trx.transaction_type === 'Borrowing' || trx.transaction_type === 'Repair') && (trx.requested_by === currentUserId || userRole === 'admin') && (
+                    <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Returning')}>
+                      {trx.requested_by === currentUserId ? 'Kembalikan Unit (Return)' : 'Tarik Unit (Admin)'}
+                    </Button>
                   )}
                   {trx.status === 'Returning' && userRole === 'admin' && (
                     <Button variant="primary" size="sm" onClick={() => onUpdateStatus(trx.id, 'Completed')}>Terima di Gudang (Completed)</Button>
