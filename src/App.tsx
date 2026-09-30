@@ -27,6 +27,9 @@ const ReportView = lazy(() => import('./views/ReportView'));
 const SettingsView = lazy(() => import('./views/SettingsView'));
 const LoginView = lazy(() => import('./views/LoginView'));
 const DisposalQueueView = lazy(() => import('./views/DisposalQueueView'));
+const MenuView = lazy(() => import('./views/MenuView'));
+const ItemsView = lazy(() => import('./views/ItemsView'));
+const ReconciliationQueueView = lazy(() => import('./views/ReconciliationQueueView'));
 
 declare global { interface Window { Telegram?: any; } }
 
@@ -316,10 +319,7 @@ function App() {
               />
             )}
             {activeTab === 'menu' && (
-              <div className="flex flex-col items-center justify-center py-20">
-                <i className="fas fa-th-large text-4xl text-slate-700 mb-4"></i>
-                <p className="text-slate-500 text-sm">Menu Utama (Dalam Pengembangan)</p>
-              </div>
+              <MenuView navigateTo={navigateTo} />
             )}
             {activeTab === 'profile' && (
               <ProfileView onShowToast={showToast} />
@@ -333,6 +333,40 @@ function App() {
             <p className="text-slate-400 text-sm animate-pulse">Memuat halaman...</p>
           </div>
         }>
+          {activeSubView === 'items' && (
+            <SubViewLayout title="Daftar Aset" onBack={goBack}>
+              <ItemsView
+                assets={assets}
+                sites={sites}
+                searchValue={searchValue}
+                initialCategory="all"
+                initialStatus="all"
+                initialRegion="all"
+                lockedAssetIds={lockedAssetIds}
+                categories={categories}
+                loading={loading}
+                onItemClick={handleItemClick}
+              />
+            </SubViewLayout>
+          )}
+          {activeSubView === 'loans' && (
+            <SubViewLayout title="Antrean Pinjaman" onBack={goBack}>
+              <div className="flex flex-col items-center justify-center py-20 text-center opacity-70">
+                <i className="fas fa-hand-holding-box text-5xl text-purple-400 mb-4"></i>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Segera Hadir</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">Modul antrean pinjaman sedang dalam tahap pengembangan.</p>
+              </div>
+            </SubViewLayout>
+          )}
+          {activeSubView === 'reconciliation' && (
+            <SubViewLayout title="Rekonsiliasi" onBack={goBack}>
+              <ReconciliationQueueView
+                currentUserId={currentUser?.telegram_id || 0}
+                onShowToast={showToast}
+                onRefreshAssets={refresh}
+              />
+            </SubViewLayout>
+          )}
           {activeSubView === 'transactions' && (
             <SubViewLayout title="Mutasi Aset" onBack={goBack}>
               <TransactionsView

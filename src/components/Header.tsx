@@ -1,4 +1,4 @@
-export type ViewName = 'home' | 'menu' | 'profile' | 'transactions' | 'sites' | 'opname' | 'disposal' | 'report' | 'settings';
+export type ViewName = 'home' | 'menu' | 'profile' | 'transactions' | 'sites' | 'opname' | 'disposal' | 'report' | 'settings' | 'items' | 'loans' | 'reconciliation';
 
 interface TabConfig { title: string; subtitle: string; }
 
@@ -12,6 +12,9 @@ const tabTitles: Record<ViewName, TabConfig> = {
   disposal:     { title: 'Antrean Afkir',        subtitle: 'Kelola usulan pemusnahan aset' },
   report:       { title: 'Laporan & Analitik',   subtitle: 'KPI, utilization & audit trail' },
   settings:     { title: 'Super Admin Settings', subtitle: 'Pusat konfigurasi dinamis E1-TMA' },
+  items:        { title: 'Daftar Aset',          subtitle: 'Katalog seluruh aset IT' },
+  loans:        { title: 'Antrean Pinjaman',     subtitle: 'Daftar peminjaman aktif' },
+  reconciliation: { title: 'Rekonsiliasi',       subtitle: 'Penyelarasan data stok' },
 };
 
 interface Props {
