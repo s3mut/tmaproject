@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { lazy, Suspense } from 'react';
 import { useReport } from '../hooks/useReport';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,14 +9,7 @@ import AuditTrailModal   from '../components/modals/AuditTrailModal';
 import LoanReportModal   from '../components/modals/LoanReportModal';
 import { LoadingSpinner } from '../components/ui';
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
-const STATUS_COLORS: Record<string, string> = {
-  Active: '#10b981', Backup: '#3b82f6', Borrowed: '#8b5cf6',
-  Repair: '#f59e0b', Retired: '#64748b', 'In Transit': '#06b6d4', Disposed: '#ef4444',
-};
-
-const ReportCharts = lazy(() => import('./ReportCharts'));
-const UtilizationChart = lazy(() => import('../components/charts/UtilizationChart'));
+const UtilizationChart = React.lazy(() => import('../components/charts/ReportCharts'));
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 const KPICard = ({
@@ -250,9 +243,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
                 </div>
               </div>
 
-              <Suspense fallback={<LoadingSpinner />}>
-                <ReportCharts trendData={trendData} pieData={pieData} siteRanking={siteRanking} />
-              </Suspense>
+
             </>
           ) : (
             <div className="glass rounded-2xl p-8 text-center">
@@ -377,7 +368,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
             <div className="glass rounded-2xl p-4">
               <SectionTitle icon="fa-chart-bar" title="Top Kategori by Total Aset" sub="6 kategori terbesar" />
               <div className="h-44">
-                <Suspense fallback={<LoadingSpinner />}>
+                <Suspense fallback={<div className="p-4 text-center">Memuat grafik...</div>}>
                   <UtilizationChart data={topCategories} />
                 </Suspense>
               </div>
