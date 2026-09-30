@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useReport } from '../hooks/useReport';
 import { useAuth } from '../contexts/AuthContext';
 import { getLoanReport, exportToCSV } from '../services/reportService';
