@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { triggerHaptic } from '../utils/telegramHaptics';
 
 interface Props {
   navigateTo: (view: string) => void;
@@ -174,7 +175,7 @@ const MenuView = ({ navigateTo }: Props) => {
                 {group.items.map(item => (
                   <div
                     key={item.id}
-                    onClick={() => navigateTo(item.viewPath)}
+                    onClick={() => { triggerHaptic('light'); navigateTo(item.viewPath); }}
                     className="glass rounded-3xl p-4 flex flex-col justify-between cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 active:scale-[0.97] transition-all border border-white/20 dark:border-slate-700/50 shadow-sm min-h-[120px]"
                   >
                     <div className="mb-3 flex items-center justify-between">

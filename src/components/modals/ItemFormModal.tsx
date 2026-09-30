@@ -38,6 +38,7 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
   const [form, setForm]             = useState<FormData>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [activeScanField, setActiveScanField] = useState<'serial_number' | 'aktiva' | 'external_id' | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
   useEffect(() => {
     if (categories.length > 0 && form.category_id === 0) {
@@ -75,8 +76,18 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
     setActiveScanField(null);
   };
 
+  const validateForm = () => {
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
+    if (!form.serial_number.trim()) newErrors.serial_number = 'Serial Number wajib diisi';
+    if (form.category_id <= 0) newErrors.category_id = 'Kategori wajib dipilih';
+    if (!form.site_alias.trim()) newErrors.site_alias = 'Lokasi cabang wajib dipilih';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setSubmitting(true);
     try { await onSubmit(form); } finally { setSubmitting(false); }
   };
@@ -89,21 +100,27 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
       titleIcon={editItem ? 'fa-pen-to-square' : 'fa-plus'}
     >
       <form autoComplete="off" onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Serial Number" required
-          placeholder="S/N dari perangkat"
-          value={form.serial_number}
-          onChange={e => set('serial_number', e.target.value)}
-        >
-          <button
-            type="button"
-            onClick={() => setActiveScanField('serial_number')}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-slate-800/80 active:scale-95 transition-all cursor-pointer"
-            title="Scan Serial Number / Barcode dengan Kamera"
+        <div>
+          <Input
+            label="Serial Number" required
+            placeholder="S/N dari perangkat"
+            value={form.serial_number}
+            onChange={e => {
+              set('serial_number', e.target.value);
+              if (errors.serial_number) setErrors(prev => ({ ...prev, serial_number: undefined }));
+            }}
           >
-            <i className="fas fa-qrcode text-base" />
-          </button>
-        </Input>
+            <button
+              type="button"
+              onClick={() => setActiveScanField('serial_number')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-slate-800/80 active:scale-95 transition-all cursor-pointer"
+              title="Scan Serial Number / Barcode dengan Kamera"
+            >
+              <i className="fas fa-qrcode text-base" />
+            </button>
+          </Input>
+          {errors.serial_number && <p className="text-red-500 text-xs mt-1">{errors.serial_number}</p>}
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Input
@@ -140,10 +157,16 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Kategori" required
-            value={form.category_id} onChange={e => set('category_id', Number(e.target.value))}>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </Select>
+          <div>
+            <Select label="Kategori" required
+              value={form.category_id} onChange={e => {
+                set('category_id', Number(e.target.value));
+                if (errors.category_id) setErrors(prev => ({ ...prev, category_id: undefined }));
+              }}>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </Select>
+            {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
+          </div>
           <Select label="Status"
             value={form.status} onChange={e => set('status', e.target.value as AssetStatus)}>
             <option value="Active">Active</option>
@@ -165,13 +188,19 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
         <Input label="Computer Name" placeholder="PC-JKT-001"
           value={form.computer_name} onChange={e => set('computer_name', e.target.value)} />
 
-        <SiteSearchInput
-          label="Lokasi Cabang (Site Alias)"
-          sites={sites}
-          value={form.site_alias}
-          onChange={val => set('site_alias', val)}
-          placeholder="Ketik kode atau alias site..."
-        />
+        <div>
+          <SiteSearchInput
+            label="Lokasi Cabang (Site Alias)"
+            sites={sites}
+            value={form.site_alias}
+            onChange={val => {
+              set('site_alias', val);
+              if (errors.site_alias) setErrors(prev => ({ ...prev, site_alias: undefined }));
+            }}
+            placeholder="Ketik kode atau alias site..."
+          />
+          {errors.site_alias && <p className="text-red-500 text-xs mt-1">{errors.site_alias}</p>}
+        </div>
 
         <Textarea label="Deskripsi" placeholder="Catatan tambahan..."
           value={form.description} onChange={e => set('description', e.target.value)} />

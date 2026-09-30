@@ -1402,3 +1402,11 @@ STEP 35: ENTERPRISE & ISO STANDARD UPGRADE (2026-09-23)
 - FASE 2: Modul Pemusnahan Aset & Karantina dengan generator BAPA yang dilengkapi validasi QR Code & E-Sign placeholder di `src/utils/printDisposalBAST.ts`. Memastikan status `PENDING_DISPOSAL` terkunci di `ItemDetailModal.tsx`.
 - FASE 3: Refactor `QRScannerModal.tsx` menggunakan `display: none` (Camera Stream Caching) untuk me-resume akses kamera tanpa jeda saat modal ditutup.
 - FASE 4: Verifikasi Super Admin Settings Hub di `SettingsView.tsx` dan `src/services/settingsService.ts` berjalan baik dan mematuhi standar. Build pass tanpa error TypeScript (`npx tsc --noEmit`).
+
+--------------------------------------------------------------------------------
+STEP 36: UX POLISHING & OPTIMISTIC UI REFACTOR (2026-09-30)
+--------------------------------------------------------------------------------
+- FASE 1: Memperbaiki Race Condition pada tombol ubah status transaksi (updateTrxStatus) dengan mengimplementasikan state pendingTransactionIds sebagai in-flight guard di useInventory.ts dan TransactionsView.tsx.
+- FASE 2: Menyempurnakan Telegram Haptic Feedback dengan menambahkan pemanggilan triggerHaptic('light') pada setiap navigasi menu utama di MenuView.tsx dan peralihan tab di App.tsx agar terasa selayaknya native app.
+- FASE 3: Menerapkan Form Validation Parity di ItemFormModal.tsx secara client-side (pengecekan Serial Number, Kategori, Site Alias) agar konsisten dengan TransactionModal.tsx dan mencegah pengiriman request kosong ke API.
+- FASE 4: Meningkatkan performa interaksi (Optimistic UI) pada aksi Write (addAsset, editAsset, createNewTransaction, updateTrxStatus) dengan memanfaatkan object spread dan local enrichment (tanpa SQL query refetch penuh) di dalam useInventory.ts, sehingga perubahan muncul secara instan (<100ms) di UI.

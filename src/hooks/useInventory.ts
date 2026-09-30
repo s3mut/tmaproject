@@ -10,6 +10,7 @@ export function useInventory() {
   const [sites, setSites] = useState<Site[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [lockedAssetIds, setLockedAssetIds] = useState<Set<number>>(new Set());
+  const [pendingTransactionIds, setPendingTransactionIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,15 +100,15 @@ export function useInventory() {
 
   // Tambah aset - hanya refresh daftar aset
   const addAsset = useCallback(async (data: Omit<MasterAsset, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => {
-    await createAsset(data);
-    await fetchOnlyAssets();
-  }, [fetchOnlyAssets]);
+    const created = await createAsset(data);
+    setAssets((prev) => [created as unknown as AssetDetail, ...prev]);
+  }, []);
 
   // Update aset - hanya refresh daftar aset
   const editAsset = useCallback(async (id: number, data: Partial<Omit<MasterAsset, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>>) => {
-    await updateAsset(id, data);
-    await fetchOnlyAssets();
-  }, [fetchOnlyAssets]);
+    const updated = await updateAsset(id, data);
+    setAssets((prev) => prev.map((a) => a.id === id ? { ...a, ...updated } as unknown as AssetDetail : a));
+  }, []);
 
   // Hapus aset (Soft Delete) - Optimistic update ke state memory tanpa re-fetch
   const removeAsset = useCallback(async (id: number) => {
@@ -116,15 +117,64 @@ export function useInventory() {
   }, []);
 
   // Actions untuk Transactions Gabungan
-  const createNewTransaction = useCallback(async (params: Parameters<typeof createTransaction>[0]) => {
-    await createTransaction(params);
-    await fetchAssetsAndTransactions();
-  }, [fetchAssetsAndTransactions]);
+  const createNewTransaction = useCallback(async (params: Parameters<typeof createTransaction>[0], requestedByName?: string) => {
+    const created = await createTransaction(params);
+    
+    const matchedSite = sites.find(s => s.site_code === created.to_site_code);
+    const matchedCategory = categories.find(c => c.id === created.category_id);
+    const matchedAsset = created.asset_id
+      ? assets.find(a => a.id === created.asset_id)
+      : null;
+
+    const enriched: TransactionDetail = {
+      ...created,
+      to_site_name: matchedSite?.site_name ?? created.to_site_code,
+      to_site_region: matchedSite?.region ?? '',
+      from_site_name: assets.find(a => a.site_alias === created.from_site_code)?.site_alias ?? created.from_site_code ?? '',
+      asset_category_name: matchedCategory?.name ?? '',
+      asset_serial_number: matchedAsset?.serial_number ?? '',
+      asset_brand: matchedAsset?.brand ?? '',
+      asset_model_type: matchedAsset?.model_type ?? '',
+      requested_by_name: requestedByName ?? '',
+      approved_by_name: '',
+      dispatched_by_name: '',
+      received_by_name: '',
+    };
+
+    setTransactions(prev => [enriched, ...prev]);
+
+    try {
+      const lockedIds = await getActiveTransactionAssetIds();
+      setLockedAssetIds(new Set(lockedIds));
+    } catch (err) {
+      console.error('Error refreshing locked assets:', err);
+    }
+  }, [sites, categories, assets]);
 
   const updateTrxStatus = useCallback(async (transactionId: number, newStatus: string, userId: number, assetId?: number, notes?: string) => {
-    await updateTransactionStatus(transactionId, newStatus, userId, assetId, notes);
-    await fetchAssetsAndTransactions();
-  }, [fetchAssetsAndTransactions]);
+    if (pendingTransactionIds.has(transactionId)) return;
+    setPendingTransactionIds(prev => new Set(prev).add(transactionId));
+    try {
+      const updated = await updateTransactionStatus(transactionId, newStatus, userId, assetId, notes);
+      setTransactions(prev => prev.map(t =>
+        t.id === transactionId ? { ...t, ...updated } : t
+      ));
+
+      const TERMINAL = ['Completed', 'Rejected', 'Cancelled'];
+      if (TERMINAL.includes(newStatus)) {
+        await fetchOnlyAssets();
+      }
+
+      const lockedIds = await getActiveTransactionAssetIds();
+      setLockedAssetIds(new Set(lockedIds));
+    } finally {
+      setPendingTransactionIds(prev => {
+        const next = new Set(prev);
+        next.delete(transactionId);
+        return next;
+      });
+    }
+  }, [fetchOnlyAssets, pendingTransactionIds]);
 
 
 
@@ -135,6 +185,7 @@ export function useInventory() {
     categories,
     stats,
     lockedAssetIds,
+    pendingTransactionIds,
     loading,
     error,
     addAsset,

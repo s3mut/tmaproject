@@ -157,7 +157,7 @@ export async function updateTransactionStatus(
   userId: number,
   assetId?: number,
   notes?: string
-): Promise<void> {
+): Promise<AssetTransaction> {
   // ── STEP 1: Baca status saat ini untuk validasi lokal ──────────────────────
   const { data: currentTrx, error: fetchErr } = await supabase
     .from('asset_transactions')
@@ -267,6 +267,16 @@ export async function updateTransactionStatus(
       console.error('[TransactionService] Exception saat invoke telegram-bot dispatch:', err);
     }
   }
+
+  // ── STEP 7: Ambil state terbaru setelah update dan kembalikan ────────────
+  const { data: updatedTrx, error: refetchErr } = await supabase
+    .from('asset_transactions')
+    .select('*')
+    .eq('id', transactionId)
+    .single();
+
+  if (refetchErr) throw new Error('Gagal mengambil data transaksi terbaru setelah di-update.');
+  return updatedTrx;
 }
 
 /**

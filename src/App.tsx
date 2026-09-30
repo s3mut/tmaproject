@@ -38,7 +38,7 @@ function App() {
   useCameraPermission();
   const { currentUser, authMethod, isLoading: authLoading } = useAuth();
   const { 
-    assets, transactions, sites, categories, lockedAssetIds,
+    assets, transactions, sites, categories, lockedAssetIds, pendingTransactionIds,
     loading, error, addAsset, editAsset, removeAsset, createNewTransaction, updateTrxStatus,
     refresh
   } = useInventory();
@@ -90,6 +90,7 @@ function App() {
 
   // Tab
   const handleTabChange = (tab: TabName) => {
+    triggerHaptic('light');
     setActiveTab(tab);
     setActiveSubView(null);
     setSearchValue('');
@@ -107,7 +108,7 @@ function App() {
     if (item) { openDetail(item); }
   };
 
-  const handleAddClick = () => { openForm(); };
+  const handleAddClick = () => { triggerHaptic('light'); openForm(); };
 
   const handleEditClick = () => {
     closeDetail();
@@ -158,7 +159,7 @@ function App() {
       await createNewTransaction({
         ...data,
         requested_by: currentUser?.telegram_id ?? 0,
-      });
+      }, currentUser?.name);
       closeTransaction();
       showToast('Permintaan transaksi berhasil dibuat!');
     } catch (e: any) {
@@ -348,6 +349,7 @@ function App() {
                 userRole={currentUser?.role}
                 currentUserId={currentUser?.telegram_id || 0}
                 currentUserRegion={currentUser?.assigned_region}
+                pendingTransactionIds={pendingTransactionIds}
                 onCreateTransaction={() => { openTransaction(); }}
                 onRefresh={refresh}
                 onUpdateStatus={async (id, status) => {
