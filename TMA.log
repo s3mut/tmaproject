@@ -1425,3 +1425,11 @@ EmptyState, SiteSearchInput, MenuView, ItemsView, ItemCard, SubViewLayout).
 FIX BUG ASLI di SubViewLayout.tsx: bg-slate-50 -> bg-slate-950 (auto-invert),
 h1 text-slate-900 -> text-slate-50, hover:bg-slate-100 -> hover:bg-slate-800.
 Verifikasi: npx tsc --noEmit (exit 0), npm run build (exit 0).
+
+--------------------------------------------------------------------------------
+STEP 38: THEME FIX — MENU SUB-ITEM LABEL (2026-10-01)
+--------------------------------------------------------------------------------
+Memperbaiki kontras font pada label sub-menu di MenuView.tsx.
+- Mengganti className h4 dari text-slate-800 dark:text-slate-100 menjadi text-slate-50.
+- Berkat sistem CSS Variable Auto-Invert di index.css, text-slate-50 secara otomatis
+  me-render warna gelap di light mode dan terang di dark mode.

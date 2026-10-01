@@ -185,7 +185,7 @@ const MenuView = ({ navigateTo }: Props) => {
                       <i className="fas fa-arrow-right text-slate-300 dark:text-slate-600 text-[10px]"></i>
                     </div>
                     <div>
-                      <h4 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                      <h4 className="text-[13px] font-bold text-slate-50 leading-tight">
                         {item.title}
                       </h4>
                       <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
