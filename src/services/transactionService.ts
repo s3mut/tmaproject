@@ -81,6 +81,61 @@ export async function getTransactions(type?: 'Mutation' | 'Borrowing' | 'Repair'
   });
 }
 
+// Ambil detail satu transaksi beserta join
+export async function getTransactionDetailById(id: number): Promise<TransactionDetail | null> {
+  const { data: rawData, error: rawErr } = await supabase
+    .from('asset_transactions')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (rawErr) {
+    if (rawErr.code === 'PGRST116') return null; // Not found
+    throw new Error(rawErr.message);
+  }
+  if (!rawData) return null;
+
+  const row = rawData;
+  const assetIds = row.asset_id ? [row.asset_id] : [];
+  const siteCodes = Array.from(new Set([row.from_site_code, row.to_site_code].filter(Boolean)));
+  const userIds = Array.from(new Set([row.requested_by, row.approved_by, row.dispatched_by, row.received_by].filter(Boolean)));
+
+  const [assetRes, siteRes, userRes, catRes] = await Promise.all([
+    assetIds.length > 0
+      ? supabase.from('master_assets').select('id, serial_number, category_id, brand, model_type').in('id', assetIds)
+      : { data: [] },
+    siteCodes.length > 0
+      ? supabase.from('sites').select('site_code, site_name, site_alias, region').in('site_code', siteCodes)
+      : { data: [] },
+    userIds.length > 0
+      ? supabase.from('telegram_users').select('telegram_id, name').in('telegram_id', userIds)
+      : { data: [] },
+    supabase.from('master_categories').select('id, name'),
+  ]);
+
+  const assetMap = new Map((assetRes.data ?? []).map((a: any) => [a.id, a]));
+  const siteMap = new Map((siteRes.data ?? []).map((s: any) => [s.site_code, s]));
+  const userMap = new Map((userRes.data ?? []).map((u: any) => [u.telegram_id, u.name]));
+  const catMap = new Map((catRes.data ?? []).map((c: any) => [c.id, c.name]));
+
+  const asset = row.asset_id ? assetMap.get(row.asset_id) : null;
+  return {
+    ...row,
+    asset_serial_number: asset?.serial_number ?? '-',
+    asset_category_name: asset?.category_id ? (catMap.get(asset.category_id) ?? (row.category_id ? catMap.get(row.category_id) : '-')) : (row.category_id ? catMap.get(row.category_id) : '-'),
+    asset_brand: asset?.brand ?? null,
+    asset_model_type: asset?.model_type ?? null,
+    from_site_name: row.from_site_code ? (siteMap.get(row.from_site_code)?.site_name ?? null) : null,
+    to_site_name: row.to_site_code ? (siteMap.get(row.to_site_code)?.site_name ?? '-') : null,
+    to_site_region: row.to_site_code ? (siteMap.get(row.to_site_code)?.region ?? null) : null,
+    requested_by_name: userMap.get(row.requested_by) ?? 'Unknown',
+    approved_by_name: row.approved_by ? (userMap.get(row.approved_by) ?? 'Unknown') : null,
+    dispatched_by_name: row.dispatched_by ? (userMap.get(row.dispatched_by) ?? 'Unknown') : null,
+    received_by_name: row.received_by ? (userMap.get(row.received_by) ?? 'Unknown') : null,
+  };
+}
+
+
 // Buat request transaksi baru
 export async function createTransaction(
   trx: Omit<AssetTransaction, 'id' | 'transaction_code' | 'status' | 'requested_at' | 'approved_at' | 'dispatched_at' | 'received_at' | 'completed_at'>

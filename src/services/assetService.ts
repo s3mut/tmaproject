@@ -256,3 +256,74 @@ export async function batchApproveDisposals(
     results: r?.results ?? [],
   };
 }
+
+/**
+ * REPRINT CENTER: Ambil daftar BAPA (Disposal Documents)
+ */
+export async function getDisposalDocuments(filters?: { fromDate?: string; toDate?: string }) {
+  let query = supabase
+    .from('disposal_documents')
+    .select(`
+      id,
+      bapa_no,
+      disposal_date,
+      total_items,
+      notes,
+      telegram_users!inner(name)
+    `)
+    .order('disposal_date', { ascending: false });
+
+  if (filters?.fromDate) {
+    query = query.gte('disposal_date', filters.fromDate);
+  }
+  if (filters?.toDate) {
+    query = query.lte('disposal_date', filters.toDate);
+  }
+
+  // default limit to 100 for no filters
+  if (!filters?.fromDate && !filters?.toDate) {
+    query = query.limit(100);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    bapa_no: row.bapa_no,
+    disposal_date: row.disposal_date,
+    total_items: row.total_items,
+    notes: row.notes,
+    processed_by_name: row.telegram_users?.name || 'Unknown',
+  }));
+}
+
+/**
+ * REPRINT CENTER: Ambil detail satu dokumen BAPA lengkap dengan JSON items
+ */
+export async function getDisposalDocumentDetail(bapaNo: string) {
+  const { data, error } = await supabase
+    .from('disposal_documents')
+    .select(`
+      id,
+      bapa_no,
+      disposal_date,
+      total_items,
+      notes,
+      items,
+      telegram_users!inner(name)
+    `)
+    .eq('bapa_no', bapaNo)
+    .single();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Dokumen BAPA tidak ditemukan.');
+
+  return {
+    ...data,
+    processed_by_name: Array.isArray(data.telegram_users) 
+      ? data.telegram_users[0]?.name || 'Unknown' 
+      : (data.telegram_users as any)?.name || 'Unknown',
+  };
+}
+

@@ -3,11 +3,17 @@ import { Suspense } from 'react';
 import { useReport } from '../hooks/useReport';
 import { useAuth } from '../contexts/AuthContext';
 import { getLoanReport, exportToCSV } from '../services/reportService';
+import { getDisposalDocuments, getDisposalDocumentDetail } from '../services/assetService';
+import { printDisposalBAST } from '../utils/printDisposalBAST';
+import { getTransactionDetailById } from '../services/transactionService';
+import { mapTransactionToLoan } from '../utils/mapTransactionToLoan';
+import { supabase } from '../lib/supabase';
 import type { TransactionDetail, Site, Category } from '../types/inventory';
 import OverdueAlertModal from '../components/modals/OverdueAlertModal';
 import AuditTrailModal   from '../components/modals/AuditTrailModal';
 import LoanReportModal   from '../components/modals/LoanReportModal';
-import { LoadingSpinner } from '../components/ui';
+import BASTDocumentModal from '../components/modals/BASTDocumentModal';
+import { LoadingSpinner, EmptyState } from '../components/ui';
 
 const ReportChartsComponent = React.lazy(() => import('../components/charts/ReportCharts'));
 
@@ -61,7 +67,7 @@ interface Props {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-type TabKey = 'kpi' | 'loans' | 'audit' | 'utilization';
+type TabKey = 'kpi' | 'loans' | 'audit' | 'utilization' | 'reprint';
 
 const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
   const { currentUser } = useAuth();
@@ -85,12 +91,112 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
   const isUser   = currentUser?.role === 'user';
   const isLimited = isUser && !!currentUser?.assigned_region;
 
+  // Reprint BAPA states
+  const [bapaDocs, setBapaDocs] = useState<any[]>([]);
+  const [bapaLoading, setBapaLoading] = useState(false);
+  const [bapaFromDate, setBapaFromDate] = useState('');
+  const [bapaToDate, setBapaToDate] = useState('');
+  const [printingBapaNo, setPrintingBapaNo] = useState<string | null>(null);
+
+  // Reprint BAST states
+  const [bastDocs, setBastDocs] = useState<any[]>([]);
+  const [bastLoading, setBastLoading] = useState(false);
+  const [bastFromDate, setBastFromDate] = useState('');
+  const [bastToDate, setBastToDate] = useState('');
+  const [printingBastId, setPrintingBastId] = useState<number | null>(null);
+  const [reprintBastModalOpen, setReprintBastModalOpen] = useState(false);
+  const [reprintBastData, setReprintBastData] = useState<any>(null);
+
   // For IT User with assigned region → lock filter to their region
   const effectiveRegion = isLimited ? (currentUser?.assigned_region ?? '') : regionFilter;
 
   useEffect(() => {
     fetchKPI(effectiveRegion || null);
   }, [effectiveRegion, fetchKPI]);
+
+  const loadBapaDocs = async () => {
+    setBapaLoading(true);
+    try {
+      const data = await getDisposalDocuments({
+        fromDate: bapaFromDate || undefined,
+        toDate: bapaToDate || undefined,
+      });
+      setBapaDocs(data);
+    } catch (e: any) {
+      onShowToast?.(e.message, 'error');
+    } finally {
+      setBapaLoading(false);
+    }
+  };
+
+  const loadBastDocs = async () => {
+    setBastLoading(true);
+    try {
+      let q = supabase
+        .from('asset_transactions')
+        .select('id, transaction_code, transaction_type, completed_at, status')
+        .eq('status', 'Completed')
+        .order('completed_at', { ascending: false });
+        
+      if (bastFromDate) q = q.gte('completed_at', bastFromDate);
+      if (bastToDate) q = q.lte('completed_at', bastToDate + 'T23:59:59');
+      if (!bastFromDate && !bastToDate) q = q.limit(100);
+
+      const { data, error } = await q;
+      if (error) throw error;
+      setBastDocs(data as any[]);
+    } catch (e: any) {
+      onShowToast?.(e.message, 'error');
+    } finally {
+      setBastLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'reprint') {
+      loadBapaDocs();
+      loadBastDocs();
+    }
+  }, [activeTab]);
+
+  const handlePrintBast = async (id: number) => {
+    setPrintingBastId(id);
+    try {
+      const detail = await getTransactionDetailById(id);
+      if (!detail) throw new Error('Detail transaksi tidak ditemukan');
+      
+      const mapped = mapTransactionToLoan(
+        detail,
+        sites.find(s => s.site_code === detail.to_site_code) ?? null
+      );
+      
+      setReprintBastData(mapped);
+      setReprintBastModalOpen(true);
+    } catch (e: any) {
+      onShowToast?.(e.message, 'error');
+    } finally {
+      setPrintingBastId(null);
+    }
+  };
+
+  const handlePrintBapa = async (bapaNo: string) => {
+    setPrintingBapaNo(bapaNo);
+    try {
+      const doc = await getDisposalDocumentDetail(bapaNo);
+      printDisposalBAST({
+        bastNo: doc.bapa_no,
+        disposalDate: new Date(doc.disposal_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+        processedBy: doc.processed_by_name,
+        notes: doc.notes,
+        items: doc.items
+      });
+    } catch (e: any) {
+      onShowToast?.(e.message, 'error');
+    } finally {
+      setPrintingBapaNo(null);
+    }
+  };
+
 
 
   // Pie data: asset status distribution from utilization
@@ -139,6 +245,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
     { key: 'loans',       label: 'Pinjaman', icon: 'fa-file-alt'  },
     { key: 'audit',       label: 'Audit',    icon: 'fa-history'   },
     { key: 'utilization', label: 'Aset',     icon: 'fa-boxes'     },
+    { key: 'reprint',     label: 'Cetak Ulang', icon: 'fa-print'  },
   ];
 
   return (
@@ -444,12 +551,120 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
             </div>
           )}
 
-          {utilization.length === 0 && !loading && (
+      {utilization.length === 0 && !loading && (
             <div className="glass rounded-2xl p-8 text-center">
               <i className="fas fa-database text-3xl text-slate-600 mb-3 block" />
               <p className="text-slate-400 text-sm">Jalankan SQL reporting di Supabase untuk mengaktifkan data utilization.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════ */}
+      {/* TAB: REPRINT */}
+      {/* ══════════════════════════════════════════════════════════════ */}
+      {activeTab === 'reprint' && (
+        <div className="space-y-4">
+          <div className="glass rounded-2xl p-4">
+            <SectionTitle icon="fa-file-contract" title="Arsip BAST (Peminjaman & Mutasi)" sub="Cetak ulang BAST historis" />
+            
+            {/* Filter BAST */}
+            <div className="flex gap-2 mb-4">
+              <div className="flex-1">
+                <input type="date" value={bastFromDate} onChange={e => setBastFromDate(e.target.value)}
+                  className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-50 focus:outline-none focus:border-blue-500" />
+              </div>
+              <div className="flex-1">
+                <input type="date" value={bastToDate} onChange={e => setBastToDate(e.target.value)}
+                  className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-50 focus:outline-none focus:border-blue-500" />
+              </div>
+              <button onClick={loadBastDocs} disabled={bastLoading}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-colors">
+                <i className={`fas ${bastLoading ? 'fa-spinner fa-spin' : 'fa-search'}`} />
+              </button>
+            </div>
+
+            {/* List BAST */}
+            {bastLoading ? (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                <i className="fas fa-spinner fa-spin mr-2" />Memuat arsip BAST...
+              </div>
+            ) : bastDocs.length === 0 ? (
+              <EmptyState icon="fa-inbox" title="Tidak Ada Arsip BAST" description="Tidak ditemukan dokumen BAST dengan filter tanggal ini." className="py-8" />
+            ) : (
+              <div className="space-y-2">
+                {bastDocs.map(doc => (
+                  <div key={doc.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                      <p className="font-mono text-sm font-bold text-blue-400">{doc.transaction_code}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {doc.completed_at ? new Date(doc.completed_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'} · {doc.transaction_type}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handlePrintBast(doc.id)}
+                      disabled={printingBastId === doc.id}
+                      className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-lg text-xs font-semibold border border-slate-600 disabled:opacity-50 transition-colors flex items-center gap-2"
+                    >
+                      <i className={`fas ${printingBastId === doc.id ? 'fa-spinner fa-spin' : 'fa-print'}`} />
+                      {printingBastId === doc.id ? 'Memuat...' : 'Cetak'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="glass rounded-2xl p-4">
+            <SectionTitle icon="fa-trash-alt" title="Arsip BAPA (Pemusnahan)" sub="Cetak ulang Berita Acara Pemusnahan Aset" />
+            
+            {/* Filter BAPA */}
+            <div className="flex gap-2 mb-4">
+              <div className="flex-1">
+                <input type="date" value={bapaFromDate} onChange={e => setBapaFromDate(e.target.value)}
+                  className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-50 focus:outline-none focus:border-blue-500" />
+              </div>
+              <div className="flex-1">
+                <input type="date" value={bapaToDate} onChange={e => setBapaToDate(e.target.value)}
+                  className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-50 focus:outline-none focus:border-blue-500" />
+              </div>
+              <button onClick={loadBapaDocs} disabled={bapaLoading}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-colors">
+                <i className={`fas ${bapaLoading ? 'fa-spinner fa-spin' : 'fa-search'}`} />
+              </button>
+            </div>
+
+            {/* List BAPA */}
+            {bapaLoading ? (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                <i className="fas fa-spinner fa-spin mr-2" />Memuat arsip BAPA...
+              </div>
+            ) : bapaDocs.length === 0 ? (
+              <EmptyState icon="fa-inbox" title="Tidak Ada Arsip BAPA" description="Tidak ditemukan dokumen BAPA dengan filter tanggal ini." className="py-8" />
+            ) : (
+              <div className="space-y-2">
+                {bapaDocs.map(doc => (
+                  <div key={doc.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                      <p className="font-mono text-sm font-bold text-orange-400">{doc.bapa_no}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(doc.disposal_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} · {doc.total_items} unit
+                      </p>
+                      <p className="text-[10px] text-slate-500 mt-1">Oleh: {doc.processed_by_name}</p>
+                    </div>
+                    <button
+                      onClick={() => handlePrintBapa(doc.bapa_no)}
+                      disabled={printingBapaNo === doc.bapa_no}
+                      className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-lg text-xs font-semibold border border-slate-600 disabled:opacity-50 transition-colors flex items-center gap-2"
+                    >
+                      <i className={`fas ${printingBapaNo === doc.bapa_no ? 'fa-spinner fa-spin' : 'fa-print'}`} />
+                      {printingBapaNo === doc.bapa_no ? 'Memuat...' : 'Cetak'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -479,6 +694,14 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
           status:    filter.status,
           limit: 500,
         })}
+      />
+      
+      {/* BAST Reprint Modal */}
+      <BASTDocumentModal
+        isOpen={reprintBastModalOpen}
+        onClose={() => setReprintBastModalOpen(false)}
+        loan={reprintBastData}
+        mode={reprintBastData?.transaction_type === 'Returning' || reprintBastData?.transaction_type === 'Repair' ? 'pengembalian' : 'peminjaman'}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import type { TransactionDetail, Site, Category } from '../types/inventory';
 import { transactionStatusConfig } from '../types/inventory';
 import { Button, SiteSearchInput } from '../components/ui';
 import BASTDocumentModal from '../components/modals/BASTDocumentModal';
+import { mapTransactionToLoan } from '../utils/mapTransactionToLoan';
 
 interface Props {
   transactions: TransactionDetail[];
@@ -260,7 +261,10 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
       <BASTDocumentModal
         isOpen={bastModalOpen}
         onClose={() => setBastModalOpen(false)}
-        loan={selectedBastTrx as any}
+        loan={selectedBastTrx ? mapTransactionToLoan(
+          selectedBastTrx,
+          sites.find(s => s.site_code === selectedBastTrx.to_site_code) ?? null
+        ) : null}
         mode={selectedBastTrx?.status === 'Returning' ? 'pengembalian' : 'peminjaman'}
       />
     </div>

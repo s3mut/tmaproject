@@ -1433,3 +1433,23 @@ Memperbaiki kontras font pada label sub-menu di MenuView.tsx.
 - Mengganti className h4 dari text-slate-800 dark:text-slate-100 menjadi text-slate-50.
 - Berkat sistem CSS Variable Auto-Invert di index.css, text-slate-50 secara otomatis
   me-render warna gelap di light mode dan terang di dark mode.
+--------------------------------------------------------------------------------
+STEP 39: PUSAT CETAK ULANG (REPRINT CENTER) - BAPA & BAST (2026-10-01)
+--------------------------------------------------------------------------------
+- FASE 1: Migrasi Database Disposal Documents
+  Membuat file migrasi terpisah sql/add_disposal_documents.sql untuk menambahkan tabel
+  disposal_documents dan memperbaiki RPC batch_approve_disposals agar dapat
+  mengambil snapshot dari rincian item (aktiva, brand, model_type, serial_number)
+  sebagai JSONB items untuk historical re-print BAPA.
+- FASE 2: API & Service Layer untuk Reprint
+  Menambahkan fungsi getDisposalDocuments() dan getDisposalDocumentDetail()
+  di src/services/assetService.ts untuk mengambil list BAPA berfilter tanggal.
+  Membuat src/utils/mapTransactionToLoan.ts dan getTransactionDetailById() di 
+  src/services/transactionService.ts untuk men-supply data yang benar secara historis
+  (TransactionDetail -> AssetLoanCompat) agar dapat disuntikkan ke BASTDocumentModal.tsx.
+- FASE 3: UI Pusat Laporan (Reprint Center)
+  Membangun sub-tab 'reprint' di ReportView.tsx. Tab ini menyajikan dua tabel 
+  historical print: "Arsip BAST (Peminjaman & Mutasi)" dan "Arsip BAPA (Pemusnahan)".
+  Meneruskan properti hasil fetch transaksi menggunakan 'mapTransactionToLoan' 
+  secara real-time agar UI Cetak BAST & BAPA 100% konsisten.
+- Verifikasi: Build berjalan sukses. 
