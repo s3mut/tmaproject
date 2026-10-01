@@ -1,4 +1,5 @@
 import type { Site } from '../types/inventory';
+import { EmptyState } from '../components/ui';
 
 interface Props {
   sites: Site[];
@@ -17,12 +18,11 @@ const SitesView = ({ sites, loading }: Props) => {
 
   if (sites.length === 0) {
     return (
-      <div className="fade-in text-center py-12">
-        <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4">
-          <i className="fas fa-building text-3xl text-slate-600"></i>
-        </div>
-        <p className="text-slate-500 text-sm">Tidak ada site terdaftar</p>
-      </div>
+      <EmptyState
+        icon="fa-building"
+        title="Tidak ada site terdaftar"
+        className="py-12"
+      />
     );
   }
 

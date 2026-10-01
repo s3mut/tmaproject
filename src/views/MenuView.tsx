@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { triggerHaptic } from '../utils/telegramHaptics';
+import { EmptyState } from '../components/ui';
 
 interface Props {
   navigateTo: (view: string) => void;
@@ -71,14 +72,6 @@ const MenuView = ({ navigateTo }: Props) => {
           icon: 'fa-clipboard-check',
           iconColor: 'text-emerald-500',
           viewPath: 'opname'
-        },
-        {
-          id: 'reconciliation',
-          title: 'Rekonsiliasi',
-          description: 'Penyelarasan data stok',
-          icon: 'fa-balance-scale',
-          iconColor: 'text-teal-500',
-          viewPath: 'reconciliation'
         }
       ]
     },
@@ -161,10 +154,11 @@ const MenuView = ({ navigateTo }: Props) => {
 
       <div className="space-y-6">
         {filteredGroups.length === 0 ? (
-          <div className="text-center py-10 opacity-70">
-            <i className="fas fa-search-minus text-4xl text-slate-400 mb-3"></i>
-            <p className="text-slate-500 font-medium">Fitur tidak ditemukan</p>
-          </div>
+          <EmptyState
+            icon="fa-search-minus"
+            title="Fitur tidak ditemukan"
+            className="py-10 opacity-70 border-none shadow-none bg-transparent"
+          />
         ) : (
           filteredGroups.map(group => (
             <div key={group.groupName} className="animate-fade-in-up">

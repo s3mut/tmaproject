@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import type { AssetDetail, AssetStatus, Site } from '../types/inventory';
 import type { Category } from '../types/inventory';
 import ItemCard from '../components/ItemCard';
-import { Select } from '../components/ui';
+import { Select, EmptyState } from '../components/ui';
 import { groupCategories } from '../utils/categoryGroups';
 
 // Urutan tampilan status yang diinginkan
@@ -363,10 +363,11 @@ const ItemsView = ({ assets, sites, searchValue, loading, initialCategory, initi
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-server text-3xl text-slate-600"></i>
-          </div>
-          <p className="text-slate-500 text-sm">Tidak ada aset ditemukan</p>
+          <EmptyState
+            icon="fa-server"
+            title="Tidak ada aset ditemukan"
+            className="py-4 border-none shadow-none bg-transparent"
+          />
           {(activeFilter !== 'all' || !!searchValue) && (
             <button
               onClick={() => setActiveFilter('all')}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { StockReconciliation } from '../types/inventory';
 import { getReconciliations } from '../services/opnameService';
 import ReconciliationDetailModal from '../components/modals/ReconciliationDetailModal';
+import { EmptyState } from '../components/ui';
 
 interface Props {
   currentUserId: number;
@@ -49,13 +50,12 @@ const ReconciliationQueueView = ({ currentUserId, onShowToast, onRefreshAssets }
           <p className="text-sm text-slate-400">Memuat antrean rekonsiliasi...</p>
         </div>
       ) : reconciliations.length === 0 ? (
-        <div className="bg-slate-800/50 rounded-2xl border border-slate-700 p-8 text-center">
-          <div className="w-16 h-16 rounded-full bg-slate-700/50 flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-check-double text-2xl text-slate-400"></i>
-          </div>
-          <h3 className="text-slate-200 font-semibold mb-1">Semua Selesai!</h3>
-          <p className="text-xs text-slate-400">Tidak ada pengajuan rekonsiliasi yang menunggu persetujuan Anda.</p>
-        </div>
+        <EmptyState
+          icon="fa-check-double"
+          title="Semua Selesai!"
+          description="Tidak ada pengajuan rekonsiliasi yang menunggu persetujuan Anda."
+          className="p-8"
+        />
       ) : (
         <div className="space-y-3">
           {reconciliations.map(recon => (

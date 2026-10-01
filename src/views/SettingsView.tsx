@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import type { Site, Category, TelegramUser, TelegramGroupRoute } from '../types/inventory';
-import { Button, ModalShell, Input, LoadingSpinner } from '../components/ui';
+import { Button, ModalShell, Input, LoadingSpinner, EmptyState } from '../components/ui';
 
 const UserManagementModal = lazy(() => import('../components/modals/UserManagementModal'));
 import {
@@ -661,9 +661,12 @@ const SettingsView: React.FC<Props> = ({
 
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {tgRoutes.length === 0 ? (
-              <p className="text-center py-4 text-slate-500 italic">
-                Belum ada grup rute terdaftar. Notifikasi saat ini menggunakan default admin chat.
-              </p>
+              <EmptyState
+                icon="fa-route"
+                title="Belum ada grup rute terdaftar."
+                description="Notifikasi saat ini menggunakan default admin chat."
+                className="py-4 border-none shadow-none bg-transparent"
+              />
             ) : (
               tgRoutes.map((route) => (
                 <div

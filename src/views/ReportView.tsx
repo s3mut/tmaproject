@@ -552,10 +552,11 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
           )}
 
       {utilization.length === 0 && !loading && (
-            <div className="glass rounded-2xl p-8 text-center">
-              <i className="fas fa-database text-3xl text-slate-600 mb-3 block" />
-              <p className="text-slate-400 text-sm">Jalankan SQL reporting di Supabase untuk mengaktifkan data utilization.</p>
-            </div>
+            <EmptyState
+              icon="fa-database"
+              title="Jalankan SQL reporting di Supabase untuk mengaktifkan data utilization."
+              className="py-8"
+            />
           )}
         </div>
       )}

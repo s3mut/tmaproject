@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { DisposalProposal } from '../types/inventory';
 import { getDisposalQueue, batchApproveDisposals } from '../services/assetService';
 import { printDisposalBAST } from '../utils/printDisposalBAST';
+import { EmptyState } from '../components/ui';
 
 interface Props {
   currentUserId: number;
@@ -224,15 +225,12 @@ const DisposalQueueView: React.FC<Props> = ({
 
       {/* Empty State */}
       {!loading && sorted.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center py-10">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-            <i className="fas fa-check-circle text-3xl text-emerald-500/60" />
-          </div>
-          <p className="text-sm font-semibold text-slate-300">Antrean Bersih</p>
-          <p className="text-xs text-slate-600 max-w-52">
-            Tidak ada usulan afkir yang menunggu persetujuan saat ini.
-          </p>
-        </div>
+        <EmptyState
+          icon="fa-check-double"
+          title="Semua Selesai!"
+          description="Tidak ada usulan afkir yang menunggu persetujuan saat ini."
+          className="flex-1 py-10 border-none shadow-none bg-transparent"
+        />
       )}
 
       {/* List */}

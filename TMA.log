@@ -1453,3 +1453,19 @@ STEP 39: PUSAT CETAK ULANG (REPRINT CENTER) - BAPA & BAST (2026-10-01)
   Meneruskan properti hasil fetch transaksi menggunakan 'mapTransactionToLoan' 
   secara real-time agar UI Cetak BAST & BAPA 100% konsisten.
 - Verifikasi: Build berjalan sukses. 
+
+--------------------------------------------------------------------------------
+STEP 40: UX AUDIT & WORKSTREAM A, B, C (2026-10-01)
+--------------------------------------------------------------------------------
+- WORKSTREAM A: UX Hardening pada TransactionsView
+  * Mengintegrasikan `ConfirmModal` pada seluruh tombol aksi status transaksi (Setuju/Tolak/Kirim/dll) dengan memanfaatkan fungsi `getAvailableActions()` dari `stateMachine.ts` yang menghasilkan `confirmMessage` dinamis.
+  * Menambahkan indikator Aging (umur usulan) dengan mengikuti pola pada DisposalQueueView (Merah > 14 hari, Oranye > 7 hari) yang dihitung dari timestamp masing-masing status berjalan.
+  * Menambahkan teks panduan langkah selanjutnya (Next-Step Guidance) di bawah badge status menggunakan dictionary `NEXT_STEP_TEXT`.
+- WORKSTREAM B: Redundansi Menu & Tombol Transaksi
+  * Mengkonfirmasi keberadaan dan kelayakan fungsionalitas tombol '+ Ajukan Transaksi' di `TransactionsView` (tidak dilakukan perubahan karena fungsionalitas telah ada melalui `onCreateTransaction()`).
+  * Menghapus duplikasi Menu "Rekonsiliasi" (Card di `MenuView.tsx` dan Route di `App.tsx`) karena antrean persetujuan rekonsiliasi sudah diintegrasikan sebagai tab khusus Admin (internal) di dalam halaman `OpnameView.tsx`. Props tetap terverifikasi cocok.
+- WORKSTREAM C: Inventarisasi UX & Validasi Form (Read-Only Audit)
+  * Menemukan 8 pola Empty State custom (inkonsisten) vs 3 penggunaan `<EmptyState />` konsisten.
+  * Menemukan 18 pola Loading State custom vs 4 penggunaan `<LoadingSpinner />` atau `<SkeletonCard />` konsisten.
+  * Mendokumentasikan inkonsistensi validasi form (3 Modal memakai state+validasi manual, 1 Modal memakai `useFormValidation`, 1 Modal tanpa validasi).
+  * Mengkonfirmasi komponen desain dasar (Input, Select, Textarea) sudah mendukung render otomatis prop `required`.
