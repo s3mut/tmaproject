@@ -80,13 +80,13 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
               label="Kategori Barang"
               value={values.categoryId}
               onChange={(e) => setFieldValue('categoryId', Number(e.target.value))}
+              error={errors.categoryId}
             >
               <option value="">-- Pilih Kategori --</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </Select>
-            {errors.categoryId && <p className="text-red-500 text-xs mt-1">{errors.categoryId}</p>}
           </div>
         )}
 
@@ -98,8 +98,8 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
             value={values.toSiteInput}
             onChange={handleSiteChange}
             icon="fa-building"
+            error={errors.toSiteCode}
           />
-          {errors.toSiteCode && <p className="text-red-500 text-xs mt-1">{errors.toSiteCode}</p>}
         </div>
 
         {values.type === 'Borrowing' && (
@@ -110,8 +110,8 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
               value={values.durationDays}
               onChange={(e) => setFieldValue('durationDays', Number(e.target.value))}
               icon="fa-calendar-alt"
+              error={errors.durationDays}
             />
-            {errors.durationDays && <p className="text-red-500 text-xs mt-1">{errors.durationDays}</p>}
           </div>
         )}
 
@@ -121,8 +121,8 @@ const TransactionModal = ({ isOpen, asset, categories, sites, onClose, onSubmit 
             placeholder="Alasan peminjaman / catatan mutasi..."
             value={values.purpose}
             onChange={(e) => setFieldValue('purpose', e.target.value)}
+            error={errors.purpose}
           />
-          {errors.purpose && <p className="text-red-500 text-xs mt-1">{errors.purpose}</p>}
         </div>
 
         <div className="flex gap-3 pt-1">

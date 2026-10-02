@@ -7,6 +7,7 @@ import {
   setUserActiveStatus, 
   approveUserAccess 
 } from '../../services/userService';
+import { useFormValidation } from '../../hooks/useFormValidation';
 import { ModalShell, Button, Input, Select, Textarea } from '../ui';
 
 interface Props {
@@ -39,15 +40,17 @@ const UserManagementModal: React.FC<Props> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   // Form State
-  const [formTelegramId, setFormTelegramId] = useState('');
-  const [formName, setFormName] = useState('');
-  const [formUsername, setFormUsername] = useState('');
-  const [formRole, setFormRole] = useState<UserRole>('user');
-  const [formRegion, setFormRegion] = useState('GLOBAL_ALL');
-  const [formIsActive, setFormIsActive] = useState(true);
-  const [formHasWebAccess, setFormHasWebAccess] = useState(false);
-  const [formWebPassword, setFormWebPassword] = useState('');
-  const [formNotes, setFormNotes] = useState('');
+  const { values, errors, setFieldValue, validate, resetForm } = useFormValidation({
+    telegramId: '',
+    name: '',
+    username: '',
+    role: 'user' as UserRole,
+    region: 'GLOBAL_ALL',
+    isActive: true,
+    hasWebAccess: false,
+    webPassword: '',
+    notes: ''
+  });
 
   // Quick action loading tracking
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
@@ -130,30 +133,24 @@ const UserManagementModal: React.FC<Props> = ({
   // Buka modal Tambah Pengguna
   const handleOpenAddModal = () => {
     setIsEditing(false);
-    setFormTelegramId('');
-    setFormName('');
-    setFormUsername('');
-    setFormRole('user');
-    setFormRegion('GLOBAL_ALL');
-    setFormIsActive(true);
-    setFormHasWebAccess(false);
-    setFormWebPassword('');
-    setFormNotes('');
+    resetForm();
     setIsFormModalOpen(true);
   };
 
   // Buka modal Edit Hak Akses Pengguna
   const handleOpenEditModal = (user: TelegramUser) => {
     setIsEditing(true);
-    setFormTelegramId(String(user.telegram_id));
-    setFormName(user.name || '');
-    setFormUsername(user.username || '');
-    setFormRole((user.role as UserRole) || 'guest');
-    setFormRegion(user.assigned_region || 'GLOBAL_ALL');
-    setFormIsActive(user.is_active ?? true);
-    setFormHasWebAccess(user.has_web_access ?? false);
-    setFormWebPassword(''); // Kosongkan saat edit, hanya diisi jika ingin ganti
-    setFormNotes(user.notes || '');
+    resetForm({
+      telegramId: String(user.telegram_id),
+      name: user.name || '',
+      username: user.username || '',
+      role: (user.role as UserRole) || 'guest',
+      region: user.assigned_region || 'GLOBAL_ALL',
+      isActive: user.is_active ?? true,
+      hasWebAccess: user.has_web_access ?? false,
+      webPassword: '',
+      notes: user.notes || ''
+    });
     setIsFormModalOpen(true);
   };
 
@@ -161,39 +158,36 @@ const UserManagementModal: React.FC<Props> = ({
   const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const tid = parseInt(formTelegramId.trim(), 10);
-    if (isNaN(tid) || tid <= 0) {
-      if (onShowToast) onShowToast('⚠️ Telegram ID harus berupa angka unik yang valid.', 'error');
-      return;
-    }
+    const isValid = validate({
+      telegramId: (val) => {
+        const tid = parseInt(val.trim(), 10);
+        if (isNaN(tid) || tid <= 0) return '⚠️ Telegram ID harus berupa angka unik yang valid.';
+        return null;
+      },
+      name: (val) => !val.trim() ? '⚠️ Nama lengkap pengguna wajib diisi.' : null,
+      webPassword: (val) => {
+        if (values.hasWebAccess && !isEditing && (!val || val.length < 8)) return '⚠️ Password web minimal 8 karakter saat mengaktifkan akses web.';
+        if (values.hasWebAccess && isEditing && val && val.length < 8) return '⚠️ Password baru minimal 8 karakter.';
+        return null;
+      }
+    });
 
-    if (!formName.trim()) {
-      if (onShowToast) onShowToast('⚠️ Nama lengkap pengguna wajib diisi.', 'error');
-      return;
-    }
+    if (!isValid) return;
 
-    if (formHasWebAccess && !isEditing && (!formWebPassword || formWebPassword.length < 8)) {
-      if (onShowToast) onShowToast('⚠️ Password web minimal 8 karakter saat mengaktifkan akses web.', 'error');
-      return;
-    }
-
-    if (formHasWebAccess && isEditing && formWebPassword && formWebPassword.length < 8) {
-      if (onShowToast) onShowToast('⚠️ Password baru minimal 8 karakter.', 'error');
-      return;
-    }
+    const tid = parseInt(values.telegramId.trim(), 10);
 
     setFormLoading(true);
     try {
       const payload: UpsertUserData = {
         telegram_id: tid,
-        name: formName.trim(),
-        username: formUsername.trim() || null,
-        role: formRole,
-        assigned_region: formRole === 'admin' ? null : (formRegion === 'GLOBAL_ALL' ? null : formRegion),
-        is_active: formIsActive,
-        has_web_access: formHasWebAccess,
-        web_password: formWebPassword ? formWebPassword.trim() : null,
-        notes: formNotes.trim() || null,
+        name: values.name.trim(),
+        username: values.username.trim() || null,
+        role: values.role,
+        assigned_region: values.role === 'admin' ? null : (values.region === 'GLOBAL_ALL' ? null : values.region),
+        is_active: values.isActive,
+        has_web_access: values.hasWebAccess,
+        web_password: values.webPassword ? values.webPassword.trim() : null,
+        notes: values.notes.trim() || null,
       };
 
       await adminUpsertUser(payload);
@@ -201,8 +195,8 @@ const UserManagementModal: React.FC<Props> = ({
       if (onShowToast) {
         onShowToast(
           isEditing 
-            ? `✅ Hak akses & data ${formName} berhasil diperbarui!`
-            : `✅ Pengguna baru ${formName} berhasil ditambahkan!`,
+            ? `✅ Hak akses & data ${values.name} berhasil diperbarui!`
+            : `✅ Pengguna baru ${values.name} berhasil ditambahkan!`,
           'success'
         );
       }
@@ -576,16 +570,14 @@ const UserManagementModal: React.FC<Props> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Telegram ID */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Telegram ID <span className="text-red-400">*</span>
-                </label>
                 <Input
+                  label="Telegram ID" required
                   type="text"
                   placeholder="Contoh: 123456789 atau 10005"
-                  value={formTelegramId}
-                  onChange={(e) => setFormTelegramId(e.target.value.replace(/[^0-9]/g, ''))}
+                  value={values.telegramId}
+                  onChange={(e) => setFieldValue('telegramId', e.target.value.replace(/[^0-9]/g, ''))}
                   disabled={isEditing} // ID tidak dapat diubah saat edit
-                  required
+                  error={errors.telegramId}
                 />
                 <span className="text-[10px] text-slate-400 block mt-0.5">
                   {isEditing ? 'Telegram ID permanen (tidak dapat diubah)' : 'ID numerik Telegram atau kode staf'}
@@ -594,14 +586,13 @@ const UserManagementModal: React.FC<Props> = ({
 
               {/* Username */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Username (@)
-                </label>
                 <Input
+                  label="Username (@)"
                   type="text"
                   placeholder="Contoh: budi_it (tanpa @)"
-                  value={formUsername}
-                  onChange={(e) => setFormUsername(e.target.value.replace('@', ''))}
+                  value={values.username}
+                  onChange={(e) => setFieldValue('username', e.target.value.replace('@', ''))}
+                  error={errors.username}
                 />
                 <span className="text-[10px] text-slate-400 block mt-0.5">
                   Digunakan untuk lookup dan login web
@@ -611,49 +602,45 @@ const UserManagementModal: React.FC<Props> = ({
 
             {/* Nama Lengkap */}
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Nama Lengkap <span className="text-red-400">*</span>
-              </label>
               <Input
+                label="Nama Lengkap" required
                 type="text"
                 placeholder="Nama teknisi / staf..."
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                required
+                value={values.name}
+                onChange={(e) => setFieldValue('name', e.target.value)}
+                error={errors.name}
               />
             </div>
 
             {/* Role & Wilayah Wewenang */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-900/60 rounded-xl border border-slate-700/60">
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Role Hak Akses <span className="text-red-400">*</span>
-                </label>
                 <Select
-                  value={formRole}
-                  onChange={(e) => setFormRole(e.target.value as UserRole)}
+                  label="Role Hak Akses" required
+                  value={values.role}
+                  onChange={(e) => setFieldValue('role', e.target.value as UserRole)}
                   className="text-xs py-2"
+                  error={errors.role}
                 >
                   <option value="guest" className="bg-slate-900 text-slate-50">🔒 Guest (Toko Cabang)</option>
                   <option value="user" className="bg-slate-900 text-slate-50">💼 User IT (Teknisi Regional)</option>
                   <option value="admin" className="bg-slate-900 text-slate-50">👑 Admin (Super Admin Global)</option>
                 </Select>
                 <span className="text-[10px] text-slate-400 block mt-1">
-                  {formRole === 'admin' && 'Akses penuh ke semua modul, approval, dan settings.'}
-                  {formRole === 'user' && 'Dapat membuat aset, approve & dispatch mutasi di regionnya.'}
-                  {formRole === 'guest' && 'Hanya dapat melihat aset tokonya dan request peminjaman.'}
+                  {values.role === 'admin' && 'Akses penuh ke semua modul, approval, dan settings.'}
+                  {values.role === 'user' && 'Dapat membuat aset, approve & dispatch mutasi di regionnya.'}
+                  {values.role === 'guest' && 'Hanya dapat melihat aset tokonya dan request peminjaman.'}
                 </span>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Wilayah Wewenang (Region)
-                </label>
                 <Select
-                  value={formRegion}
-                  onChange={(e) => setFormRegion(e.target.value)}
-                  disabled={formRole === 'admin'}
+                  label="Wilayah Wewenang (Region)"
+                  value={values.region}
+                  onChange={(e) => setFieldValue('region', e.target.value)}
+                  disabled={values.role === 'admin'}
                   className="text-xs py-2 text-amber-300 border-amber-500/40 disabled:opacity-50"
+                  error={errors.region}
                 >
                   <option value="GLOBAL_ALL" className="bg-slate-900 text-slate-50">🌐 Semua Wilayah (Global)</option>
                   {availableRegions.map(reg => (
@@ -661,7 +648,7 @@ const UserManagementModal: React.FC<Props> = ({
                   ))}
                 </Select>
                 <span className="text-[10px] text-slate-400 block mt-1">
-                  {formRole === 'admin' ? 'Admin otomatis menguasai seluruh region.' : 'Wilayah kerja teknisi IT cabang.'}
+                  {values.role === 'admin' ? 'Admin otomatis menguasai seluruh region.' : 'Wilayah kerja teknisi IT cabang.'}
                 </span>
               </div>
             </div>
@@ -676,14 +663,14 @@ const UserManagementModal: React.FC<Props> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFormIsActive(!formIsActive)}
+                  onClick={() => setFieldValue('isActive', !values.isActive)}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                    formIsActive ? 'bg-emerald-500' : 'bg-slate-700'
+                    values.isActive ? 'bg-emerald-500' : 'bg-slate-700'
                   }`}
                 >
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      formIsActive ? 'translate-x-5' : 'translate-x-0'
+                      values.isActive ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
                 </button>
@@ -697,31 +684,30 @@ const UserManagementModal: React.FC<Props> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFormHasWebAccess(!formHasWebAccess)}
+                  onClick={() => setFieldValue('hasWebAccess', !values.hasWebAccess)}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                    formHasWebAccess ? 'bg-indigo-500' : 'bg-slate-700'
+                    values.hasWebAccess ? 'bg-indigo-500' : 'bg-slate-700'
                   }`}
                 >
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      formHasWebAccess ? 'translate-x-5' : 'translate-x-0'
+                      values.hasWebAccess ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
                 </button>
               </div>
 
               {/* Password Web (Muncul jika akses web aktif) */}
-              {formHasWebAccess && (
+              {values.hasWebAccess && (
                 <div className="pt-2 border-t border-slate-800 space-y-1">
-                  <label className="text-xs font-semibold text-indigo-300 block">
-                    {isEditing ? 'Ganti Password Web (Opsional)' : 'Password Web (Bcrypt)'}{' '}
-                    {!isEditing && <span className="text-red-400">*</span>}
-                  </label>
                   <Input
+                    label={isEditing ? 'Ganti Password Web (Opsional)' : 'Password Web (Bcrypt)'}
+                    required={!isEditing}
                     type="password"
                     placeholder={isEditing ? 'Kosongkan jika tidak ingin mengubah password...' : 'Minimal 8 karakter...'}
-                    value={formWebPassword}
-                    onChange={(e) => setFormWebPassword(e.target.value)}
+                    value={values.webPassword}
+                    onChange={(e) => setFieldValue('webPassword', e.target.value)}
+                    error={errors.webPassword}
                   />
                   <span className="text-[10px] text-slate-400 block">
                     Password disimpan aman di database dengan enkripsi Bcrypt.
@@ -732,14 +718,13 @@ const UserManagementModal: React.FC<Props> = ({
 
             {/* Catatan / Keterangan */}
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Catatan / Keterangan
-              </label>
               <Textarea
+                label="Catatan / Keterangan"
                 rows={2}
                 placeholder="Catatan wewenang, nomor kontak, atau divisi..."
-                value={formNotes}
-                onChange={(e) => setFormNotes(e.target.value)}
+                value={values.notes}
+                onChange={(e) => setFieldValue('notes', e.target.value)}
+                error={errors.notes}
               />
             </div>
 
@@ -748,7 +733,7 @@ const UserManagementModal: React.FC<Props> = ({
               <div className="p-3 bg-red-500/15 border border-red-500/40 rounded-xl space-y-2">
                 <p className="text-xs text-red-300 font-bold">
                   <i className="fas fa-triangle-exclamation mr-1.5" />
-                  Yakin ingin menghapus akun {formName}?
+                  Yakin ingin menghapus akun {values.name}?
                 </p>
                 <p className="text-[11px] text-red-200/80 leading-relaxed">
                   Jika pengguna memiliki riwayat transaksi atau audit opname, akun otomatis dinonaktifkan (soft delete) untuk menjaga integritas data.
@@ -760,7 +745,7 @@ const UserManagementModal: React.FC<Props> = ({
                     size="sm"
                     loading={deleteLoading}
                     disabled={deleteLoading}
-                    onClick={() => handleDeleteUser(parseInt(formTelegramId, 10))}
+                    onClick={() => handleDeleteUser(parseInt(values.telegramId, 10))}
                   >
                     Ya, Hapus Akun
                   </Button>
@@ -786,7 +771,7 @@ const UserManagementModal: React.FC<Props> = ({
                     variant="danger"
                     size="sm"
                     icon="fa-trash"
-                    onClick={() => setConfirmDeleteId(parseInt(formTelegramId, 10))}
+                    onClick={() => setConfirmDeleteId(parseInt(values.telegramId, 10))}
                   >
                     Hapus
                   </Button>

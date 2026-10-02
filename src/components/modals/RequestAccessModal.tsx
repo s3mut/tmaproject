@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TelegramUser } from '../../types/inventory';
 import { requestITAccess, getTelegramSDKUser } from '../../services/userService';
+import { useFormValidation } from '../../hooks/useFormValidation';
 import { ModalShell, Button, Textarea } from '../ui';
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
  * RequestAccessModal — refactored with design system components.
  */
 const RequestAccessModal = ({ isOpen, currentUser, onClose, onSuccess }: Props) => {
-  const [noteText, setNoteText]     = useState('');
+  const { values, errors, setFieldValue, validate } = useFormValidation({ noteText: '' });
   const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -23,9 +24,14 @@ const RequestAccessModal = ({ isOpen, currentUser, onClose, onSuccess }: Props) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isValid = validate({
+      noteText: (val) => !val.trim() ? 'Alasan/Divisi wajib diisi' : null
+    });
+    if (!isValid) return;
+
     setSubmitting(true);
     try {
-      const res = await requestITAccess(currentUser, noteText);
+      const res = await requestITAccess(currentUser, values.noteText);
       onSuccess(res.message);
       onClose();
     } catch (err: any) {
@@ -70,12 +76,15 @@ const RequestAccessModal = ({ isOpen, currentUser, onClose, onSuccess }: Props) 
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Textarea
-            label="Alasan / Divisi / Cabang" required
-            placeholder="Contoh: Staff IT Support Cabang Jakarta, minta akses kelola unit..."
-            value={noteText}
-            onChange={e => setNoteText(e.target.value)}
-          />
+          <div>
+            <Textarea
+              label="Alasan / Divisi / Cabang" required
+              placeholder="Contoh: Staff IT Support Cabang Jakarta, minta akses kelola unit..."
+              value={values.noteText}
+              onChange={e => setFieldValue('noteText', e.target.value)}
+              error={errors.noteText}
+            />
+          </div>
 
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 text-[11px] text-blue-300 space-y-1">
             <p className="font-semibold flex items-center gap-1">

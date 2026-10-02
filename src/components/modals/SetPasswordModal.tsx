@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { setWebPassword, removeWebAccess } from '../../services/authService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFormValidation } from '../../hooks/useFormValidation';
 import { ModalShell, Button, Input } from '../ui';
 
 interface Props {
@@ -16,9 +17,11 @@ type Step = 'menu' | 'set_password' | 'remove_confirm';
  */
 const SetPasswordModal = ({ isOpen, onClose, onSuccess }: Props) => {
   const { currentUser, authMethod, refreshUser } = useAuth();
+  const { values, errors, setFieldValue, validate, resetForm } = useFormValidation({
+    newPassword: '',
+    confirmPassword: ''
+  });
   const [step, setStep]                     = useState<Step>('menu');
-  const [newPassword, setNewPassword]       = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass]             = useState(false);
   const [submitting, setSubmitting]         = useState(false);
   const [error, setError]                   = useState<string | null>(null);
@@ -28,7 +31,7 @@ const SetPasswordModal = ({ isOpen, onClose, onSuccess }: Props) => {
   const hasWebAccess = !!(currentUser as any).has_web_access || authMethod === 'web';
 
   const resetState = () => {
-    setNewPassword(''); setConfirmPassword(''); setError(null); setShowPass(false); setStep('menu');
+    resetForm(); setError(null); setShowPass(false); setStep('menu');
   };
 
   const handleClose = () => { resetState(); onClose(); };
@@ -36,11 +39,16 @@ const SetPasswordModal = ({ isOpen, onClose, onSuccess }: Props) => {
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (newPassword.length < 8) { setError('Password minimal 8 karakter.'); return; }
-    if (newPassword !== confirmPassword) { setError('Konfirmasi password tidak cocok.'); return; }
+    
+    const isValid = validate({
+      newPassword: (val) => val.length < 8 ? 'Password minimal 8 karakter.' : null,
+      confirmPassword: (val) => val !== values.newPassword ? 'Konfirmasi password tidak cocok.' : null
+    });
+    if (!isValid) return;
+
     setSubmitting(true);
     try {
-      await setWebPassword(currentUser.telegram_id, newPassword);
+      await setWebPassword(currentUser.telegram_id, values.newPassword);
       await refreshUser();
       onSuccess('Password web berhasil diset! Anda sekarang bisa login via browser.');
       handleClose();
@@ -113,9 +121,10 @@ const SetPasswordModal = ({ isOpen, onClose, onSuccess }: Props) => {
               label="Password Baru" required
               type={showPass ? 'text' : 'password'}
               placeholder="Min. 8 karakter"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
+              value={values.newPassword}
+              onChange={e => setFieldValue('newPassword', e.target.value)}
               icon="fa-lock"
+              error={errors.newPassword}
             >
               <button type="button" onClick={() => setShowPass(v => !v)}
                 className="text-slate-500 hover:text-slate-300 text-xs p-1">
@@ -126,9 +135,10 @@ const SetPasswordModal = ({ isOpen, onClose, onSuccess }: Props) => {
               label="Konfirmasi Password" required
               type={showPass ? 'text' : 'password'}
               placeholder="Ulangi password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              value={values.confirmPassword}
+              onChange={e => setFieldValue('confirmPassword', e.target.value)}
               icon="fa-lock-open"
+              error={errors.confirmPassword}
             />
             <div className="flex gap-2 pt-1">
               <Button type="button" variant="secondary" fullWidth onClick={() => setStep('menu')}>Kembali</Button>

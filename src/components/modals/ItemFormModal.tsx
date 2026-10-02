@@ -3,6 +3,7 @@ import type { AssetDetail, AssetStatus, Site, Category } from '../../types/inven
 import { ModalShell, Button, Input, Select, SiteSearchInput, Textarea } from '../ui';
 import QRScannerModal from './QRScannerModal';
 import { triggerHaptic } from '../../utils/telegramHaptics';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface FormData {
   serial_number: string;
@@ -35,20 +36,19 @@ const defaultForm: FormData = {
  * ItemFormModal — refactored with design system components & barcode scanner integration.
  */
 const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit }: Props) => {
-  const [form, setForm]             = useState<FormData>(defaultForm);
+  const { values, errors, setFieldValue, validate, resetForm } = useFormValidation<FormData>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [activeScanField, setActiveScanField] = useState<'serial_number' | 'aktiva' | 'external_id' | null>(null);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
   useEffect(() => {
-    if (categories.length > 0 && form.category_id === 0) {
-      setForm(prev => ({ ...prev, category_id: categories[0].id }));
+    if (categories.length > 0 && values.category_id === 0) {
+      setFieldValue('category_id', categories[0].id);
     }
-  }, [categories, form.category_id]);
+  }, [categories, values.category_id, setFieldValue]);
 
   useEffect(() => {
     if (editItem) {
-      setForm({
+      resetForm({
         serial_number:  editItem.serial_number,
         aktiva:         editItem.aktiva ?? '',
         category_id:    editItem.category_id,
@@ -61,35 +61,28 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
         description:    editItem.description ?? '',
       });
     } else {
-      setForm({ ...defaultForm, category_id: categories.length > 0 ? categories[0].id : 0 });
+      resetForm({ ...defaultForm, category_id: categories.length > 0 ? categories[0].id : 0 });
     }
-  }, [editItem, isOpen, categories]);
-
-  const set = <K extends keyof FormData>(key: K, value: FormData[K]) =>
-    setForm(prev => ({ ...prev, [key]: value }));
+  }, [editItem, isOpen, categories, resetForm]);
 
   const handleScanResult = (scannedText: string) => {
     if (activeScanField) {
-      set(activeScanField, scannedText.trim());
+      setFieldValue(activeScanField, scannedText.trim());
       triggerHaptic('success');
     }
     setActiveScanField(null);
   };
 
-  const validateForm = () => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {};
-    if (!form.serial_number.trim()) newErrors.serial_number = 'Serial Number wajib diisi';
-    if (form.category_id <= 0) newErrors.category_id = 'Kategori wajib dipilih';
-    if (!form.site_alias.trim()) newErrors.site_alias = 'Lokasi cabang wajib dipilih';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    const isValid = validate({
+      serial_number: (val) => !val.trim() ? 'Serial Number wajib diisi' : null,
+      category_id: (val) => val <= 0 ? 'Kategori wajib dipilih' : null,
+      site_alias: (val) => !val.trim() ? 'Lokasi cabang wajib dipilih' : null
+    });
+    if (!isValid) return;
     setSubmitting(true);
-    try { await onSubmit(form); } finally { setSubmitting(false); }
+    try { await onSubmit(values); } finally { setSubmitting(false); }
   };
 
   return (
@@ -104,11 +97,9 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
           <Input
             label="Serial Number" required
             placeholder="S/N dari perangkat"
-            value={form.serial_number}
-            onChange={e => {
-              set('serial_number', e.target.value);
-              if (errors.serial_number) setErrors(prev => ({ ...prev, serial_number: undefined }));
-            }}
+            value={values.serial_number}
+            onChange={e => setFieldValue('serial_number', e.target.value)}
+            error={errors.serial_number}
           >
             <button
               type="button"
@@ -119,15 +110,14 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
               <i className="fas fa-qrcode text-base" />
             </button>
           </Input>
-          {errors.serial_number && <p className="text-red-500 text-xs mt-1">{errors.serial_number}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Aktiva"
             placeholder="Nomor aktiva"
-            value={form.aktiva}
-            onChange={e => set('aktiva', e.target.value)}
+            value={values.aktiva}
+            onChange={e => setFieldValue('aktiva', e.target.value)}
           >
             <button
               type="button"
@@ -142,8 +132,8 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
           <Input
             label="External ID"
             placeholder="ID eksternal"
-            value={form.external_id}
-            onChange={e => set('external_id', e.target.value)}
+            value={values.external_id}
+            onChange={e => setFieldValue('external_id', e.target.value)}
           >
             <button
               type="button"
@@ -159,16 +149,13 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Select label="Kategori" required
-              value={form.category_id} onChange={e => {
-                set('category_id', Number(e.target.value));
-                if (errors.category_id) setErrors(prev => ({ ...prev, category_id: undefined }));
-              }}>
+              value={values.category_id} onChange={e => setFieldValue('category_id', Number(e.target.value))}
+              error={errors.category_id}>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
-            {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
           </div>
           <Select label="Status"
-            value={form.status} onChange={e => set('status', e.target.value as AssetStatus)}>
+            value={values.status} onChange={e => setFieldValue('status', e.target.value as AssetStatus)}>
             <option value="Active">Active</option>
             <option value="Backup">Backup</option>
             <option value="Repair">Repair</option>
@@ -180,30 +167,27 @@ const ItemFormModal = ({ isOpen, editItem, sites, categories, onClose, onSubmit 
 
         <div className="grid grid-cols-2 gap-3">
           <Input label="Brand" placeholder="Dell, HP, Cisco..."
-            value={form.brand} onChange={e => set('brand', e.target.value)} />
+            value={values.brand} onChange={e => setFieldValue('brand', e.target.value)} />
           <Input label="Model / Type" placeholder="Latitude 5520"
-            value={form.model_type} onChange={e => set('model_type', e.target.value)} />
+            value={values.model_type} onChange={e => setFieldValue('model_type', e.target.value)} />
         </div>
 
         <Input label="Computer Name" placeholder="PC-JKT-001"
-          value={form.computer_name} onChange={e => set('computer_name', e.target.value)} />
+          value={values.computer_name} onChange={e => setFieldValue('computer_name', e.target.value)} />
 
         <div>
           <SiteSearchInput
             label="Lokasi Cabang (Site Alias)"
             sites={sites}
-            value={form.site_alias}
-            onChange={val => {
-              set('site_alias', val);
-              if (errors.site_alias) setErrors(prev => ({ ...prev, site_alias: undefined }));
-            }}
+            value={values.site_alias}
+            onChange={val => setFieldValue('site_alias', val)}
             placeholder="Ketik kode atau alias site..."
+            error={errors.site_alias}
           />
-          {errors.site_alias && <p className="text-red-500 text-xs mt-1">{errors.site_alias}</p>}
         </div>
 
         <Textarea label="Deskripsi" placeholder="Catatan tambahan..."
-          value={form.description} onChange={e => set('description', e.target.value)} />
+          value={values.description} onChange={e => setFieldValue('description', e.target.value)} />
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="secondary" fullWidth onClick={onClose} disabled={submitting}>Batal</Button>
