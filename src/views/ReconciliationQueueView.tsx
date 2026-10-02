@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { StockReconciliation } from '../types/inventory';
 import { getReconciliations } from '../services/opnameService';
 import ReconciliationDetailModal from '../components/modals/ReconciliationDetailModal';
-import { EmptyState } from '../components/ui';
+import { EmptyState, LoadingSpinner } from '../components/ui';
 
 interface Props {
   currentUserId: number;
@@ -45,10 +45,7 @@ const ReconciliationQueueView = ({ currentUserId, onShowToast, onRefreshAssets }
       </div>
 
       {loading ? (
-        <div className="text-center py-10">
-          <i className="fas fa-spinner fa-spin text-3xl text-blue-500 mb-4"></i>
-          <p className="text-sm text-slate-400">Memuat antrean rekonsiliasi...</p>
-        </div>
+        <LoadingSpinner text="Memuat antrean rekonsiliasi..." />
       ) : reconciliations.length === 0 ? (
         <EmptyState
           icon="fa-check-double"

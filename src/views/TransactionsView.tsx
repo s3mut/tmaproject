@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { TransactionDetail, Site, Category, TransactionStatus } from '../types/inventory';
 import { transactionStatusConfig } from '../types/inventory';
-import { Button, SiteSearchInput, EmptyState } from '../components/ui';
+import { Button, SiteSearchInput, EmptyState, LoadingSpinner } from '../components/ui';
 import BASTDocumentModal from '../components/modals/BASTDocumentModal';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import { mapTransactionToLoan } from '../utils/mapTransactionToLoan';
@@ -115,7 +115,7 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
   });
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-400">Memuat transaksi...</div>;
+    return <LoadingSpinner text="Memuat transaksi..." />;
   }
 
   // ── GUEST: Gate Screen ───────────────────────────────────────────────────

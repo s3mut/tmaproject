@@ -314,7 +314,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
       {activeTab === 'kpi' && (
         <div className="space-y-4">
           {loading ? (
-            <div className="py-12 text-center text-slate-400 text-sm"><i className="fas fa-spinner fa-spin mr-2" />Memuat data KPI...</div>
+            <LoadingSpinner text="Memuat data KPI..." />
           ) : kpi ? (
             <>
               {/* KPI Cards */}
@@ -477,7 +477,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
             <div className="glass rounded-2xl p-4">
               <SectionTitle icon="fa-chart-bar" title="Top Kategori by Total Aset" sub="6 kategori terbesar" />
               <div className="h-44">
-                <Suspense fallback={<div className="p-4 text-center">Memuat grafik...</div>}>
+                <Suspense fallback={<LoadingSpinner text="Memuat grafik..." />}>
                   <ReportChartsComponent utilizationData={topCategories} />
                 </Suspense>
               </div>
@@ -587,9 +587,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
 
             {/* List BAST */}
             {bastLoading ? (
-              <div className="py-8 text-center text-slate-400 text-xs">
-                <i className="fas fa-spinner fa-spin mr-2" />Memuat arsip BAST...
-              </div>
+              <LoadingSpinner text="Memuat arsip BAST..." />
             ) : bastDocs.length === 0 ? (
               <EmptyState icon="fa-inbox" title="Tidak Ada Arsip BAST" description="Tidak ditemukan dokumen BAST dengan filter tanggal ini." className="py-8" />
             ) : (
@@ -637,9 +635,7 @@ const ReportView = ({ onBack, onShowToast, sites = [] }: Props) => {
 
             {/* List BAPA */}
             {bapaLoading ? (
-              <div className="py-8 text-center text-slate-400 text-xs">
-                <i className="fas fa-spinner fa-spin mr-2" />Memuat arsip BAPA...
-              </div>
+              <LoadingSpinner text="Memuat arsip BAPA..." />
             ) : bapaDocs.length === 0 ? (
               <EmptyState icon="fa-inbox" title="Tidak Ada Arsip BAPA" description="Tidak ditemukan dokumen BAPA dengan filter tanggal ini." className="py-8" />
             ) : (

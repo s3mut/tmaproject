@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { DisposalProposal } from '../types/inventory';
 import { getDisposalQueue, batchApproveDisposals } from '../services/assetService';
 import { printDisposalBAST } from '../utils/printDisposalBAST';
-import { EmptyState } from '../components/ui';
+import { EmptyState, LoadingSpinner } from '../components/ui';
 
 interface Props {
   currentUserId: number;
@@ -216,10 +216,7 @@ const DisposalQueueView: React.FC<Props> = ({
       {/* Loading */}
       {loading && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-orange-500/30 border-t-orange-500 animate-spin" />
-            <p className="text-xs text-slate-500">Memuat antrean afkir...</p>
-          </div>
+          <LoadingSpinner text="Memuat antrean afkir..." />
         </div>
       )}
 

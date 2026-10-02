@@ -1469,3 +1469,19 @@ STEP 40: UX AUDIT & WORKSTREAM A, B, C (2026-10-01)
   * Menemukan 18 pola Loading State custom vs 4 penggunaan `<LoadingSpinner />` atau `<SkeletonCard />` konsisten.
   * Mendokumentasikan inkonsistensi validasi form (3 Modal memakai state+validasi manual, 1 Modal memakai `useFormValidation`, 1 Modal tanpa validasi).
   * Mengkonfirmasi komponen desain dasar (Input, Select, Textarea) sudah mendukung render otomatis prop `required`.
+
+--------------------------------------------------------------------------------
+STEP 41: WORKSTREAM C1 — UNIFIKASI EMPTY STATE (2026-10-02)
+--------------------------------------------------------------------------------
+- Unifikasi 8 titik Empty State custom/manual ke komponen standar `<EmptyState />` (di `SitesView.tsx`, `HistoryView.tsx`, `OpnameView.tsx`, `TransactionsView.tsx`, `SettingsView.tsx`, `UserManagementModal.tsx`, `ReconciliationQueueView.tsx`, `AuditTrailModal.tsx`).
+- Mempertahankan pesan/deskripsi asli dan ikon yang relevan untuk setiap konteks.
+- Memastikan tidak ada regresi tampilan dan komponen `EmptyState` memanfaatkan arsitektur CSS variable auto-invert secara penuh.
+
+--------------------------------------------------------------------------------
+STEP 42: WORKSTREAM C2 — UNIFIKASI LOADING STATE LEVEL HALAMAN (2026-10-02)
+--------------------------------------------------------------------------------
+- Memperluas props `LoadingSpinner` agar mendukung `text` (custom label), `size` ('sm' | 'md' | 'lg'), dan `className`.
+- Menyeragamkan 14 titik loading state level halaman/section ke komponen `<LoadingSpinner text="..." />` di:
+  `TransactionsView.tsx`, `SitesView.tsx`, `DisposalQueueView.tsx`, `ReconciliationQueueView.tsx`, `AuditTrailModal.tsx`, `LoanReportModal.tsx`, `ReconciliationDetailModal.tsx`, `DocumentTimeline.tsx`.
+- Mempertahankan loading spinner inline pada tombol submit form (karena konteks tombol berbeda dari level halaman).
+- Verifikasi build: `npx tsc --noEmit` (exit 0) dan `npm run build` (exit 0).

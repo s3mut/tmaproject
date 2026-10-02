@@ -1,5 +1,5 @@
 import type { Site } from '../types/inventory';
-import { EmptyState } from '../components/ui';
+import { EmptyState, LoadingSpinner } from '../components/ui';
 
 interface Props {
   sites: Site[];
@@ -8,12 +8,7 @@ interface Props {
 
 const SitesView = ({ sites, loading }: Props) => {
   if (loading) {
-    return (
-      <div className="fade-in text-center py-12">
-        <i className="fas fa-spinner fa-spin text-2xl text-blue-400 mb-3 block"></i>
-        <p className="text-slate-500 text-sm">Memuat daftar site...</p>
-      </div>
-    );
+    return <LoadingSpinner text="Memuat daftar site..." />;
   }
 
   if (sites.length === 0) {

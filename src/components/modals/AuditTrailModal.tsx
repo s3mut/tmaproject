@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AuditTrailRow } from '../../services/reportService';
 import { getAuditTrail, exportToCSV, fmtDate } from '../../services/reportService';
+import { LoadingSpinner } from '../ui';
 
 interface Props {
   isOpen: boolean;
@@ -183,9 +184,7 @@ const AuditTrailModal = ({
         {/* Timeline */}
         <div className="overflow-y-auto flex-1 p-5">
           {loading ? (
-            <div className="py-12 text-center text-slate-400 text-sm">
-              <i className="fas fa-spinner fa-spin mr-2" /> Memuat audit trail...
-            </div>
+            <LoadingSpinner text="Memuat audit trail..." />
           ) : !searched ? (
             <div className="py-16 text-center">
               <i className="fas fa-search text-3xl text-slate-600 mb-3 block" />

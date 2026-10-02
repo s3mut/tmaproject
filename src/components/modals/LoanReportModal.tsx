@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { LoanReportRow } from '../../services/reportService';
 import { exportToCSV, fmtDate } from '../../services/reportService';
 import type { Site } from '../../types/inventory';
+import { LoadingSpinner } from '../ui';
 
 interface Props {
   isOpen: boolean;
@@ -190,7 +191,7 @@ const LoanReportModal = ({ isOpen, onClose, onGenerate, sites, onShowToast }: Pr
         {/* Table */}
         <div className="overflow-auto flex-1">
           {loading ? (
-            <div className="py-12 text-center text-slate-400 text-sm"><i className="fas fa-spinner fa-spin mr-2" />Memuat laporan...</div>
+            <LoadingSpinner text="Memuat laporan..." />
           ) : !generated ? (
             <div className="py-16 text-center">
               <i className="fas fa-chart-bar text-3xl text-slate-600 mb-3 block" />

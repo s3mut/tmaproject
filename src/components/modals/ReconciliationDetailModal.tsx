@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { StockReconciliation, StockReconciliationItem, ProposedActionType } from '../../types/inventory';
 import { getReconciliationItems, approveReconciliation } from '../../services/opnameService';
 import { getSites } from '../../services/siteService';
+import { LoadingSpinner } from '../ui';
 
 interface ActionState {
   approvedAction: ProposedActionType;
@@ -122,10 +123,7 @@ const ReconciliationDetailModal = ({ isOpen, onClose, reconciliation, currentUse
         {/* Content */}
         <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
           {loading ? (
-            <div className="text-center py-10">
-              <i className="fas fa-spinner fa-spin text-3xl text-blue-500 mb-4"></i>
-              <p className="text-sm text-slate-400">Memuat rincian aset...</p>
-            </div>
+            <LoadingSpinner text="Memuat rincian aset..." />
           ) : (
             <div className="space-y-4">
               {/* Header Info */}

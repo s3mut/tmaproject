@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import type { AssetMovementLog } from '../types/inventory';
 import { MOVEMENT_EVENT_TYPES } from '../types/inventory';
 import { getAssetTimeline } from '../services/transactionService';
+import { LoadingSpinner } from './ui';
 
 // ── Event type metadata ───────────────────────────────────────────────────────
 
@@ -74,12 +75,7 @@ const DocumentTimeline: React.FC<Props> = ({ assetId, serialNumber }) => {
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10 gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
-        <p className="text-xs text-slate-500">Memuat riwayat pergerakan...</p>
-      </div>
-    );
+    return <LoadingSpinner text="Memuat riwayat pergerakan..." />;
   }
 
   // ── Error state ────────────────────────────────────────────────────────────
