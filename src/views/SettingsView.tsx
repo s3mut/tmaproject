@@ -2,7 +2,6 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import type { Site, Category, TelegramUser, TelegramGroupRoute } from '../types/inventory';
 import { Button, ModalShell, Input, LoadingSpinner, EmptyState } from '../components/ui';
 
-const UserManagementModal = lazy(() => import('../components/modals/UserManagementModal'));
 import {
   getSystemSetting,
   updateSystemSetting,
@@ -10,6 +9,8 @@ import {
   upsertTelegramGroupRoute,
   deleteTelegramGroupRoute,
 } from '../services/settingsService';
+
+const UserManagementModal = lazy(() => import('../components/modals/UserManagementModal'));
 
 export interface SettingMenuItemProps {
   icon: string;

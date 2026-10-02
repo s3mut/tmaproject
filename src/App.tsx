@@ -80,10 +80,11 @@ function App() {
     if (error) showToast(`Error: ${error}`, 'error');
   }, [error, showToast]);
 
-  // Keamanan: Hanya role admin yang dapat mengakses tab 'settings'
+  // Keamanan: Hanya role admin / super_admin yang dapat mengakses Settings
   useEffect(() => {
-    if (activeSubView === 'settings' && currentUser?.role !== 'admin') {
-      setActiveSubView('profile');
+    const allowedRoles = ['admin', 'super_admin'];
+    if (activeSubView === 'settings' && currentUser?.role && !allowedRoles.includes(currentUser.role)) {
+      setActiveSubView(null); // kembali ke main view, bukan 'profile' (tidak ada handler subView-nya)
     }
   }, [activeSubView, currentUser?.role]);
 
