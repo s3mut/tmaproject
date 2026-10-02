@@ -300,14 +300,14 @@ export const LOCKED_ASSET_STATUSES: AssetStatus[] = ['PENDING_DISPOSAL', 'Dispos
 // ============================================================
 
 export const transactionStatusConfig: Record<TransactionStatus, { label: string; bg: string; text: string; icon: string }> = {
-  Requested:    { label: 'Requested',   bg: 'bg-amber-500/20 border border-amber-500/40',   text: 'text-amber-300',   icon: 'fa-clock' },
-  Approved:     { label: 'Approved',    bg: 'bg-teal-500/20 border border-teal-500/40',     text: 'text-teal-300',    icon: 'fa-check-circle' },
-  'In Transit': { label: 'In Transit',  bg: 'bg-blue-500/20 border border-blue-500/40',     text: 'text-blue-300',    icon: 'fa-truck' },
-  'In Progress':{ label: 'In Progress', bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-tools' },
-  Returning:    { label: 'Returning',   bg: 'bg-purple-500/20 border border-purple-500/40', text: 'text-purple-300',  icon: 'fa-box-open' },
-  Completed:    { label: 'Completed',   bg: 'bg-slate-700/50 border border-slate-600/50',   text: 'text-slate-400',   icon: 'fa-check-double' },
-  Rejected:     { label: 'Rejected',    bg: 'bg-red-500/20 border border-red-500/40',       text: 'text-red-400',     icon: 'fa-times-circle' },
-  Cancelled:    { label: 'Cancelled',   bg: 'bg-slate-700/30 border border-slate-600/40',   text: 'text-slate-400',   icon: 'fa-ban' },
+  Requested:    { label: 'Diajukan',            bg: 'bg-amber-500/20 border border-amber-500/40',   text: 'text-amber-300',   icon: 'fa-clock' },
+  Approved:     { label: 'Disetujui',           bg: 'bg-teal-500/20 border border-teal-500/40',     text: 'text-teal-300',    icon: 'fa-check-circle' },
+  'In Transit': { label: 'Dalam Pengiriman',    bg: 'bg-blue-500/20 border border-blue-500/40',     text: 'text-blue-300',    icon: 'fa-truck' },
+  'In Progress':{ label: 'Sedang Digunakan',    bg: 'bg-emerald-500/20 border border-emerald-500/40', text: 'text-emerald-300', icon: 'fa-tools' },
+  Returning:    { label: 'Proses Pengembalian', bg: 'bg-purple-500/20 border border-purple-500/40', text: 'text-purple-300',  icon: 'fa-box-open' },
+  Completed:    { label: 'Selesai',             bg: 'bg-slate-700/50 border border-slate-600/50',   text: 'text-slate-400',   icon: 'fa-check-double' },
+  Rejected:     { label: 'Ditolak',             bg: 'bg-red-500/20 border border-red-500/40',       text: 'text-red-400',     icon: 'fa-times-circle' },
+  Cancelled:    { label: 'Dibatalkan',          bg: 'bg-slate-700/30 border border-slate-600/40',   text: 'text-slate-400',   icon: 'fa-ban' },
 };
 
 // ============================================================

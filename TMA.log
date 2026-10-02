@@ -1485,3 +1485,25 @@ STEP 42: WORKSTREAM C2 — UNIFIKASI LOADING STATE LEVEL HALAMAN (2026-10-02)
   `TransactionsView.tsx`, `SitesView.tsx`, `DisposalQueueView.tsx`, `ReconciliationQueueView.tsx`, `AuditTrailModal.tsx`, `LoanReportModal.tsx`, `ReconciliationDetailModal.tsx`, `DocumentTimeline.tsx`.
 - Mempertahankan loading spinner inline pada tombol submit form (karena konteks tombol berbeda dari level halaman).
 - Verifikasi build: `npx tsc --noEmit` (exit 0) dan `npm run build` (exit 0).
+
+--------------------------------------------------------------------------------
+STEP 43: WORKSTREAM D — ERGONOMI MOBILE (TOUCH TARGET & RESPONSIVE) (2026-10-02)
+--------------------------------------------------------------------------------
+- TransactionsView.tsx:
+  * Menambahkan `min-h-[44px]` dan `min-w-[100px]` pada seluruh tombol aksi transaksi (Setujui, Tolak, Kirim, Terima, Kembalikan, Tarik, Batalkan, BAST) sesuai pedoman minimum touch-target 44x44px.
+  * Mengubah container tombol aksi menjadi `flex flex-wrap gap-2` dengan `flex-1` agar tombol fleksibel dan tidak terpotong (squished) pada layar mobile 375px.
+- DisposalQueueView.tsx:
+  * Memperbaiki tata letak Batch Action Bar antrean penghapusan dengan pembagian 2 baris (info counter aset dan baris input No. BAPA + tombol).
+  * Menambahkan `min-h-[40px]` pada input BAPA dan `min-h-[44px]` pada tombol "Setujui & BAPA".
+
+--------------------------------------------------------------------------------
+STEP 44: WORKSTREAM E — LOKALISASI STATUS & USER-FRIENDLY ERROR (2026-10-02)
+--------------------------------------------------------------------------------
+- Lokalisasi Status Transaksi (src/types/inventory.ts):
+  * Menerjemahkan label `transactionStatusConfig` ke Bahasa Indonesia baku tanpa mengubah key object (Requested -> 'Diajukan', Approved -> 'Disetujui', In Transit -> 'Dalam Pengiriman', In Progress -> 'Sedang Digunakan', Returning -> 'Proses Pengembalian', Completed -> 'Selesai', Rejected -> 'Ditolak', Cancelled -> 'Dibatalkan').
+- Friendly Error Message Mapper (src/utils/friendlyError.ts):
+  * Membuat utilitas `getFriendlyErrorMessage(err, fallback)` untuk memetakan error teknis PostgREST / Supabase (Network error, JWT expired, RLS violation, Foreign Key constraint, Unique constraint, 404, 500) ke pesan yang ramah pengguna non-teknis.
+- Integrasi Penanganan Error:
+  * Mengganti penanganan raw error `e.message` dengan `getFriendlyErrorMessage` di `App.tsx` (login, update status, create trx, auth), `DisposalQueueView.tsx`, dan `UserManagementModal.tsx`.
+- Verifikasi: `npx tsc --noEmit` (exit 0) dan `npm run build` (exit 0).
+

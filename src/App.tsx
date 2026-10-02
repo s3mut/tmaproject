@@ -6,6 +6,7 @@ import { useAuth } from './contexts/AuthContext';
 import { useModals } from './contexts/ModalContext';
 import { changeAssetStatus } from './services/assetService';
 import { triggerHaptic } from './utils/telegramHaptics';
+import { getFriendlyErrorMessage } from './utils/friendlyError';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import type { TabName } from './components/BottomNav';
@@ -148,7 +149,7 @@ function App() {
       }
       closeForm();
     } catch (e: any) {
-      showToast(e.message, 'error');
+      showToast(getFriendlyErrorMessage(e), 'error');
     }
   };
 
@@ -163,7 +164,7 @@ function App() {
       closeTransaction();
       showToast('Permintaan transaksi berhasil dibuat!');
     } catch (e: any) {
-      showToast(e.message, 'error');
+      showToast(getFriendlyErrorMessage(e), 'error');
     }
   };
 
@@ -348,7 +349,7 @@ function App() {
                     await updateTrxStatus(id, status, currentUser?.telegram_id || 0);
                     showToast(`Status transaksi berhasil diperbarui menjadi ${status}`);
                   } catch (e: any) {
-                    showToast(e.message, 'error');
+                    showToast(getFriendlyErrorMessage(e), 'error');
                   }
                 }}
               />

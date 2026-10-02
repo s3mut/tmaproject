@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { DisposalProposal } from '../types/inventory';
 import { getDisposalQueue, batchApproveDisposals } from '../services/assetService';
 import { printDisposalBAST } from '../utils/printDisposalBAST';
+import { getFriendlyErrorMessage } from '../utils/friendlyError';
 import { EmptyState, LoadingSpinner } from '../components/ui';
 
 interface Props {
@@ -130,7 +131,7 @@ const DisposalQueueView: React.FC<Props> = ({
       await loadQueue();
       onRefreshAssets?.();
     } catch (err: any) {
-      onShowToast?.(err.message, 'error');
+      onShowToast?.(getFriendlyErrorMessage(err), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -188,23 +189,26 @@ const DisposalQueueView: React.FC<Props> = ({
 
       {/* Batch Action Bar */}
       {selected.size > 0 && (
-        <div className="glass rounded-xl p-3 mb-3 flex items-center gap-3 border border-orange-500/30 bg-orange-500/5">
-          <i className="fas fa-check-circle text-orange-400" />
-          <span className="text-xs font-semibold text-orange-300 flex-1">
-            {selected.size} aset dipilih
-          </span>
-          <div className="flex items-center gap-1">
+        <div className="sticky bottom-0 z-20 glass rounded-xl p-3 mb-3 flex flex-col gap-2 border border-orange-500/30 bg-orange-500/5 shadow-lg"
+             style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
+          <div className="flex items-center gap-2">
+            <i className="fas fa-check-circle text-orange-400" />
+            <span className="text-xs font-semibold text-orange-300 flex-1">
+              {selected.size} aset dipilih
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
             <input
               type="text"
               value={bastNo}
               onChange={e => setBastNo(e.target.value)}
               placeholder="No. BAPA"
-              className="text-[10px] font-mono bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-300 w-36 focus:outline-none"
+              className="text-[10px] font-mono bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-slate-300 flex-1 min-w-0 focus:outline-none min-h-[40px]"
             />
             <button
               onClick={handleBatchApprove}
               disabled={submitting}
-              className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-300 text-xs font-semibold border border-orange-500/40 hover:bg-orange-500/30 transition-all flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-300 text-xs font-semibold border border-orange-500/40 hover:bg-orange-500/30 transition-all flex items-center gap-1.5 min-h-[44px] whitespace-nowrap flex-shrink-0"
             >
               <i className={`fas ${submitting ? 'fa-spinner fa-spin' : 'fa-check'}`} />
               {submitting ? 'Memproses...' : 'Setujui & BAPA'}

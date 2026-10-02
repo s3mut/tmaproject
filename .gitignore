@@ -31,3 +31,4 @@ dist-ssr
 .env.production
 .env.development
 qrscanner_fix.patch
+scratch-puppeteer/

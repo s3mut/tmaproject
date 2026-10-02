@@ -286,50 +286,52 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
                 )}
 
                 {/* Actions based on Status & Role */}
-                <div className="flex gap-2 mt-3 pt-3 border-t border-slate-700/50">
+                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-700/50">
                   {(() => {
                     const isPending = pendingTransactionIds.has(trx.id);
                     const pendingClass = isPending ? 'opacity-50 pointer-events-none' : '';
+                    const baseBtnClass = `min-h-[44px] flex-1 min-w-[100px] ${pendingClass}`;
+                    
                     return (
                       <>
                         {/* PERBAIKAN 1 — Semua onClick sekarang melalui requestConfirm */}
                         {trx.status === 'Requested' && userRole === 'admin' && (!currentUserRegion || currentUserRegion === 'ALL' || currentUserRegion === trx.to_site_region) && (
                           <>
-                            <Button variant="primary" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'Approved')}>
+                            <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'Approved')}>
                               {isPending ? <><i className="fas fa-spinner fa-spin mr-1" /> Memproses...</> : 'Setujui'}
                             </Button>
-                            <Button variant="danger" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'Rejected')}>
+                            <Button variant="danger" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'Rejected')}>
                               Tolak
                             </Button>
                           </>
                         )}
                         {trx.status === 'Approved' && userRole === 'admin' && (
-                          <Button variant="primary" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'In Transit')}>
+                          <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'In Transit')}>
                             {isPending ? <><i className="fas fa-spinner fa-spin mr-1" /> Memproses...</> : 'Kirim Unit (In Transit)'}
                           </Button>
                         )}
                         {trx.status === 'In Transit' && trx.transaction_type === 'Mutation' && (
-                          <Button variant="primary" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'Completed')}>
+                          <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'Completed')}>
                             {isPending ? <><i className="fas fa-spinner fa-spin mr-1" /> Memproses...</> : 'Terima Unit (Completed)'}
                           </Button>
                         )}
                         {trx.status === 'In Transit' && trx.transaction_type !== 'Mutation' && (
-                          <Button variant="primary" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'In Progress')}>
+                          <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'In Progress')}>
                             {isPending ? <><i className="fas fa-spinner fa-spin mr-1" /> Memproses...</> : 'Terima Unit (In Progress)'}
                           </Button>
                         )}
                         {trx.status === 'In Progress' && (trx.transaction_type === 'Borrowing' || trx.transaction_type === 'Repair') && (trx.requested_by === currentUserId || userRole === 'admin') && (
-                          <Button variant="primary" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'Returning')}>
+                          <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'Returning')}>
                             {isPending ? <><i className="fas fa-spinner fa-spin mr-1" /> Memproses...</> : (trx.requested_by === currentUserId ? 'Kembalikan Unit (Return)' : 'Tarik Unit (Admin)')}
                           </Button>
                         )}
                         {trx.status === 'Returning' && userRole === 'admin' && (
-                          <Button variant="primary" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'Completed')}>
+                          <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'Completed')}>
                             {isPending ? <><i className="fas fa-spinner fa-spin mr-1" /> Memproses...</> : 'Terima di Gudang (Completed)'}
                           </Button>
                         )}
                         {trx.status === 'Requested' && trx.requested_by === currentUserId && (
-                          <Button variant="danger" size="sm" disabled={isPending} className={pendingClass} onClick={() => requestConfirm(trx, 'Cancelled')}>
+                          <Button variant="danger" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'Cancelled')}>
                             Batalkan
                           </Button>
                         )}
@@ -337,7 +339,7 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="ml-auto flex items-center gap-1 bg-slate-700/50 hover:bg-slate-600 text-slate-300"
+                            className={`min-h-[44px] flex-1 min-w-[100px] flex items-center justify-center gap-1 bg-slate-700/50 hover:bg-slate-600 text-slate-300 ${trx.status === 'Completed' ? 'ml-auto' : ''}`}
                             onClick={() => {
                               setSelectedBastTrx(trx);
                               setBastModalOpen(true);

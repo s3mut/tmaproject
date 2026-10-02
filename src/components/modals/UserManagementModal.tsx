@@ -8,6 +8,7 @@ import {
   approveUserAccess 
 } from '../../services/userService';
 import { useFormValidation } from '../../hooks/useFormValidation';
+import { getFriendlyErrorMessage } from '../../utils/friendlyError';
 import { ModalShell, Button, Input, Select, Textarea } from '../ui';
 
 interface Props {
@@ -242,7 +243,7 @@ const UserManagementModal: React.FC<Props> = ({
       }
       if (onRefresh) onRefresh();
     } catch (err: any) {
-      if (onShowToast) onShowToast(`❌ Gagal mengubah status: ${err.message}`, 'error');
+      if (onShowToast) onShowToast(`❌ Gagal mengubah status: ${getFriendlyErrorMessage(err)}`, 'error');
     } finally {
       setActionLoadingId(null);
     }
@@ -257,7 +258,7 @@ const UserManagementModal: React.FC<Props> = ({
       await fetchUsers();
       if (onRefresh) onRefresh();
     } catch (err: any) {
-      if (onShowToast) onShowToast(`❌ Gagal menyetujui: ${err.message}`, 'error');
+      if (onShowToast) onShowToast(`❌ Gagal menyetujui: ${getFriendlyErrorMessage(err)}`, 'error');
     } finally {
       setActionLoadingId(null);
     }
