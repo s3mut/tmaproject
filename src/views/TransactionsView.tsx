@@ -6,6 +6,7 @@ import BASTDocumentModal from '../components/modals/BASTDocumentModal';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import { mapTransactionToLoan } from '../utils/mapTransactionToLoan';
 import { getAvailableActions } from '../services/stateMachine';
+import { logTransitCheckpoint } from '../services/transactionService';
 
 interface Props {
   transactions: TransactionDetail[];
@@ -51,7 +52,7 @@ interface ConfirmAction {
   confirmLabel: string;
 }
 
-const TransactionsView = ({ transactions, sites, loading, userRole, currentUserId, currentUserRegion, onCreateTransaction, onUpdateStatus, pendingTransactionIds }: Props) => {
+const TransactionsView = ({ transactions, sites, loading, userRole, currentUserId, currentUserRegion, onCreateTransaction, onUpdateStatus, onRefresh, pendingTransactionIds }: Props) => {
   const [filterType, setFilterType] = useState<string>('all');
 
   // ── Guest Gate Screen state ──────────────────────────────────────────────
@@ -333,6 +334,28 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
                         {trx.status === 'Requested' && trx.requested_by === currentUserId && (
                           <Button variant="danger" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'Cancelled')}>
                             Batalkan
+                          </Button>
+                        )}
+                        {['In Transit', 'Returning'].includes(trx.status) && userRole === 'admin' && (!currentUserRegion || currentUserRegion === 'ALL' || currentUserRegion === trx.to_site_region) && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={isPending}
+                            className={baseBtnClass}
+                            onClick={async () => {
+                              const notes = window.prompt('Catatan Checkpoint (opsional):');
+                              if (notes === null) return;
+                              try {
+                                const siteCode = trx.status === 'In Transit' ? trx.to_site_code : trx.from_site_code;
+                                await logTransitCheckpoint(trx.id, siteCode || '', currentUserId, notes);
+                                alert('Checkpoint tercatat');
+                                onRefresh();
+                              } catch (err: any) {
+                                alert('Gagal mencatat checkpoint: ' + err.message);
+                              }
+                            }}
+                          >
+                            <i className="fas fa-map-marker-alt mr-1" /> Konfirmasi Terima di Sini
                           </Button>
                         )}
                         {['In Transit', 'In Progress', 'Returning', 'Completed'].includes(trx.status) && (

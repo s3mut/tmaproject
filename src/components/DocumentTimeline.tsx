@@ -25,6 +25,7 @@ const EVENT_META: Record<string, EventMeta> = {
   [MOVEMENT_EVENT_TYPES.LOCATION_CORRECTION]:    { label: 'Koreksi Lokasi',      icon: 'fa-map-marker-alt',  color: 'text-yellow-300',  bgColor: 'bg-yellow-500/20'  },
   [MOVEMENT_EVENT_TYPES.STATUS_CHANGE]:          { label: 'Perubahan Status',    icon: 'fa-sync-alt',        color: 'text-indigo-300',  bgColor: 'bg-indigo-500/20'  },
   [MOVEMENT_EVENT_TYPES.TRANSACTION_COMPLETE]:   { label: 'Transaksi Selesai',   icon: 'fa-check-circle',    color: 'text-green-300',   bgColor: 'bg-green-500/20'   },
+  [MOVEMENT_EVENT_TYPES.TRANSIT_CHECKPOINT]:     { label: 'Checkpoint Transit',  icon: 'fa-map-marker-alt',  color: 'text-sky-300',     bgColor: 'bg-sky-500/20'     },
 };
 
 function getEventMeta(eventType: string): EventMeta {

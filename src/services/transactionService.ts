@@ -393,3 +393,22 @@ export async function insertMovementLog(log: {
     console.error('[TransactionService] Gagal insert movement log:', error.message);
   }
 }
+
+/**
+ * Mencatat checkpoint transit secara aman via RPC.
+ */
+export async function logTransitCheckpoint(
+  transactionId: number,
+  siteCode: string,
+  executorId: number,
+  notes?: string
+): Promise<{ success: boolean; message?: string }> {
+  const { data, error } = await supabase.rpc('log_transit_checkpoint', {
+    p_transaction_id: transactionId,
+    p_site_code: siteCode,
+    p_executor_id: executorId,
+    p_notes: notes ?? null,
+  });
+  if (error) throw error;
+  return data;
+}

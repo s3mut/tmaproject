@@ -1507,3 +1507,16 @@ STEP 44: WORKSTREAM E — LOKALISASI STATUS & USER-FRIENDLY ERROR (2026-10-02)
   * Mengganti penanganan raw error `e.message` dengan `getFriendlyErrorMessage` di `App.tsx` (login, update status, create trx, auth), `DisposalQueueView.tsx`, dan `UserManagementModal.tsx`.
 - Verifikasi: `npx tsc --noEmit` (exit 0) dan `npm run build` (exit 0).
 
+--------------------------------------------------------------------------------
+STEP 45: SINKRONISASI STATUS & TRANSIT CHECKPOINT (2026-10-06)
+--------------------------------------------------------------------------------
+- Migration SQL:
+  * Membuat `sql/add_asset_availability_sync.sql` untuk memperluas enum `asset_status` dengan value 'Borrow' dan menambah kolom `asset_status_before` di tabel `asset_transactions`.
+  * Membuat `sql/update_transaction_status_sync_v2.sql` untuk mengupdate RPC `update_transaction_status_safe` agar otomatis menyinkronkan `master_assets.status` ('Borrow', 'Repair', dll) di tiap transisi transaksi, dan membuat fungsi RPC baru `log_transit_checkpoint`.
+- Frontend Integration:
+  * `src/services/transactionService.ts`: Menambahkan fungsi `logTransitCheckpoint` untuk memanggil RPC.
+  * `src/views/TransactionsView.tsx`: Menambahkan tombol aksi "Konfirmasi Terima di Sini" khusus Admin untuk status 'In Transit' dan 'Returning' yang mencatat checkpoint.
+  * `src/types/inventory.ts`: Menambahkan event tipe `TRANSIT_CHECKPOINT` pada konstanta `MOVEMENT_EVENT_TYPES`.
+  * `src/components/DocumentTimeline.tsx`: Menambahkan konfigurasi icon dan styling (EVENT_META) untuk riwayat log transit di Immutable Ledger.
+- Audit Sistem: Melakukan audit komprehensif terhadap mekanisme pengecekan Role dan membuktikan adanya ketidaksesuaian skema DB (`super_admin` bukan enum valid).
+
