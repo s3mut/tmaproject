@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import type { Site } from '../../types/inventory';
 import Input from './Input';
 
@@ -19,7 +19,7 @@ interface Props {
 /**
  * Design System — SiteSearchInput
  * Reusable auto-complete search input for selecting Sites by Alias or Code.
- * Replaces heavy <select> dropdowns to handle thousands of sites efficiently.
+ * Uses a custom dropdown to replace native <datalist> for better UX and consistency.
  */
 const SiteSearchInput = ({
   sites,
@@ -34,8 +34,18 @@ const SiteSearchInput = ({
   icon = 'fa-map-marker-alt',
   customInfoText,
 }: Props) => {
-  const reactId = useId();
-  const datalistId = `site-list-${reactId}`;
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const matchedSite = useMemo(() => {
     if (!value || !value.trim()) return null;
@@ -46,6 +56,16 @@ const SiteSearchInput = ({
       sites.find(s => s.site_name?.toLowerCase() === query) ||
       null
     );
+  }, [sites, value]);
+
+  const filteredSites = useMemo(() => {
+    if (!value || !value.trim()) return sites.slice(0, 10);
+    const query = value.trim().toLowerCase();
+    return sites.filter(s => 
+      (s.site_alias?.toLowerCase().includes(query)) ||
+      (s.site_code?.toLowerCase().includes(query)) ||
+      (s.site_name?.toLowerCase().includes(query))
+    ).slice(0, 10);
   }, [sites, value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,36 +79,58 @@ const SiteSearchInput = ({
                      null;
     }
     onChange(val, currentMatch);
+    setIsOpen(true);
+  };
+
+  const handleSelect = (s: Site) => {
+    const val = s.site_alias ?? s.site_code;
+    onChange(val, s);
+    setIsOpen(false);
   };
 
   return (
-    <div className="w-full">
-      <Input
-        label={label}
-        type="text"
-        list={datalistId}
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-        error={error}
-        hint={hint}
-        icon={icon}
-        className="uppercase"
-        autoComplete="off"
-      />
+    <div className="w-full relative" ref={containerRef}>
+      <div onClick={() => !disabled && setIsOpen(true)}>
+        <Input
+          label={label}
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          error={error}
+          hint={hint}
+          icon={icon}
+          className="uppercase"
+          autoComplete="off"
+        />
+      </div>
       
-      <datalist id={datalistId}>
-        {sites.map((s) => {
-          const val = s.site_alias ?? s.site_code;
-          return (
-            <option key={s.site_code} value={val}>
-              {val} — {s.site_name} {s.region ? `(${s.region})` : ''}
-            </option>
-          );
-        })}
-      </datalist>
+      {isOpen && !disabled && (
+        <div className="absolute top-full left-0 right-0 mt-1 max-h-[240px] overflow-y-auto z-50 bg-slate-800 border border-slate-700 rounded-lg shadow-xl">
+          {filteredSites.length > 0 ? (
+            filteredSites.map((s) => {
+              const val = s.site_alias ?? s.site_code;
+              return (
+                <div
+                  key={s.site_code}
+                  className="px-4 py-2 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-b-0 transition-colors"
+                  onClick={() => handleSelect(s)}
+                >
+                  <p className="text-sm font-semibold text-slate-200 uppercase">{val}</p>
+                  <p className="text-[11px] text-slate-400">{s.site_name} {s.region ? `(${s.region})` : ''}</p>
+                </div>
+              );
+            })
+          ) : (
+            <div className="px-4 py-3 text-sm text-slate-400 italic text-center">
+              Tidak ada hasil yang cocok.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Real-time feedback badge */}
       {matchedSite ? (

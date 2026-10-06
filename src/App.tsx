@@ -337,6 +337,8 @@ function App() {
                 transactions={transactions}
                 sites={sites}
                 categories={categories}
+                assets={assets}
+                lockedAssetIds={lockedAssetIds}
                 loading={loading}
                 userRole={currentUser?.role}
                 currentUserId={currentUser?.telegram_id || 0}
@@ -344,9 +346,10 @@ function App() {
                 pendingTransactionIds={pendingTransactionIds}
                 onCreateTransaction={() => { openTransaction(); }}
                 onRefresh={refresh}
-                onUpdateStatus={async (id, status) => {
+                onShowToast={showToast}
+                onUpdateStatus={async (id, status, assetId, notes) => {
                   try {
-                    await updateTrxStatus(id, status, currentUser?.telegram_id || 0);
+                    await updateTrxStatus(id, status, currentUser?.telegram_id || 0, assetId, notes);
                     showToast(`Status transaksi berhasil diperbarui menjadi ${status}`);
                   } catch (e: any) {
                     showToast(getFriendlyErrorMessage(e), 'error');

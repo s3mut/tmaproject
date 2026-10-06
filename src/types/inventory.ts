@@ -130,6 +130,7 @@ export interface AssetTransaction {
 
   duration_days?: number | null;
   due_date?: string | null;
+  asset_status_before?: AssetStatus | null;
 }
 
 // ----- TABLE: asset_movement_logs (Immutable Stock Ledger) -----

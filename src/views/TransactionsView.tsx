@@ -1,24 +1,29 @@
 import { useState } from 'react';
-import type { TransactionDetail, Site, Category, TransactionStatus } from '../types/inventory';
+import type { TransactionDetail, Site, Category, TransactionStatus, AssetDetail } from '../types/inventory';
 import { transactionStatusConfig } from '../types/inventory';
 import { Button, SiteSearchInput, EmptyState, LoadingSpinner } from '../components/ui';
 import BASTDocumentModal from '../components/modals/BASTDocumentModal';
 import ConfirmModal from '../components/modals/ConfirmModal';
+import AssetPickerModal from '../components/modals/AssetPickerModal';
 import { mapTransactionToLoan } from '../utils/mapTransactionToLoan';
 import { getAvailableActions } from '../services/stateMachine';
 import { logTransitCheckpoint } from '../services/transactionService';
+import { getFriendlyErrorMessage } from '../utils/friendlyError';
 
 interface Props {
   transactions: TransactionDetail[];
   sites: Site[];
   categories: Category[];
+  assets: AssetDetail[];
+  lockedAssetIds: Set<number>;
   loading: boolean;
   userRole?: string;
   currentUserId: number;
   currentUserRegion?: string | null;
   onCreateTransaction: () => void;
   onRefresh: () => void;
-  onUpdateStatus: (transactionId: number, newStatus: string, notes?: string) => Promise<void>;
+  onUpdateStatus: (transactionId: number, newStatus: string, assetId?: number, notes?: string) => Promise<void>;
+  onShowToast?: (msg: string, type?: 'success' | 'error') => void;
   pendingTransactionIds: Set<number>;
 }
 
@@ -50,9 +55,10 @@ interface ConfirmAction {
   message: string;
   variant: 'danger' | 'warning' | 'primary';
   confirmLabel: string;
+  assetId?: number;
 }
 
-const TransactionsView = ({ transactions, sites, loading, userRole, currentUserId, currentUserRegion, onCreateTransaction, onUpdateStatus, onRefresh, pendingTransactionIds }: Props) => {
+const TransactionsView = ({ transactions, sites, assets, lockedAssetIds, loading, userRole, currentUserId, currentUserRegion, onCreateTransaction, onUpdateStatus, onRefresh, onShowToast, pendingTransactionIds }: Props) => {
   const [filterType, setFilterType] = useState<string>('all');
 
   // ── Guest Gate Screen state ──────────────────────────────────────────────
@@ -65,6 +71,12 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
 
   // ── Confirm Modal State (P1) ─────────────────────────────────────────────
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [pickerTrx, setPickerTrx] = useState<TransactionDetail | null>(null);
+  const [pickerTargetStatus, setPickerTargetStatus] = useState<string>('');
+  
+  // ── Checkpoint State ─────────────────────────────────────────────────────
+  const [checkpointTarget, setCheckpointTarget] = useState<{ transactionId: number, siteCode: string } | null>(null);
+  const [checkpointNotes, setCheckpointNotes] = useState<string>('');
 
   const handleGuestSiteChange = (val: string, matched: Site | null) => {
     setGuestSiteInput(val);
@@ -98,8 +110,27 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
   const handleConfirmExecute = async () => {
     if (!confirmAction) return;
     const { transactionId, targetStatus } = confirmAction;
+
+    if (targetStatus === '_CHECKPOINT_') {
+      const target = checkpointTarget;
+      const notes = checkpointNotes;
+      setConfirmAction(null);
+      setCheckpointTarget(null);
+      setCheckpointNotes('');
+      if (target) {
+        try {
+          await logTransitCheckpoint(target.transactionId, target.siteCode, currentUserId, notes);
+          onShowToast?.('Checkpoint tercatat', 'success');
+          onRefresh();
+        } catch (err: any) {
+          onShowToast?.(getFriendlyErrorMessage(err), 'error');
+        }
+      }
+      return;
+    }
+
     setConfirmAction(null);
-    await onUpdateStatus(transactionId, targetStatus);
+    await onUpdateStatus(transactionId, targetStatus, confirmAction.assetId);
   };
 
   // ── Filter transaksi ─────────────────────────────────────────────────────
@@ -307,7 +338,14 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
                           </>
                         )}
                         {trx.status === 'Approved' && userRole === 'admin' && (
-                          <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => requestConfirm(trx, 'In Transit')}>
+                          <Button variant="primary" size="sm" disabled={isPending} className={baseBtnClass} onClick={() => {
+                            if (trx.asset_id === null) {
+                              setPickerTrx(trx);
+                              setPickerTargetStatus('In Transit');
+                            } else {
+                              requestConfirm(trx, 'In Transit');
+                            }
+                          }}>
                             {isPending ? <><i className="fas fa-spinner fa-spin mr-1" /> Memproses...</> : 'Kirim Unit (In Transit)'}
                           </Button>
                         )}
@@ -337,26 +375,62 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
                           </Button>
                         )}
                         {['In Transit', 'Returning'].includes(trx.status) && userRole === 'admin' && (!currentUserRegion || currentUserRegion === 'ALL' || currentUserRegion === trx.to_site_region) && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={isPending}
-                            className={baseBtnClass}
-                            onClick={async () => {
-                              const notes = window.prompt('Catatan Checkpoint (opsional):');
-                              if (notes === null) return;
-                              try {
-                                const siteCode = trx.status === 'In Transit' ? trx.to_site_code : trx.from_site_code;
-                                await logTransitCheckpoint(trx.id, siteCode || '', currentUserId, notes);
-                                alert('Checkpoint tercatat');
-                                onRefresh();
-                              } catch (err: any) {
-                                alert('Gagal mencatat checkpoint: ' + err.message);
-                              }
-                            }}
-                          >
-                            <i className="fas fa-map-marker-alt mr-1" /> Konfirmasi Terima di Sini
-                          </Button>
+                          <div className="w-full flex flex-col gap-2 bg-slate-800/30 border border-slate-700/50 p-2 rounded-xl mb-1">
+                            {(() => {
+                              const isTargetTrx = checkpointTarget?.transactionId === trx.id;
+                              const defaultSiteCode = trx.status === 'In Transit' ? trx.to_site_code : trx.from_site_code;
+                              const currentSiteValue = isTargetTrx ? checkpointTarget.siteCode : (defaultSiteCode || '');
+                              
+                              return (
+                                <>
+                                  <div className="px-1">
+                                    <SiteSearchInput
+                                      sites={sites}
+                                      value={currentSiteValue}
+                                      onChange={(val) => setCheckpointTarget({ transactionId: trx.id, siteCode: val })}
+                                      label="Konfirmasi Lokasi Penerima (Bisa Ubah)"
+                                      placeholder="Ketik alias atau kode lokasi..."
+                                      icon="fa-map-pin"
+                                    />
+                                  </div>
+                                  <textarea
+                                    placeholder="Catatan Checkpoint (opsional)..."
+                                    value={isTargetTrx ? checkpointNotes : ''}
+                                    onChange={(e) => {
+                                      if (!isTargetTrx) {
+                                        setCheckpointTarget({ transactionId: trx.id, siteCode: currentSiteValue });
+                                      }
+                                      setCheckpointNotes(e.target.value);
+                                    }}
+                                    className="w-full text-xs bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-slate-200 focus:ring-1 focus:ring-blue-500 resize-none outline-none"
+                                    rows={2}
+                                  />
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    disabled={isPending || !currentSiteValue.trim()}
+                                    className="w-full min-h-[44px] flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20"
+                                    onClick={() => {
+                                      setCheckpointTarget({ transactionId: trx.id, siteCode: currentSiteValue });
+                                      
+                                      const matchedSite = sites.find(s => s.site_code === currentSiteValue || s.site_alias === currentSiteValue);
+                                      const displayName = matchedSite ? matchedSite.site_name : currentSiteValue;
+                                      
+                                      setConfirmAction({
+                                        transactionId: trx.id,
+                                        targetStatus: '_CHECKPOINT_',
+                                        message: `Catat bahwa unit sudah sampai di ${displayName}?`,
+                                        variant: 'primary',
+                                        confirmLabel: 'Konfirmasi Checkpoint'
+                                      });
+                                    }}
+                                  >
+                                    <i className="fas fa-map-marker-alt mr-1" /> Konfirmasi Terima di Sini
+                                  </Button>
+                                </>
+                              );
+                            })()}
+                          </div>
                         )}
                         {['In Transit', 'In Progress', 'Returning', 'Completed'].includes(trx.status) && (
                           <Button
@@ -381,7 +455,6 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
         )}
       </div>
 
-      {/* PERBAIKAN 1 — Satu ConfirmModal di level komponen */}
       <ConfirmModal
         isOpen={confirmAction !== null}
         title="Konfirmasi Aksi"
@@ -390,6 +463,29 @@ const TransactionsView = ({ transactions, sites, loading, userRole, currentUserI
         variant={confirmAction?.variant ?? 'danger'}
         onConfirm={handleConfirmExecute}
         onCancel={() => setConfirmAction(null)}
+      />
+
+      <AssetPickerModal
+        isOpen={!!pickerTrx}
+        onClose={() => { setPickerTrx(null); setPickerTargetStatus(''); }}
+        assets={assets}
+        categoryId={pickerTrx?.category_id || null}
+        lockedAssetIds={lockedAssetIds}
+        onSelect={(assetId) => {
+          const t = pickerTrx!;
+          const s = pickerTargetStatus;
+          setPickerTrx(null);
+          setPickerTargetStatus('');
+          
+          setConfirmAction({
+            transactionId: t.id,
+            targetStatus: s,
+            message: `Anda memilih unit untuk dikirim. Lanjutkan proses pengiriman (In Transit)?`,
+            variant: 'primary',
+            confirmLabel: 'Konfirmasi',
+            assetId: assetId
+          });
+        }}
       />
 
       <BASTDocumentModal
