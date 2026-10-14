@@ -98,9 +98,13 @@ E1-TMA/
    - Jalankan `npx tsc --noEmit` untuk memastikan tidak ada kesalahan TypeScript.
    - Jalankan `npm run build` untuk memverifikasi bundle Vite.
 
-3. **Dokumentasi Wajib (TMA.log)**:
+3. **Telegram Mini App & Bot (wajib untuk fitur production)**:
+   - Jangan mengandalkan `npm run dev` saja. Deploy dan webhook didokumentasikan di [docs/TELEGRAM_BOT_AND_MINI_APP.md](docs/TELEGRAM_BOT_AND_MINI_APP.md).
+   - Token bot disimpan di Supabase secrets (`TELEGRAM_BOT_TOKEN`), bukan di bundle Vite.
+
+4. **Dokumentasi Wajib (TMA.log)**:
    - Setiap selesai melakukan fitur baru, bugfix, atau migrasi SQL, catat perubahan di `TMA.log` dengan format STEP berurutan.
 
-4. **Git Commit & Push**:
+5. **Git Commit & Push**:
    - Gunakan pesan commit deskriptif (misal: `feat: ...`, `fix: ...`, `docs: ...`).
    - Pastikan file sensitif (`.env`, `.env.local`) tidak ter-commit ke Git.

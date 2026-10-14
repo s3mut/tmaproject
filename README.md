@@ -73,7 +73,7 @@ E1-TMA/
 │   ├── reporting_views_and_rpcs.sql # Skema SQL 5 Views & 4 RPC untuk Analitik & Pelaporan
 │   ├── web_auth_rpc.sql            # SQL Migration: Web Auth (web_password + RPC)
 │   ├── diagnostic_web_auth.sql     # SQL Diagnostik & Pengujian Web Login
-│   └── bot_webhook_handler.js      # Telegram Bot Webhook Handler (Node.js)
+│   └── TELEGRAM_BOT_AND_MINI_APP.md # Setup Mini App, Bot, webhook, cron
 ├── sql/
 │   ├── create_asset_loans.sql              # Skema Database & Migrasi Sistem Peminjaman
 │   └── upgrade_rbac_regional_workflow.sql  # Migrasi Enterprise RBAC, User Region & Cross-Region RPC
@@ -140,6 +140,7 @@ E1-TMA/
 │       ├── SitesView.tsx           # Daftar Lokasi Site Operasional
 │       ├── OpnameView.tsx          # Audit Fisik Aset
 │       └── ProfileView.tsx         # Profil User & Pengaturan Akses Web
+├── supabase/functions/             # Edge Functions (telegram-bot, cron-overdue)
 ├── .env.example                    # Template Environment Variables
 ├── TMA.log                         # Log Riwayat Perubahan Project
 └── vite.config.ts                  # Vite Configuration
@@ -165,11 +166,9 @@ Buat file `.env` di root project berdasarkan `.env.example`:
 ```env
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
-
-# Opsional: Untuk fitur notifikasi Telegram Bot (Request Akses Admin)
-VITE_TELEGRAM_BOT_TOKEN=your-bot-token-here
-VITE_TELEGRAM_ADMIN_CHAT_ID=your-admin-chat-id-here
 ```
+
+Token bot **tidak** ditaruh di Vite untuk production. Simpan `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`, dan `WEBHOOK_SECRET` sebagai **Supabase Edge Function secrets**. Panduan lengkap (BotFather, Mini App HTTPS, deploy function, webhook, cron overdue, troubleshooting): [docs/TELEGRAM_BOT_AND_MINI_APP.md](docs/TELEGRAM_BOT_AND_MINI_APP.md).
 
 ### 4. Setup Database Supabase
 Eksekusi file SQL yang berada di folder `docs/` secara berurutan di Supabase SQL Editor:
@@ -188,6 +187,8 @@ Eksekusi file SQL yang berada di folder `docs/` secara berurutan di Supabase SQL
 ```bash
 npm run dev
 ```
+
+Ini hanya frontend di browser (`http://localhost:5173`). Auto-login Telegram, tombol approve di chat, dan reminder overdue memerlukan workflow di [docs/TELEGRAM_BOT_AND_MINI_APP.md](docs/TELEGRAM_BOT_AND_MINI_APP.md).
 
 ---
 
