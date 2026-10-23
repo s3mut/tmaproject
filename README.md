@@ -17,21 +17,17 @@
 - **⚡ High-Performance Site Auto-Complete**: Seluruh menu penentuan lokasi (Pindah Aset, Mutasi, Tambah/Edit Aset, dan Stock Opname) ditenagai oleh komponen *auto-complete search* (`SiteSearchInput`) yang mampu mengolah 2.000+ cabang lokasi dengan ringan tanpa kendala rendering/lag dari *dropdown select*.
 - **💻 Manajemen Daftar Aset**: Pengelompokan daftar aset berdasarkan **Region/Wilayah** dalam bentuk *collapsible/accordion* yang informatif, dilengkapi indikator *breakdown* status per wilayah dan penghitung hasil filter secara reponsif.
 - **⚡ Paginated Auto-Fetch (Bebas Limit 1.000 Baris)**: Mampu memuat seluruh inventaris perusahaan (6.000+ unit aset) dengan sempurna tanpa terhalang batas default 1.000 baris per request dari PostgREST/Supabase.
-- **📦 Mutasi Aset (Maker-Checker Handover)**: Catat perpindahan aset antar site dengan alur status (*Pending → Completed / In Transit*), dilengkapi filter status, pencarian real-time di riwayat mutasi, dan fitur **Pencarian Aset by QR/Barcode Scan** (Zero-Click Logistics) yang otomatis menyeleksi barang seketika setelah disekan.
-- **🤝 Manajemen Peminjaman Aset & Alur RMA (5-Phase Loan Management)**: Sistem sirkulasi pinjam unit backup sementara untuk Toko dengan siklus kendali profesional:
-  - **Fase Pengenalan & Preview Regional**: Pencarian stok unit backup yang tersatukan secara regional di background (`sites.region`). Sebelum submit, toko dapat melihat kartu Preview Alokasi Unit Backup yang menampilkan ketersediaan unit di hub region terdekatnya.
-  - **Fase Pengajuan (Request) & Pembatalan Mandiri**: Penomoran unik otomatis anti-duplikasi (`LOAN-[SITE]-[YYMM]-[4_DIGIT_SEQ]`), pemilihan Alias Toko via *auto-complete*, dan sistem alert bila estimasi melebihi durasi standar 14 hari. Pengaju (Creator/Admin) juga berhak menekan tombol **⚪ Batal** (*Cancelled*) sebelum barang diproyeksikan.
-  - **Fase Alokasi & Inspeksi Spesifikasi (Dispatch)**: Tim IT dapat melihat **Inspeksi Spesifikasi Lengkap** (S/N, Merek, Model, Aktiva, External ID) pada tiap kandidat dengan prioritas ⭐ Satu Region, menyeken barcode/QR fisik, atau melakukan **🚫 Penolakan Tiket (Reject)** dengan input wajib alasan penawaran.
-  - **Fase Penerimaan (Receiving)**: Konfirmasi penerimaan saat barang sampai di toko dalam 1-klik yang memindahkan status unit fisik menjadi *Borrowed* di site Toko.
-  - **Fase Monitoring Dinamis**: Peringatan awal **🟡 H-3 Jatuh Tempo** dan eskalasi visual **🔴 OVERDUE** (berkendip & bergaris merah bercahaya) secara real-time apabila barang terlambat dikembalikan.
-  - **Fase Pengembalian & Verifikasi (Return)**: Toko mengklik *Kembalikan Unit*, lalu Tim IT memverifikasi kondisi fisik saat barang tiba (Pilihan: `✅ Bagus` reset jadi Backup, `🛠️ Rusak` ubah jadi Repair, atau `❌ Hilang` ubah jadi Disposed/Klaim).
-  - **📄 Generator Dokumen BAST & Shipping Label**: Template Berita Acara Serah Terima berdesain korporasi resmi bersumber spesifikasi lengkap dan slot tanda tangan digital yang siap cetak langsung (*Print-Ready* / Save PDF).
-  - **🌐 Enterprise RBAC & Regional Auto-Routing (Intra vs. Cross-Region)**: Pembatasan wewenang teknisi IT cabang berdasarkan wilayah (`assigned_region`). Penguncian visual otomatis (`🔒 Wilayah [Region]`) bagi teknisi di luar wilayah kerjanya. Jika stok di region toko kosong, pengajuan otomatis dieksplorasikan ke Alur B (Cross-Region Escalation) dengan status **`Waiting Admin Approval`** agar diotorisasi Admin Global untuk alokasi dari Gudang Pusat / HQ.
-  - **🛡️ Audit Trail Alasan Terstruktur & God Mode Override**: Kewajiban memilih kategori alasan terstruktur dan keterangan saat pembatalan maupun penolakan. Admin Global juga diberdayakan dengan tombol otoritas tertinggi **⚡ Force Cancel** untuk penarikan paksa aset yang mereset status fisik secara otomatis kembali ke *Backup*.
+- **🔄 Sistem Transaksi Aset Terpadu (Unified Transactions: Mutation, Borrowing, Repair)**: Sistem alur pergerakan aset terintegrasi dengan State Machine 8-Status yang menggantikan sistem peminjaman dan mutasi lama:
+  - **Alur State Machine 8-Status**: Alur transisi status terpadu (`Requested` → `Approved` → `In Transit` → `In Progress` → `{Returning}` → `Completed`, atau terminal `Rejected` / `Cancelled`) untuk 3 jenis transaksi operasional: **Mutation** (perpindahan permanen antar cabang), **Borrowing** (peminjaman unit backup sementara untuk toko), dan **Repair** (pengiriman unit rusak ke service center).
+  - **Sinkronisasi Otomatis Status Fisik Aset**: Status fisik unit pada `master_assets.status` (`Backup`, `Borrow`, `Repair`, `In Transit`, `Active`) secara otomatis disinkronkan di setiap transisi status tiket melalui RPC PostgreSQL `update_transaction_status_safe`.
+  - **Binding Aset Real-Time saat Kirim Unit**: Pada tiket berbasis kategori, penentuan serial number fisik dilakukan saat tombol "Kirim Unit" (status `In Transit`) melalui modal `AssetPickerModal` dengan validasi ketersediaan unit `Backup` real-time guna mencegah *double-booking*.
+  - **Checkpoint Transit Multi-Leg**: Mendukung pencatatan lokasi transit perantara sebelum aset tiba di lokasi tujuan akhir, dicatat ke dalam log audit fisik (*immutable ledger* `asset_movement_logs`) melalui RPC `log_transit_checkpoint`.
+  - **Pusat Laporan & Reprint Center**: Pemantauan KPI, audit trail pergerakan unit (standar ISO 19770/27001), utilisasi cabang, serta fitur **Reprint Center** untuk mencetak ulang dokumen historis BAST (Peminjaman & Mutasi) dan BAPA (Pemusnahan Aset via `disposal_documents`).
 - **📈 Enterprise Documentation & Reporting (Recharts & SQL Analytics)**: Dasbor pelaporan eksekutif berbekal visualisasi grafik modern yang ditenagai oleh **Recharts** dan komputasi langsung dari PostgreSQL Views/RPC:
   - **KPI Summary**: Area Chart untuk trend mutasi 12 bulan terakhir dan Donut/Pie Chart proporsi distribusi status aset fisik.
-  - **Loans & SLA Monitoring**: Pelacakan tingkat keterlambatan (*Overdue Alerts*) dengan aksi ekspor CSV dan pemicu notifikasi peringatan ke Telegram Bot.
+  - **SLA & Overdue Monitoring**: Pelacakan tingkat keterlambatan pengembalian unit backup (*Overdue Alerts*) dengan aksi ekspor CSV dan pemicu notifikasi peringatan ke Telegram Bot.
   - **Audit Trail & Utilization**: Linimasa rekam jejak siklus hidup tiap unit aset serta Horizontal Bar Chart untuk ranking utilisasi peminjaman tertinggi per cabang.
+  - **Reprint Center (Arsip BAST & BAPA)**: Pusat cetak ulang dokumen historis Berita Acara Serah Terima (Peminjaman & Mutasi) dan Berita Acara Pemusnahan Aset (BAPA) berbasis snapshot tabel `disposal_documents` dan view transaksi.
 - **💾 Admin Disaster Recovery & Backup System**: Panel khusus Role Admin di menu Profil untuk mengunduh salinan cadangan lengkap database (Snapshot JSON) serta mengekspor tabel Master Aset & Riwayat Mutasi ke format Excel CSV (terformat UTF-8 BOM agar langsung kompatibel dan rapi di Microsoft Excel/Spreadsheet).
 - **📝 Stock Opname (Audit Fisik)**: Fasilitas audit fisik aset berbasis lokasi terintegrasi kamera yang memisahkan status barang yang sudah di-scan dengan yang belum diverifikasi, lengkap dengan *progress bar* visual.
 - **📷 QR / Barcode Scanner Nyata**: Scanner kamera langsung di Telegram Mini App menggunakan `html5-qrcode` — mendukung QR Code, Code 128, Code 39, EAN-13, dan format lainnya. Otomatis membuka detail aset saat kode terdeteksi.
@@ -75,71 +71,109 @@ E1-TMA/
 │   ├── diagnostic_web_auth.sql     # SQL Diagnostik & Pengujian Web Login
 │   └── TELEGRAM_BOT_AND_MINI_APP.md # Setup Mini App, Bot, webhook, cron
 ├── sql/
-│   ├── create_asset_loans.sql              # Skema Database & Migrasi Sistem Peminjaman
-│   └── upgrade_rbac_regional_workflow.sql  # Migrasi Enterprise RBAC, User Region & Cross-Region RPC
+│   ├── upgrade_erp_standards.sql          # Migrasi Unifikasi Transaksi & Standardisasi ERP (asset_transactions)
+│   ├── upgrade_iso_standards.sql          # Immutable Ledger ISO 19770 & 27001 (asset_movement_logs)
+│   ├── upgrade_rbac_regional_workflow.sql # Migrasi Enterprise RBAC, User Region & Cross-Region RPC
+│   ├── create_super_admin_settings.sql    # Dynamic System Settings & Telegram Group Routes
+│   ├── create_user_management_and_rights.sql # Manajemen Hak Akses User & Approval
+│   ├── reporting_views_and_rpcs.sql       # Views & RPCs untuk Analitik dan Pelaporan
+│   ├── add_disposal_documents.sql         # Tabel Snapshot Dokumen BAPA untuk Reprint Center
+│   ├── add_opname_unique_constraint.sql   # Unique Constraint Stock Opname Details
+│   ├── add_asset_availability_sync.sql    # Penambahan Enum 'Borrow' & Kolom asset_status_before
+│   ├── create_asset_loans.sql             # [Legacy] Skema Peminjaman v1 (Digantikan upgrade_erp_standards.sql)
+│   ├── update_transaction_status_sync_v2.sql # [Superseded] RPC Transaksi v2 (Digantikan bind_asset_at_dispatch.sql)
+│   ├── fix_missing_loan_columns.sql       # ⚠️ Perlu dieksekusi manual (Kolom duration_days & due_date)
+│   └── bind_asset_at_dispatch.sql         # ⚠️ Perlu dieksekusi manual (Binding S/N Aset saat In Transit)
 ├── src/
 │   ├── components/                 # Reusable UI Components & Modals
 │   │   ├── ui/                     # Atomic Design System Component Library
+│   │   │   ├── Badge.tsx           # Asset Status, Transaction, & Role Badges
 │   │   │   ├── Button.tsx          # Tombol Serbaguna (6 wujud, 3 ukuran, loading state)
+│   │   │   ├── EmptyState.tsx      # Komponen Standar Tampilan Kosong (CSS Invert)
 │   │   │   ├── Input.tsx           # Standard Input dengan focus ring & error state
-│   │   │   ├── Select.tsx          # Customized Dropdown Select
-│   │   │   ├── Textarea.tsx        # Standard Textarea
-│   │   │   ├── Badge.tsx           # Asset Status, Mutation, & Role Badges
-│   │   │   ├── Skeleton.tsx        # Responsive Loading Animations
+│   │   │   ├── LoadingSpinner.tsx  # Unified Loading Spinner Level Halaman
 │   │   │   ├── ModalShell.tsx      # Unified Wrapper untuk Modals & Overlay
 │   │   │   ├── SectionHeader.tsx   # Standard Section Titles & Action Buttons
-│   │   │   ├── EmptyState.tsx      # Empty Data Placeholders
-│   │   │   └── SiteSearchInput.tsx # High-Performance Auto-Complete Site Search
-│   │   ├── Header.tsx              # Top Navigation Bar & Tombol Admin
-│   │   ├── BottomNav.tsx           # Bottom Tab Navigation
+│   │   │   ├── Select.tsx          # Customized Dropdown Select
+│   │   │   ├── SiteSearchInput.tsx # Custom Auto-Complete Dropdown Pencarian Site
+│   │   │   ├── Skeleton.tsx        # Responsive Loading Skeleton Animations
+│   │   │   └── Textarea.tsx        # Standard Textarea
+│   │   ├── charts/
+│   │   │   └── ReportCharts.tsx    # Komponen Visualisasi Grafik Recharts
+│   │   ├── layout/
+│   │   │   └── SubViewLayout.tsx   # Wrapper Sub-Page Full Screen (3-Pilar Pattern)
+│   │   ├── BottomNav.tsx           # Bottom Tab Navigation (Beranda, Menu, Profil)
+│   │   ├── DocumentTimeline.tsx    # Linimasa Riwayat Mutasi & Checkpoint Transit
+│   │   ├── ErrorBoundary.tsx       # Error Boundary Pelindung Crash Aplikasi
+│   │   ├── Header.tsx              # Top Navigation Bar & Action Icons
 │   │   ├── ItemCard.tsx            # Card Component Tampilan Aset
+│   │   ├── StatusBadge.tsx         # Badge Representasi Status Aset
+│   │   ├── Toast.tsx               # Notifikasi Toast Melayang
 │   │   └── modals/                 # Interactive Modal Components
+│   │       ├── AssetPickerModal.tsx # Pemilihan Unit Backup saat Kirim Unit (In Transit)
 │   │       ├── AuditTrailModal.tsx # Linimasa Rekam Jejak Audit per Unit Aset
 │   │       ├── BackupModal.tsx     # Modal Backup & Export CSV/JSON (Khusus Admin)
 │   │       ├── BASTDocumentModal.tsx # Generator Dokumen BAST & Shipping Label PDF
-│   │       ├── CancelRejectModal.tsx # Form Alasan Wajib Terakreditasi (Cancel/Reject/Force)
-│   │       ├── ConfirmModal.tsx    # Modal Konfirmasi Pengganti window.confirm
-│   │       ├── CSVImportModal.tsx  # Uploader & Validator CSV Khusus Admin
-│   │       ├── DispatchLoanModal.tsx # Alokasi & Scan Barcode Peminjaman IT
-│   │       ├── ItemFormModal.tsx   # Form Tambah / Edit Aset
-│   │       ├── ItemDetailModal.tsx # Detail Aset & Aksis
-│   │       ├── LoanReportModal.tsx # Generator Laporanan Transaksi Peminjaman
-│   │       ├── MutationModal.tsx   # Form Mutasi / Perpindahan Aset
-│   │       ├── OverdueAlertModal.tsx # Daftar Keterlambatan, Export CSV & Telegram Bot Alert
-│   │       ├── QRScannerModal.tsx  # Scanner QR / Barcode (html5-qrcode)
-│   │       ├── RequestAccessModal.tsx # Form Request Akses Tim IT (Guest)
-│   │       ├── RequestLoanModal.tsx   # Form Pengajuan Peminjaman Toko
-│   │       ├── ReturnCheckModal.tsx   # Verifikasi Kondisi Barang Kembalian IT
-│   │       ├── SetPasswordModal.tsx   # Atur Password Akses Web
-│   │       └── UserManagementModal.tsx # Panel Admin Manajemen Role & Teritori IT
+│   │       ├── BulkDisposalModal.tsx # Modal Pemusnahan Massal Aset (BAPA)
+│   │       ├── ConfirmModal.tsx    # Modal Konfirmasi Interaktif Standar
+│   │       ├── CSVImportModal.tsx  # Uploader & Strict Validator CSV Khusus Admin
+│   │       ├── ExportGSheetModal.tsx # Export Data ke Google Spreadsheet
+│   │       ├── ItemDetailModal.tsx # Detail Lengkap Aset & Aksis Cepat
+│   │       ├── ItemFormModal.tsx   # Form Tambah / Edit Master Aset
+│   │       ├── LoanReportModal.tsx # Generator Laporan Transaksi Peminjaman
+│   │       ├── OverdueAlertModal.tsx # Modal Monitoring Overdue & Alert Bot
+│   │       ├── ProposeDisposalModal.tsx # Pengajuan Afkir / Usulan Pemusnahan Aset
+│   │       ├── QRScannerModal.tsx  # Scanner Kamera QR / Barcode (html5-qrcode)
+│   │       ├── ReconciliationDetailModal.tsx # Verifikasi & Approval Rekonsiliasi Opname
+│   │       ├── RequestAccessModal.tsx # Form Pengajuan Akses Tim IT (Guest)
+│   │       ├── SetPasswordModal.tsx # Pengaturan Password Akses Web
+│   │       ├── TransactionModal.tsx # Form Pengajuan Transaksi Terpadu (Mutasi/Pinjam/Repair)
+│   │       └── UserManagementModal.tsx # Panel Manajemen Role & Assigned Region IT
 │   ├── contexts/
-│   │   └── AuthContext.tsx         # AuthProvider & useAuth() Hook (Dual Auth)
+│   │   ├── AuthContext.tsx         # Dual Auth Provider & Session State
+│   │   ├── ModalContext.tsx        # Global Modal Controller
+│   │   └── ThemeContext.tsx        # Dark/Light Mode Theme Provider (Auto-Invert)
 │   ├── hooks/
-│   │   ├── useInventory.ts         # Central State Management Hook (Inventaris & Loans)
-│   │   └── useReport.ts            # Hook Analitik & State Management Laporan
+│   │   ├── useCameraPermission.ts  # Hook Izin & Status Kamera Barcode
+│   │   ├── useFormValidation.ts    # Hook Standarisasi Validasi Form & Error State
+│   │   ├── useInventory.ts         # Central State Management (Items, Sites, Trx)
+│   │   └── useReport.ts            # Hook Analitik & Aggregasi Pelaporan
 │   ├── lib/
-│   │   └── supabase.ts             # Supabase Client Initialization
+│   │   └── supabase.ts             # Supabase Client Instance Initialization
 │   ├── services/                   # API Integration Layer
-│   │   ├── assetService.ts         # Asset CRUD & View Integration
+│   │   ├── assetService.ts         # Master Aset CRUD, Disposal Docs & Views
 │   │   ├── authService.ts          # Auth Service: Web Login, Session, Password
-│   │   ├── csvImportService.ts     # Parsing & Chunking Upload CSV
-│   │   ├── loanService.ts          # API Layer Siklus Peminjaman & Overdue
-│   │   ├── mutationService.ts      # Mutation Log & Handover
-│   │   ├── reportService.ts        # Service Pelaporan, Export CSV, & Telegram Notif
-│   │   ├── siteService.ts          # Fetch Sites & Regions
+│   │   ├── csvImportService.ts     # Chunking Uploader & Validator CSV
+│   │   ├── gsheetExportService.ts  # Service Integrasi Ekspor Google Sheets
+│   │   ├── opnameService.ts        # Service Audit Fisik & Rekonsiliasi Opname
+│   │   ├── reportService.ts        # Pelaporan, Agregasi KPI & Notifikasi Alert
+│   │   ├── settingsService.ts      # Pengaturan Sistem & Dynamic Route Settings
+│   │   ├── siteService.ts          # Master Lokasi Cabang & Region
+│   │   ├── stateMachine.ts         # State Machine 8-Status & Validasi Transisi
+│   │   ├── transactionService.ts   # Service Transaksi Terpadu & Checkpoint Transit
 │   │   └── userService.ts          # Telegram SDK User Sync & Bot Notification
 │   ├── types/
-│   │   └── inventory.ts            # TypeScript Definitions & Enums
-│   └── views/                      # Main Page / Tab Views
-│       ├── DashboardView.tsx       # Ringkasan Stats & Grid Kategori
-│       ├── ItemsView.tsx           # Daftar Aset Grouped by Region
-│       ├── HistoryView.tsx         # Riwayat Mutasi Aset
-│       ├── LoansView.tsx           # Dashboard Monitoring Peminjaman & BAST
-│       ├── LoginView.tsx           # Halaman Login Web (Telegram ID + Password)
-│       ├── ReportView.tsx          # Dashboard Pelaporan Enterprise & Grafik Recharts
-│       ├── SitesView.tsx           # Daftar Lokasi Site Operasional
-│       ├── OpnameView.tsx          # Audit Fisik Aset
-│       └── ProfileView.tsx         # Profil User & Pengaturan Akses Web
+│   │   └── inventory.ts            # TypeScript Definitions, Enums & Status Configs
+│   ├── utils/
+│   │   ├── categoryGroups.ts       # Pengelompokan Kategori Aset
+│   │   ├── friendlyError.ts        # Mapper Error Ramah Pengguna
+│   │   ├── mapTransactionToLoan.ts # Adapter Kompatibilitas Transaksi ke BAST
+│   │   ├── printDisposalBAST.ts    # Generator Cetak BAPA Pemusnahan Aset
+│   │   ├── printDocument.ts        # Generator Cetak Dokumen Umum
+│   │   └── telegramHaptics.ts      # Haptic Feedback Telegram WebApp SDK
+│   └── views/                      # Main Page / Tab Views (Pola 3-Pilar)
+│       ├── DashboardView.tsx       # Beranda: Ringkasan Stats, Kategori & Recent Moves
+│       ├── DisposalQueueView.tsx   # Antrean & Approval Pemusnahan Aset (BAPA)
+│       ├── ItemsView.tsx           # Daftar Master Aset Grouped by Region
+│       ├── LoginView.tsx           # Halaman Login Form Web (ID + Password)
+│       ├── MenuView.tsx            # Hub Navigasi Menu & Sub-View
+│       ├── OpnameView.tsx          # Audit Fisik Aset & Tab Rekonsiliasi (Admin)
+│       ├── ProfileView.tsx         # Profil User, Setting Password & Backup Data
+│       ├── ReconciliationQueueView.tsx # Antrean Persetujuan Selisih Opname
+│       ├── ReportView.tsx          # Pusat Laporan: KPI, Grafik & Reprint Center
+│       ├── SettingsView.tsx        # Konfigurasi Super Admin & Routing Bot
+│       ├── SitesView.tsx           # Direktori Master Cabang / Site
+│       └── TransactionsView.tsx    # Manajemen Transaksi Terpadu (Mutasi, Pinjam, Repair)
 ├── supabase/functions/             # Edge Functions (telegram-bot, cron-overdue)
 ├── .env.example                    # Template Environment Variables
 ├── TMA.log                         # Log Riwayat Perubahan Project
